@@ -1,52 +1,31 @@
 import { cn } from "@/lib/utils";
 
 /**
- * Loadit mark — an abstract "rail" routing node: three converging paths
- * meeting at a single settlement point. Uses currentColor + gradient.
+ * Loadit brand mark — the QR + rising-arrow logo.
+ * Rendered light-on-dark (white QR, green arrow) so it reads on dark surfaces.
+ * Sizing is controlled via className (the asset is square).
  */
-export function Logo({ className }: { className?: string }) {
+export function Logo({
+  className,
+  alt = "",
+  priority = false,
+}: {
+  className?: string;
+  alt?: string;
+  priority?: boolean;
+}) {
   return (
-    <svg
-      viewBox="0 0 32 32"
-      fill="none"
-      className={cn("text-rail-400", className)}
-      aria-hidden="true"
-    >
-      <defs>
-        <linearGradient id="loadit-rail" x1="0" y1="0" x2="32" y2="32">
-          <stop offset="0%" stopColor="#5eead4" />
-          <stop offset="50%" stopColor="#5b9bff" />
-          <stop offset="100%" stopColor="#c084fc" />
-        </linearGradient>
-      </defs>
-      <circle
-        cx="16"
-        cy="16"
-        r="14.5"
-        stroke="url(#loadit-rail)"
-        strokeOpacity="0.25"
-      />
-      {/* converging rails */}
-      <path
-        d="M5 9 H16 a5 5 0 0 1 5 5"
-        stroke="url(#loadit-rail)"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-      <path
-        d="M5 16 H16"
-        stroke="url(#loadit-rail)"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-      <path
-        d="M5 23 H16 a5 5 0 0 0 5 -5"
-        stroke="url(#loadit-rail)"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-      {/* settlement node */}
-      <circle cx="22.5" cy="16" r="3" fill="url(#loadit-rail)" />
-    </svg>
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src="/loadit-mark.png"
+      alt={alt}
+      width={64}
+      height={64}
+      decoding="async"
+      loading={priority ? "eager" : "lazy"}
+      className={cn("h-7 w-7 select-none object-contain", className)}
+      aria-hidden={alt === "" ? true : undefined}
+      draggable={false}
+    />
   );
 }

@@ -62,7 +62,7 @@ export function Security() {
                   <defs>
                     <linearGradient id="vaultGrad" x1="4" y1="2" x2="20" y2="22">
                       <stop stopColor="#5eead4" />
-                      <stop offset="1" stopColor="#c084fc" />
+                      <stop offset="1" stopColor="#16a34a" />
                     </linearGradient>
                   </defs>
                 </svg>

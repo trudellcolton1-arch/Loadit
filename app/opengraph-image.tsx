@@ -18,7 +18,7 @@ export default function OgImage() {
           justifyContent: "center",
           padding: "80px",
           background:
-            "radial-gradient(ellipse 80% 60% at 50% 0%, #0d1b3a, #04060B 70%)",
+            "radial-gradient(ellipse 80% 60% at 50% 0%, #08321d, #04060B 70%)",
           color: "white",
           fontFamily: "sans-serif",
         }}
@@ -29,19 +29,18 @@ export default function OgImage() {
             alignItems: "center",
             gap: 16,
             fontSize: 28,
-            color: "#8fb6ff",
+            color: "#5fe3a0",
             fontFamily: "monospace",
             letterSpacing: "0.2em",
             textTransform: "uppercase",
           }}
         >
-          <div
-            style={{
-              width: 14,
-              height: 14,
-              borderRadius: 999,
-              background: "#5eead4",
-            }}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={`${SITE.url}/loadit-mark.png`}
+            width={56}
+            height={56}
+            alt=""
           />
           {SITE.name} · Patent Pending
         </div>
@@ -59,7 +58,7 @@ export default function OgImage() {
           <span>Move Value.</span>
           <span
             style={{
-              background: "linear-gradient(90deg, #5eead4, #5b9bff, #c084fc)",
+              background: "linear-gradient(90deg, #5eead4, #22c55e, #15803d)",
               backgroundClip: "text",
               color: "transparent",
             }}

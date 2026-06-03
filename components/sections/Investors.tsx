@@ -89,8 +89,8 @@ export function Investors() {
             >
               <defs>
                 <linearGradient id="area" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#5b9bff" stopOpacity="0.5" />
-                  <stop offset="100%" stopColor="#5b9bff" stopOpacity="0" />
+                  <stop offset="0%" stopColor="#22c55e" stopOpacity="0.5" />
+                  <stop offset="100%" stopColor="#22c55e" stopOpacity="0" />
                 </linearGradient>
               </defs>
               <motion.polyline

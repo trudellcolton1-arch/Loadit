@@ -98,12 +98,12 @@ export function RoutingEngine() {
             >
               <defs>
                 <radialGradient id="core-glow">
-                  <stop offset="0%" stopColor="#5b9bff" stopOpacity="0.9" />
-                  <stop offset="100%" stopColor="#5b9bff" stopOpacity="0" />
+                  <stop offset="0%" stopColor="#22c55e" stopOpacity="0.9" />
+                  <stop offset="100%" stopColor="#22c55e" stopOpacity="0" />
                 </radialGradient>
                 <linearGradient id="active-line">
                   <stop offset="0%" stopColor="#5eead4" />
-                  <stop offset="100%" stopColor="#c084fc" />
+                  <stop offset="100%" stopColor="#16a34a" />
                 </linearGradient>
               </defs>
 
@@ -151,7 +151,7 @@ export function RoutingEngine() {
                 cy={cy}
                 r={30}
                 fill="#0B0F1A"
-                stroke="#5b9bff"
+                stroke="#34d17a"
                 strokeOpacity={0.5}
               />
               <text

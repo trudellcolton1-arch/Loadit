@@ -127,7 +127,7 @@ function Network() {
     <group ref={group}>
       <points ref={pointsRef} geometry={pointGeo}>
         <pointsMaterial
-          color="#7fb2ff"
+          color="#6ee7a8"
           size={0.06}
           sizeAttenuation
           transparent
@@ -138,9 +138,9 @@ function Network() {
       </points>
       <lineSegments ref={linesRef} geometry={lineGeo}>
         <lineBasicMaterial
-          color="#3b82f6"
+          color="#22a95c"
           transparent
-          opacity={0.18}
+          opacity={0.2}
           depthWrite={false}
           blending={THREE.AdditiveBlending}
         />

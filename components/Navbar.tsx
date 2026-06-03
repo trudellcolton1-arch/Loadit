@@ -29,7 +29,7 @@ export function Navbar() {
           className={cn(
             "flex items-center justify-between rounded-full px-4 py-2.5 transition-all duration-500",
             scrolled
-              ? "glass shadow-glass"
+              ? "glass glass-blur shadow-glass"
               : "border border-transparent bg-transparent"
           )}
         >
@@ -38,7 +38,7 @@ export function Navbar() {
             className="flex items-center gap-2.5 pl-2"
             aria-label={`${SITE.name} home`}
           >
-            <Logo className="h-7 w-7" />
+            <Logo className="h-7 w-7" priority />
             <span className="text-base font-semibold tracking-tight">
               {SITE.name}
             </span>
@@ -98,7 +98,7 @@ export function Navbar() {
           <motion.ul
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="glass mt-2 space-y-1 rounded-3xl p-3 lg:hidden"
+            className="glass glass-blur mt-2 space-y-1 rounded-3xl p-3 lg:hidden"
           >
             {NAV_LINKS.map((link) => (
               <li key={link.href}>

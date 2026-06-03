@@ -1,13 +1,14 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/Button";
 import { Logo } from "@/components/ui/Logo";
 import { Badge } from "@/components/ui/Badge";
 import { SITE } from "@/lib/constants";
 
-// Three.js is heavy — load it client-only, after first paint.
+// Three.js is heavy — load it client-only, and only when actually needed.
 const NeuralField = dynamic(() => import("@/components/three/NeuralField"), {
   ssr: false,
   loading: () => null,
@@ -16,14 +17,50 @@ const NeuralField = dynamic(() => import("@/components/three/NeuralField"), {
 const VALUE_CHAIN = ["Cash", "Card", "Stablecoin", "Crypto", "Anything"];
 
 export function Hero() {
+  // Gate the (large) three.js chunk download: skip it entirely on mobile and
+  // for reduced-motion, and otherwise defer it until the browser is idle so the
+  // hero text + gradient paint instantly.
+  const [show3d, setShow3d] = useState(false);
+
+  useEffect(() => {
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const isMobile = window.matchMedia("(max-width: 767px)").matches;
+    const lowCore =
+      typeof navigator !== "undefined" &&
+      (navigator.hardwareConcurrency ?? 8) <= 4;
+    if (reduce || isMobile || lowCore) return;
+
+    const w = window as unknown as {
+      requestIdleCallback?: (cb: () => void) => number;
+      cancelIdleCallback?: (id: number) => void;
+    };
+    const start = () => setShow3d(true);
+    const id = w.requestIdleCallback
+      ? w.requestIdleCallback(start)
+      : window.setTimeout(start, 300);
+    return () => {
+      if (w.cancelIdleCallback) w.cancelIdleCallback(id);
+      else clearTimeout(id);
+    };
+  }, []);
+
   return (
     <section
       id="top"
       className="relative grain flex min-h-[100svh] flex-col items-center justify-center overflow-hidden"
     >
-      {/* 3D financial universe */}
+      {/* 3D financial universe (loads only on capable devices, after paint) */}
       <div className="absolute inset-0 -z-10">
-        <NeuralField />
+        {show3d && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 1.2 }}
+            className="absolute inset-0"
+          >
+            <NeuralField />
+          </motion.div>
+        )}
       </div>
 
       {/* Atmospheric gradients */}
@@ -40,7 +77,7 @@ export function Hero() {
         >
           <div className="relative grid place-items-center">
             <div className="absolute h-24 w-24 rounded-full bg-rail-500/20 blur-2xl animate-pulse-rail" />
-            <Logo className="h-16 w-16 animate-float" />
+            <Logo className="h-20 w-20 animate-float" alt="Loadit" priority />
           </div>
         </motion.div>
 

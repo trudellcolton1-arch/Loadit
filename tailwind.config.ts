@@ -14,22 +14,22 @@ const config: Config = {
         ink: "#070A12",
         surface: "#0B0F1A",
         elevated: "#10151F",
-        // Accents — the "rail" energy
+        // Accents — the brand green "rail" energy
         rail: {
-          DEFAULT: "#3B82F6",
-          50: "#EAF2FF",
-          100: "#D6E4FF",
-          400: "#5B9BFF",
-          500: "#3B82F6",
-          600: "#2563EB",
+          DEFAULT: "#22A95C",
+          50: "#E9FBF1",
+          100: "#CFF5DF",
+          400: "#34D17A",
+          500: "#22A95C",
+          600: "#1B8B4A",
         },
         cyan: {
           DEFAULT: "#22D3EE",
           glow: "#5EEAD4",
         },
         quantum: {
-          DEFAULT: "#A855F7",
-          glow: "#C084FC",
+          DEFAULT: "#10B981",
+          glow: "#5EEAD4",
         },
         signal: "#34D399", // success / settled
       },
@@ -44,16 +44,16 @@ const config: Config = {
         "4xl": "2rem",
       },
       boxShadow: {
-        glow: "0 0 40px -8px rgba(59,130,246,0.45)",
+        glow: "0 0 40px -8px rgba(34,169,92,0.45)",
         "glow-cyan": "0 0 50px -10px rgba(34,211,238,0.5)",
-        "glow-quantum": "0 0 50px -10px rgba(168,85,247,0.5)",
+        "glow-quantum": "0 0 50px -10px rgba(16,185,129,0.5)",
         glass: "inset 0 1px 0 0 rgba(255,255,255,0.06), 0 20px 60px -20px rgba(0,0,0,0.7)",
       },
       backgroundImage: {
         "grid-fade":
-          "radial-gradient(ellipse 80% 60% at 50% 0%, rgba(59,130,246,0.12), transparent 70%)",
+          "radial-gradient(ellipse 80% 60% at 50% 0%, rgba(34,169,92,0.14), transparent 70%)",
         "rail-gradient":
-          "linear-gradient(90deg, #22D3EE 0%, #3B82F6 50%, #A855F7 100%)",
+          "linear-gradient(90deg, #5EEAD4 0%, #22C55E 50%, #15803D 100%)",
       },
       keyframes: {
         "fade-up": {
