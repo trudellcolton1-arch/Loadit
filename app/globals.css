@@ -15,7 +15,10 @@
   html {
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+    /* Native smooth scrolling (compositor-threaded — never janks like JS
+       scroll-hijacking). scroll-padding offsets the fixed navbar for anchors. */
     scroll-behavior: smooth;
+    scroll-padding-top: 5rem;
   }
 
   body {

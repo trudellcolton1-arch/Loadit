@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { SITE } from "@/lib/constants";
-import { SmoothScroll } from "@/components/providers/SmoothScroll";
 import { JsonLd } from "@/components/JsonLd";
 import "./globals.css";
 
@@ -67,7 +66,7 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable} ${mono.variable}`}>
       <body>
         <JsonLd />
-        <SmoothScroll>{children}</SmoothScroll>
+        {children}
       </body>
     </html>
   );

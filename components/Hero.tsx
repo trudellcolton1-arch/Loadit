@@ -1,66 +1,23 @@
 "use client";
 
-import dynamic from "next/dynamic";
-import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/Button";
 import { Logo } from "@/components/ui/Logo";
 import { Badge } from "@/components/ui/Badge";
+import { ParticleField } from "@/components/ParticleField";
 import { SITE } from "@/lib/constants";
-
-// Three.js is heavy — load it client-only, and only when actually needed.
-const NeuralField = dynamic(() => import("@/components/three/NeuralField"), {
-  ssr: false,
-  loading: () => null,
-});
 
 const VALUE_CHAIN = ["Cash", "Card", "Stablecoin", "Crypto", "Anything"];
 
 export function Hero() {
-  // Gate the (large) three.js chunk download: skip it entirely on mobile and
-  // for reduced-motion, and otherwise defer it until the browser is idle so the
-  // hero text + gradient paint instantly.
-  const [show3d, setShow3d] = useState(false);
-
-  useEffect(() => {
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const isMobile = window.matchMedia("(max-width: 767px)").matches;
-    const lowCore =
-      typeof navigator !== "undefined" &&
-      (navigator.hardwareConcurrency ?? 8) <= 4;
-    if (reduce || isMobile || lowCore) return;
-
-    const w = window as unknown as {
-      requestIdleCallback?: (cb: () => void) => number;
-      cancelIdleCallback?: (id: number) => void;
-    };
-    const start = () => setShow3d(true);
-    const id = w.requestIdleCallback
-      ? w.requestIdleCallback(start)
-      : window.setTimeout(start, 300);
-    return () => {
-      if (w.cancelIdleCallback) w.cancelIdleCallback(id);
-      else clearTimeout(id);
-    };
-  }, []);
-
   return (
     <section
       id="top"
       className="relative grain flex min-h-[100svh] flex-col items-center justify-center overflow-hidden"
     >
-      {/* 3D financial universe (loads only on capable devices, after paint) */}
+      {/* Animated financial universe — lightweight 2D canvas */}
       <div className="absolute inset-0 -z-10">
-        {show3d && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 1.2 }}
-            className="absolute inset-0"
-          >
-            <NeuralField />
-          </motion.div>
-        )}
+        <ParticleField />
       </div>
 
       {/* Atmospheric gradients */}
