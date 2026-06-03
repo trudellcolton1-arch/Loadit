@@ -14,8 +14,10 @@ a command-center architecture stack, and a fully interactive routing demo.
 - **Next.js 14** (App Router) + **TypeScript**
 - **Tailwind CSS** — design system in `tailwind.config.ts`
 - **Framer Motion** — scroll-driven storytelling, layout animations, reveals
-- **Three.js** + **@react-three/fiber** — the hero's neural/financial-universe field
-- **Lenis** — smooth scrolling (auto-disabled for `prefers-reduced-motion`)
+- **2D-canvas particle field** — the hero's financial-universe background, written
+  by hand (no 3D library) so the page stays light and fast; pauses off-screen
+- **Native smooth scrolling** — compositor-threaded (no scroll-hijacking library),
+  with `scroll-padding` for the fixed navbar
 
 ## Architecture
 
@@ -25,14 +27,13 @@ app/
   page.tsx              Section composition
   globals.css           Design tokens + glassmorphism utilities
   opengraph-image.tsx   Dynamic OG image
-  robots.ts / sitemap.ts / manifest.ts / icon.svg
+  robots.ts / sitemap.ts / manifest.ts / icon.png
 components/
-  Hero.tsx              Animated hero (lazy-loaded 3D background)
+  Hero.tsx              Animated hero
+  ParticleField.tsx     Lightweight 2D-canvas financial-universe background
   Navbar.tsx / Footer.tsx
-  three/NeuralField.tsx Particle network + energy pulses
   sections/             One file per homepage section
   ui/                   Button, Reveal, SectionHeading, Badge, Counter, Logo
-  providers/            SmoothScroll (Lenis)
 lib/
   constants.ts          All site copy — single source of truth
   seo.ts                FAQ content + JSON-LD graph builder
