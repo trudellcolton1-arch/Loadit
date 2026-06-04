@@ -23,7 +23,13 @@ export function Hero() {
       {/* Atmospheric gradients */}
       <div className="pointer-events-none absolute inset-0 -z-10 bg-grid-fade" />
       <div className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-64 bg-gradient-to-t from-void to-transparent" />
-      <div className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[40rem] w-[40rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-rail-500/10 blur-[120px]" />
+      <div
+        className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[40rem] w-[40rem] -translate-x-1/2 -translate-y-1/2"
+        style={{
+          background:
+            "radial-gradient(circle, rgba(34,169,92,0.14), transparent 68%)",
+        }}
+      />
 
       <div className="container-px relative mx-auto flex max-w-5xl flex-col items-center text-center">
         <motion.div

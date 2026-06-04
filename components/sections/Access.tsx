@@ -21,7 +21,13 @@ export function Access() {
       <div className="container-px mx-auto max-w-4xl">
         <Reveal>
           <div className="glass grain relative overflow-hidden rounded-4xl p-10 text-center sm:p-16">
-            <div className="pointer-events-none absolute left-1/2 top-0 h-64 w-64 -translate-x-1/2 rounded-full bg-rail-500/20 blur-[100px]" />
+            <div
+              className="pointer-events-none absolute left-1/2 top-0 h-80 w-80 -translate-x-1/2 -translate-y-1/3"
+              style={{
+                background:
+                  "radial-gradient(circle, rgba(34,169,92,0.22), transparent 70%)",
+              }}
+            />
             <h2 className="text-balance text-3xl font-semibold tracking-tightest text-gradient sm:text-5xl">
               Request access to the rail.
             </h2>

@@ -102,19 +102,28 @@ export function ParticleField() {
       raf = requestAnimationFrame(loop);
     };
 
-    const start = () => {
-      if (running || reduce) return;
-      running = true;
-      raf = requestAnimationFrame(loop);
-    };
-    const stop = () => {
-      running = false;
-      cancelAnimationFrame(raf);
+    // Run only when on-screen, tab visible, and the user isn't actively
+    // scrolling. Pausing during scroll keeps the compositor free, which is what
+    // makes iOS Safari scroll smoothly instead of fighting the canvas.
+    let visible = true;
+    let scrolling = false;
+    let scrollTimer = 0;
+    const shouldRun = () => visible && !document.hidden && !scrolling && !reduce;
+    const sync = () => {
+      if (shouldRun()) {
+        if (!running) {
+          running = true;
+          raf = requestAnimationFrame(loop);
+        }
+      } else if (running) {
+        running = false;
+        cancelAnimationFrame(raf);
+      }
     };
 
     resize();
     if (reduce) draw(); // single static frame
-    else start();
+    else sync();
 
     const onResize = () => {
       resize();
@@ -123,17 +132,34 @@ export function ParticleField() {
     window.addEventListener("resize", onResize, { passive: true });
 
     const io = new IntersectionObserver(
-      ([entry]) => (entry.isIntersecting ? start() : stop()),
+      ([entry]) => {
+        visible = entry.isIntersecting;
+        sync();
+      },
       { threshold: 0.01 }
     );
     io.observe(canvas);
 
-    const onVis = () => (document.hidden ? stop() : start());
+    const onVis = () => sync();
     document.addEventListener("visibilitychange", onVis);
 
+    const onScroll = () => {
+      scrolling = true;
+      sync();
+      clearTimeout(scrollTimer);
+      scrollTimer = window.setTimeout(() => {
+        scrolling = false;
+        sync();
+      }, 180);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+
     return () => {
-      stop();
+      running = false;
+      cancelAnimationFrame(raf);
+      clearTimeout(scrollTimer);
       window.removeEventListener("resize", onResize);
+      window.removeEventListener("scroll", onScroll);
       document.removeEventListener("visibilitychange", onVis);
       io.disconnect();
     };

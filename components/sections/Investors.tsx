@@ -27,8 +27,12 @@ export function Investors() {
       {/* subtle moving glow */}
       <motion.div
         aria-hidden
-        className="pointer-events-none absolute left-1/2 top-0 h-[36rem] w-[36rem] -translate-x-1/2 rounded-full bg-rail-500/10 blur-[140px]"
-        animate={{ opacity: [0.4, 0.7, 0.4] }}
+        className="pointer-events-none absolute left-1/2 top-0 h-[36rem] w-[36rem] -translate-x-1/2"
+        style={{
+          background:
+            "radial-gradient(circle, rgba(34,169,92,0.16), transparent 70%)",
+        }}
+        animate={{ opacity: [0.5, 0.85, 0.5] }}
         transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
       />
 

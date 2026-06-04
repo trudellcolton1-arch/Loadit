@@ -24,7 +24,10 @@
   body {
     @apply bg-void text-white/90 antialiased;
     font-feature-settings: "ss01", "cv01", "cv03";
-    overflow-x: hidden;
+    /* `clip` (not `hidden`) prevents horizontal overflow without turning the
+       body into a scroll container — which on iOS Safari breaks momentum
+       scrolling and makes the page feel like it "can't scroll freely". */
+    overflow-x: clip;
   }
 
   /* Selection */
@@ -77,8 +80,10 @@
   }
 
   .glass-blur {
-    @apply backdrop-blur-xl;
-    background-color: rgba(11, 15, 26, 0.6);
+    /* Solid translucent fill instead of backdrop-filter. Over the dark page it
+       looks the same, but avoids iOS Safari's severe backdrop-blur scroll jank
+       on the fixed navbar. */
+    background-color: rgba(7, 10, 18, 0.82);
   }
 
   .glass-hover {
