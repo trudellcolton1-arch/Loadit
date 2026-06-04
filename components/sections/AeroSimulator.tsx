@@ -107,8 +107,16 @@ export function AeroSimulator() {
   const [investor, setInvestor] = useState(false);
   const [runId, setRunId] = useState(0);
 
+  // OpenAI-generated explanation/reasoning (falls back to local copy).
+  const [ai, setAi] = useState<{
+    status: "idle" | "loading" | "live" | "fallback";
+    explanation?: string;
+    reasoning?: string;
+  }>({ status: "idle" });
+
   const cardRef = useRef<HTMLDivElement>(null);
   const timers = useRef<number[]>([]);
+  const aiReq = useRef(0); // guards against stale responses on rerun
 
   // Live preview of the route for the diagram, before/while configuring.
   const preview = useMemo(
@@ -118,12 +126,48 @@ export function AeroSimulator() {
 
   useEffect(() => () => timers.current.forEach(clearTimeout), []);
 
+  const askOpenAI = async (route: RouteResult) => {
+    const reqId = ++aiReq.current;
+    setAi({ status: "loading" });
+    try {
+      const res = await fetch("/api/aero", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          paymentMethod,
+          asset,
+          amount,
+          network: route.network.name,
+          savingsPct: route.savingsPct,
+          loaditFee: route.loaditFee,
+          legacyFee: route.legacyFee,
+          eta: route.eta,
+          risk: `${route.risk.value} (${route.risk.label})`,
+        }),
+      });
+      const data = await res.json();
+      if (reqId !== aiReq.current) return; // a newer run superseded this one
+      if (data?.ok && data.explanation) {
+        setAi({
+          status: "live",
+          explanation: data.explanation,
+          reasoning: data.reasoning ?? undefined,
+        });
+      } else {
+        setAi({ status: "fallback" });
+      }
+    } catch {
+      if (reqId === aiReq.current) setAi({ status: "fallback" });
+    }
+  };
+
   const run = () => {
     timers.current.forEach(clearTimeout);
     timers.current = [];
     setPhase("analyzing");
     setStep(0);
     setResult(null);
+    setAi({ status: "idle" });
 
     const stepMs = 620;
     ANALYSIS_STEPS.forEach((_, i) => {
@@ -133,9 +177,11 @@ export function AeroSimulator() {
     });
     timers.current.push(
       window.setTimeout(() => {
-        setResult(computeRoute({ paymentMethod, asset, amount, wallet, preferred }));
+        const route = computeRoute({ paymentMethod, asset, amount, wallet, preferred });
+        setResult(route);
         setPhase("done");
-        setRunId((r) => r + 1);
+        setRunId((x) => x + 1);
+        void askOpenAI(route);
       }, ANALYSIS_STEPS.length * stepMs)
     );
   };
@@ -398,13 +444,29 @@ export function AeroSimulator() {
 
                   {/* Why AERO chose this route */}
                   <div className="mt-5 rounded-2xl border border-cyan/20 bg-cyan/[0.04] p-5">
-                    <div className="flex items-center gap-2">
-                      <span className="text-cyan">◇</span>
-                      <FieldLabel>Why AERO chose this route</FieldLabel>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-cyan">◇</span>
+                        <FieldLabel>Why AERO chose this route</FieldLabel>
+                      </div>
+                      {ai.status === "live" && (
+                        <span className="rounded-full border border-cyan/30 bg-cyan/10 px-2 py-0.5 font-mono text-[0.55rem] uppercase tracking-widest text-cyan">
+                          ⚡ Live AI
+                        </span>
+                      )}
                     </div>
-                    <p className="mt-2 text-pretty text-sm leading-relaxed text-white/75">
-                      {r.explanation}
-                    </p>
+                    {ai.status === "loading" ? (
+                      <p className="mt-2 flex items-center gap-2 text-sm text-white/50">
+                        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-cyan" />
+                        AERO is reasoning…
+                      </p>
+                    ) : (
+                      <p className="mt-2 text-pretty text-sm leading-relaxed text-white/75">
+                        {ai.status === "live" && ai.explanation
+                          ? ai.explanation
+                          : r.explanation}
+                      </p>
+                    )}
                   </div>
 
                   {/* Fee comparison bar */}
@@ -556,8 +618,15 @@ export function AeroSimulator() {
                   </InvestorCard>
 
                   <InvestorCard title="AI Reasoning">
+                    {ai.status === "live" && ai.reasoning && (
+                      <span className="mb-2 inline-block rounded-full border border-cyan/30 bg-cyan/10 px-2 py-0.5 font-mono text-[0.55rem] uppercase tracking-widest text-cyan">
+                        ⚡ OpenAI
+                      </span>
+                    )}
                     <p className="text-sm leading-relaxed text-white/65">
-                      {(r ?? preview).investor.aiReasoning}
+                      {ai.status === "live" && ai.reasoning
+                        ? ai.reasoning
+                        : (r ?? preview).investor.aiReasoning}
                     </p>
                   </InvestorCard>
 
