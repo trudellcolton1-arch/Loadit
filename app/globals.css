@@ -19,15 +19,31 @@
        scroll-hijacking). scroll-padding offsets the fixed navbar for anchors. */
     scroll-behavior: smooth;
     scroll-padding-top: 5rem;
+    /* Hard-cap width so no stray element can make the page wider than the
+       screen — that overflow is what makes mobile browsers "zoom out" to fit. */
+    max-width: 100%;
+    overflow-x: clip;
   }
 
   body {
     @apply bg-void text-white/90 antialiased;
     font-feature-settings: "ss01", "cv01", "cv03";
+    position: relative;
+    width: 100%;
+    max-width: 100%;
     /* `clip` (not `hidden`) prevents horizontal overflow without turning the
        body into a scroll container — which on iOS Safari breaks momentum
        scrolling and makes the page feel like it "can't scroll freely". */
     overflow-x: clip;
+    overscroll-behavior-x: none;
+  }
+
+  /* Media never exceeds its container (another overflow / zoom-out source). */
+  img,
+  canvas,
+  svg,
+  video {
+    max-width: 100%;
   }
 
   /* Selection */
