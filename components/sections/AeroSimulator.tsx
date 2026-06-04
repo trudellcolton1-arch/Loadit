@@ -3,7 +3,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Counter } from "@/components/ui/Counter";
-import { AeroVisualizer } from "@/components/AeroVisualizer";
+import { GlobeVisualizer } from "@/components/GlobeVisualizer";
+import {
+  CONTINENTS,
+  DESTINATIONS,
+  ORIGIN,
+  type Continent,
+} from "@/lib/geo";
 import {
   ANALYSIS_STEPS,
   ASSETS,
@@ -101,6 +107,13 @@ export function AeroSimulator() {
   const [wallet, setWallet] = useState("");
   const [preferred, setPreferred] = useState<"auto" | NetworkId>("auto");
 
+  // Destination on the globe.
+  const [continent, setContinent] = useState<Continent>("Europe");
+  const [cityIdx, setCityIdx] = useState(0);
+  const dest = DESTINATIONS[continent][cityIdx] ?? DESTINATIONS[continent][0];
+  const destLL = { lat: dest.lat, lon: dest.lon, label: dest.city };
+  const originLL = { lat: ORIGIN.lat, lon: ORIGIN.lon, label: ORIGIN.label };
+
   const [phase, setPhase] = useState<"idle" | "analyzing" | "done">("idle");
   const [step, setStep] = useState(0);
   const [result, setResult] = useState<RouteResult | null>(null);
@@ -192,7 +205,6 @@ export function AeroSimulator() {
   };
 
   const r = result;
-  const flowPath = (r ?? preview).path;
 
   return (
     <section id="demo" className="relative bg-black section-py">
@@ -262,8 +274,66 @@ export function AeroSimulator() {
           </div>
         </div>
 
+        {/* Global settlement globe — the centerpiece */}
+        <div className="relative mt-12 h-[440px] overflow-hidden rounded-4xl border border-white/8 bg-[#02040a] sm:h-[580px]">
+          <GlobeVisualizer origin={originLL} dest={destLL} live={phase === "done"} />
+
+          {/* HUD corner brackets */}
+          <span className="pointer-events-none absolute left-3 top-3 h-5 w-5 border-l border-t border-cyan/40" />
+          <span className="pointer-events-none absolute right-3 top-3 h-5 w-5 border-r border-t border-cyan/40" />
+          <span className="pointer-events-none absolute bottom-3 left-3 h-5 w-5 border-b border-l border-cyan/40" />
+          <span className="pointer-events-none absolute bottom-3 right-3 h-5 w-5 border-b border-r border-cyan/40" />
+
+          {/* top bar */}
+          <div className="pointer-events-none absolute inset-x-0 top-0 flex items-center justify-between p-4 font-mono text-[0.6rem] uppercase tracking-[0.22em]">
+            <span className="flex items-center gap-2 text-white/65">
+              <span className="h-1.5 w-1.5 rounded-full bg-cyan shadow-[0_0_8px_2px_rgba(34,211,238,0.7)]" />
+              AERO Global Settlement
+            </span>
+            <span className={phase === "done" ? "text-signal" : "text-white/45"}>
+              {phase === "analyzing"
+                ? "Routing…"
+                : phase === "done"
+                  ? "● Settling"
+                  : "○ Standby"}
+            </span>
+          </div>
+
+          {/* route caption */}
+          <div className="pointer-events-none absolute left-4 top-11 font-mono text-[0.58rem] uppercase tracking-widest text-white/45">
+            {ORIGIN.label} → {dest.city}, {dest.country}
+          </div>
+
+          {/* bottom result strip */}
+          <div className="absolute inset-x-0 bottom-0 p-3 sm:p-4">
+            <div className="rounded-2xl border border-white/10 bg-[#04060b]/85 p-3 sm:p-4">
+              {phase === "done" && r ? (
+                <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+                  <span className="rounded-full border border-signal/30 bg-signal/10 px-3 py-1 text-xs font-medium text-signal">
+                    {r.network.name}
+                  </span>
+                  <Inline label="Saves" value={`${r.savingsPct}%`} accent />
+                  <Inline label="Fee" value={formatUSD(r.loaditFee)} />
+                  <Inline label="Arrives" value={r.eta} />
+                  <Inline label="Success" value={`${r.successProbability}%`} accent />
+                </div>
+              ) : phase === "analyzing" ? (
+                <div className="flex items-center gap-2 text-sm text-white/70">
+                  <span className="h-3.5 w-3.5 animate-spin-slow rounded-full border border-white/20 border-t-cyan" />
+                  <span className="font-mono">{ANALYSIS_STEPS[step]}</span>
+                </div>
+              ) : (
+                <p className="text-center text-xs text-white/50">
+                  Choose a destination and run AERO to watch value fly across the
+                  globe in real time.
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+
         {/* Simulator + analysis/results */}
-        <div className="mt-14 grid gap-5 lg:grid-cols-[minmax(0,420px)_1fr]">
+        <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,420px)_1fr]">
           {/* Inputs */}
           <div
             ref={cardRef}
@@ -296,6 +366,39 @@ export function AeroSimulator() {
                       {a.id}
                     </Chip>
                   ))}
+                </div>
+              </div>
+
+              <div>
+                <FieldLabel>Send To · Destination</FieldLabel>
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  <select
+                    value={continent}
+                    onChange={(e) => {
+                      setContinent(e.target.value as Continent);
+                      setCityIdx(0);
+                    }}
+                    className="w-full appearance-none rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5 text-sm text-white outline-none focus:border-cyan/50"
+                    aria-label="Destination continent"
+                  >
+                    {CONTINENTS.map((c) => (
+                      <option key={c} value={c} className="bg-surface">
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    value={cityIdx}
+                    onChange={(e) => setCityIdx(Number(e.target.value))}
+                    className="w-full appearance-none rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5 text-sm text-white outline-none focus:border-cyan/50"
+                    aria-label="Destination city"
+                  >
+                    {DESTINATIONS[continent].map((p, i) => (
+                      <option key={p.city} value={i} className="bg-surface">
+                        {p.city}, {p.country}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
@@ -444,14 +547,15 @@ export function AeroSimulator() {
 
                   {/* Why AERO chose this route */}
                   <div className="mt-5 rounded-2xl border border-cyan/20 bg-cyan/[0.04] p-5">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex min-w-0 items-center gap-2">
                         <span className="text-cyan">◇</span>
                         <FieldLabel>Why AERO chose this route</FieldLabel>
                       </div>
                       {ai.status === "live" && (
-                        <span className="rounded-full border border-cyan/30 bg-cyan/10 px-2 py-0.5 font-mono text-[0.55rem] uppercase tracking-widest text-cyan">
-                          ⚡ Live AI
+                        <span className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-cyan/30 bg-cyan/10 px-2.5 py-1 font-mono text-[0.55rem] uppercase tracking-wider text-cyan">
+                          <span className="h-1.5 w-1.5 rounded-full bg-cyan shadow-[0_0_6px_1px_rgba(34,211,238,0.8)]" />
+                          Live&nbsp;AI
                         </span>
                       )}
                     </div>
@@ -490,19 +594,6 @@ export function AeroSimulator() {
                 </motion.div>
               )}
             </AnimatePresence>
-          </div>
-        </div>
-
-        {/* Network visualization */}
-        <div className="mt-5 glass rounded-4xl p-6 sm:p-8">
-          <div className="flex items-center justify-between">
-            <FieldLabel>Settlement Path</FieldLabel>
-            <span className="font-mono text-[0.6rem] uppercase tracking-widest text-white/35">
-              {phase === "done" ? "Value flowing" : "Preview"}
-            </span>
-          </div>
-          <div className="mt-6">
-            <AeroVisualizer path={flowPath} live={phase === "done"} />
           </div>
         </div>
 
@@ -657,6 +748,32 @@ export function AeroSimulator() {
         </AnimatePresence>
       </div>
     </section>
+  );
+}
+
+function Inline({
+  label,
+  value,
+  accent,
+}: {
+  label: string;
+  value: string;
+  accent?: boolean;
+}) {
+  return (
+    <span className="flex items-baseline gap-1.5">
+      <span className="font-mono text-[0.58rem] uppercase tracking-widest text-white/40">
+        {label}
+      </span>
+      <span
+        className={cn(
+          "text-sm font-semibold tracking-tight",
+          accent ? "text-signal" : "text-white"
+        )}
+      >
+        {value}
+      </span>
+    </span>
   );
 }
 

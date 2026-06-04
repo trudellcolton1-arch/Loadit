@@ -36,6 +36,9 @@
        scrolling and makes the page feel like it "can't scroll freely". */
     overflow-x: clip;
     overscroll-behavior-x: none;
+    /* Kill double-tap-to-zoom (a common "zooms in/out on its own" cause on
+       mobile) while keeping pinch-zoom and scrolling intact. */
+    touch-action: manipulation;
   }
 
   /* Media never exceeds its container (another overflow / zoom-out source). */
