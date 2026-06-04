@@ -3,13 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Counter } from "@/components/ui/Counter";
-import { GlobeVisualizer } from "@/components/GlobeVisualizer";
-import {
-  CONTINENTS,
-  DESTINATIONS,
-  ORIGIN,
-  type Continent,
-} from "@/lib/geo";
+import dynamic from "next/dynamic";
+import { CONTINENTS, DESTINATIONS, ORIGIN, type Continent } from "@/lib/geo";
 import {
   ANALYSIS_STEPS,
   ASSETS,
@@ -23,6 +18,12 @@ import {
   type RouteResult,
 } from "@/lib/aero";
 import { cn } from "@/lib/utils";
+
+// Lazy-load the WebGL globe so cobe never touches the initial bundle / paint.
+const GlobeUltra = dynamic(
+  () => import("@/components/GlobeUltra").then((m) => m.GlobeUltra),
+  { ssr: false, loading: () => null }
+);
 
 /* -------------------------------------------------------------------------- */
 /*  Small primitives (ShadCN-style, zero dependency)                          */
@@ -276,7 +277,7 @@ export function AeroSimulator() {
 
         {/* Global settlement globe — the centerpiece */}
         <div className="relative mt-12 h-[440px] overflow-hidden rounded-4xl border border-white/8 bg-[#02040a] sm:h-[580px]">
-          <GlobeVisualizer origin={originLL} dest={destLL} live={phase === "done"} />
+          <GlobeUltra origin={originLL} dest={destLL} live={phase === "done"} />
 
           {/* HUD corner brackets */}
           <span className="pointer-events-none absolute left-3 top-3 h-5 w-5 border-l border-t border-cyan/40" />
