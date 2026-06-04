@@ -302,7 +302,7 @@ export function AeroSimulator() {
 
           {/* route caption + live network ticker */}
           <div className="pointer-events-none absolute left-4 top-11 space-y-1">
-            <div className="font-mono text-[0.58rem] uppercase tracking-widest text-white/45">
+            <div className="font-mono text-[0.58rem] uppercase tracking-widest text-rail-400/90">
               {ORIGIN.label} → {dest.city}, {dest.country}
             </div>
             <NetworkTicker />
