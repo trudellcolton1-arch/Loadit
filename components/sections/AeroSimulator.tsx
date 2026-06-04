@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Counter } from "@/components/ui/Counter";
+import { AeroVisualizer } from "@/components/AeroVisualizer";
 import {
   ANALYSIS_STEPS,
   ASSETS,
@@ -76,118 +77,6 @@ function Stat({
       >
         {value}
       </div>
-    </div>
-  );
-}
-
-/* -------------------------------------------------------------------------- */
-/*  Animated route flow — particles "like money flowing"                      */
-/* -------------------------------------------------------------------------- */
-
-const KIND_STYLE: Record<RouteResult["path"][number]["kind"], string> = {
-  origin: "border-white/15 text-white",
-  engine: "border-cyan/50 text-cyan shadow-[0_0_24px_-8px_rgba(34,211,238,0.6)]",
-  asset: "border-white/15 text-white/90",
-  network: "border-signal/50 text-signal",
-  wallet: "border-signal/50 text-signal shadow-[0_0_24px_-8px_rgba(52,211,153,0.5)]",
-};
-
-function RouteFlow({ path, live }: { path: RouteResult["path"]; live: boolean }) {
-  const [vertical, setVertical] = useState(false);
-  useEffect(() => {
-    const mq = window.matchMedia("(max-width: 767px)");
-    const apply = () => setVertical(mq.matches);
-    apply();
-    mq.addEventListener("change", apply);
-    return () => mq.removeEventListener("change", apply);
-  }, []);
-
-  return (
-    <div
-      className={cn(
-        "flex items-stretch justify-center gap-0",
-        vertical ? "flex-col items-center" : "flex-row flex-wrap"
-      )}
-    >
-      {path.map((node, i) => (
-        <div
-          key={`${node.label}-${i}`}
-          className={cn(
-            "flex items-center",
-            vertical ? "flex-col" : "flex-row"
-          )}
-        >
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ delay: i * 0.06 }}
-            className={cn(
-              "grid place-items-center rounded-2xl border bg-surface px-4 py-2.5 text-sm font-medium",
-              KIND_STYLE[node.kind]
-            )}
-          >
-            {node.label}
-          </motion.div>
-
-          {i < path.length - 1 && (
-            <Connector vertical={vertical} active={live} index={i} />
-          )}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function Connector({
-  vertical,
-  active,
-  index,
-}: {
-  vertical: boolean;
-  active: boolean;
-  index: number;
-}) {
-  const particles = [0, 1, 2];
-  return (
-    <div
-      className={cn(
-        "relative",
-        vertical ? "h-7 w-px" : "h-px w-8 sm:w-12"
-      )}
-    >
-      <div
-        className={cn(
-          "absolute inset-0",
-          vertical
-            ? "bg-gradient-to-b from-cyan/40 to-signal/40"
-            : "bg-gradient-to-r from-cyan/40 to-signal/40"
-        )}
-      />
-      {active &&
-        particles.map((p) => (
-          <motion.span
-            key={p}
-            className="absolute h-1.5 w-1.5 rounded-full bg-cyan shadow-[0_0_8px_2px_rgba(34,211,238,0.7)]"
-            style={
-              vertical
-                ? { left: "50%", marginLeft: -3, top: -3 }
-                : { top: "50%", marginTop: -3, left: -3 }
-            }
-            initial={vertical ? { y: 0, opacity: 0 } : { x: 0, opacity: 0 }}
-            animate={
-              vertical
-                ? { y: [0, 28], opacity: [0, 1, 0] }
-                : { x: [0, 48], opacity: [0, 1, 0] }
-            }
-            transition={{
-              duration: 1.1,
-              repeat: Infinity,
-              ease: "easeInOut",
-              delay: index * 0.15 + p * 0.36,
-            }}
-          />
-        ))}
     </div>
   );
 }
@@ -550,8 +439,8 @@ export function AeroSimulator() {
               {phase === "done" ? "Value flowing" : "Preview"}
             </span>
           </div>
-          <div className="mt-8 pb-2">
-            <RouteFlow path={flowPath} live={phase === "done"} />
+          <div className="mt-6">
+            <AeroVisualizer path={flowPath} live={phase === "done"} />
           </div>
         </div>
 
