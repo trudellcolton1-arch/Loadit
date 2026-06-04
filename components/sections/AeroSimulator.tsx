@@ -287,8 +287,8 @@ export function AeroSimulator() {
 
           {/* top bar */}
           <div className="pointer-events-none absolute inset-x-0 top-0 flex items-center justify-between p-4 font-mono text-[0.6rem] uppercase tracking-[0.22em]">
-            <span className="flex items-center gap-2 text-white/65">
-              <span className="h-1.5 w-1.5 rounded-full bg-cyan shadow-[0_0_8px_2px_rgba(34,211,238,0.7)]" />
+            <span className="flex items-center gap-2 font-semibold text-rail-400">
+              <span className="h-1.5 w-1.5 rounded-full bg-rail-400 shadow-[0_0_8px_2px_rgba(52,209,122,0.7)]" />
               AERO Global Settlement
             </span>
             <span className={phase === "done" ? "text-signal" : "text-white/45"}>
@@ -300,9 +300,12 @@ export function AeroSimulator() {
             </span>
           </div>
 
-          {/* route caption */}
-          <div className="pointer-events-none absolute left-4 top-11 font-mono text-[0.58rem] uppercase tracking-widest text-white/45">
-            {ORIGIN.label} → {dest.city}, {dest.country}
+          {/* route caption + live network ticker */}
+          <div className="pointer-events-none absolute left-4 top-11 space-y-1">
+            <div className="font-mono text-[0.58rem] uppercase tracking-widest text-white/45">
+              {ORIGIN.label} → {dest.city}, {dest.country}
+            </div>
+            <NetworkTicker />
           </div>
 
           {/* bottom result strip */}
@@ -749,6 +752,23 @@ export function AeroSimulator() {
         </AnimatePresence>
       </div>
     </section>
+  );
+}
+
+function NetworkTicker() {
+  const [n, setN] = useState(12840);
+  useEffect(() => {
+    const id = setInterval(
+      () => setN(11500 + Math.floor(Math.random() * 4200)),
+      1400
+    );
+    return () => clearInterval(id);
+  }, []);
+  return (
+    <div className="flex items-center gap-1.5 font-mono text-[0.55rem] uppercase tracking-widest text-rail-400/80">
+      <span className="h-1 w-1 rounded-full bg-rail-400 animate-pulse-rail" />
+      {n.toLocaleString()} settlements / min
+    </div>
   );
 }
 
