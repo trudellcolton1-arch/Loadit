@@ -37,6 +37,15 @@ const GREEN: V3 = [0.18, 0.78, 0.44];
 const MINT: V3 = [0.5, 1, 0.72];
 const AMBIENT: V3 = [0.13, 0.6, 0.7];
 const CITY: V3 = [0.16, 0.5, 0.55];
+const AMBER: V3 = [0.98, 0.72, 0.16];
+
+// AERO-forecast corridors (predicted demand spikes): [fromLat, fromLon, toLat, toLon].
+const FORECASTS: [number, number, number, number][] = [
+  [25.2, 55.27, 19.08, 72.88], // Dubai → Mumbai
+  [34.05, -118.24, 19.43, -99.13], // LA → Mexico City
+  [1.35, 103.82, 14.6, 120.98], // Singapore → Manila
+  [51.51, -0.13, 6.52, 3.38], // London → Lagos
+];
 
 interface AmbientArc {
   from: V3;
@@ -121,6 +130,12 @@ export function GlobeUltra({
       const pulse = 0.07 + 0.02 * Math.sin(t * 0.004);
       markers.push({ location: [o.lat, o.lon], size: 0.06, color: CYAN });
       markers.push({ location: [d.lat, d.lon], size: pulse, color: GREEN });
+      // Forecast hotspots — pulsing amber where AERO predicts demand.
+      FORECASTS.forEach(([fa, fo, ta, to], i) => {
+        const p = 0.016 + 0.014 * Math.abs(Math.sin(t * 0.003 + i));
+        markers.push({ location: [fa, fo], size: p, color: AMBER });
+        markers.push({ location: [ta, to], size: p, color: AMBER });
+      });
       const ov = toVec(o.lat, o.lon);
       const dv = toVec(d.lat, d.lon);
       const count = isLive ? 6 : 4;
@@ -157,6 +172,15 @@ export function GlobeUltra({
           color: [AMBIENT[0] * env, AMBIENT[1] * env, AMBIENT[2] * env],
         });
       }
+      // Forecast corridors — pulsing amber (predicted demand).
+      FORECASTS.forEach(([fa, fo, ta, to], i) => {
+        const env = 0.35 + 0.65 * Math.abs(Math.sin(t * 0.0012 + i * 1.3));
+        arcs.push({
+          from: [fa, fo],
+          to: [ta, to],
+          color: [AMBER[0] * env, AMBER[1] * env, AMBER[2] * env],
+        });
+      });
       // User route — bright green, always on top.
       arcs.push({ from: [o.lat, o.lon], to: [d.lat, d.lon], color: GREEN });
       return arcs;

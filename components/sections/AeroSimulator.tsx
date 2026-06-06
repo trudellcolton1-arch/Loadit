@@ -306,6 +306,7 @@ export function AeroSimulator() {
               {ORIGIN.label} → {dest.city}, {dest.country}
             </div>
             <NetworkTicker />
+            <ForecastTicker />
           </div>
 
           {/* bottom result strip */}
@@ -752,6 +753,40 @@ export function AeroSimulator() {
         </AnimatePresence>
       </div>
     </section>
+  );
+}
+
+const FORECAST_CORRIDORS = [
+  "Dubai → Mumbai",
+  "LA → Mexico City",
+  "Singapore → Manila",
+  "London → Lagos",
+];
+
+function ForecastTicker() {
+  const [i, setI] = useState(0);
+  const [s, setS] = useState(6);
+  const [conf, setConf] = useState(94);
+  useEffect(() => {
+    const id = setInterval(() => {
+      setS((p) => {
+        if (p <= 1) {
+          setI((x) => (x + 1) % FORECAST_CORRIDORS.length);
+          setConf(90 + Math.floor(Math.random() * 9));
+          return 4 + Math.floor(Math.random() * 6);
+        }
+        return p - 1;
+      });
+    }, 1000);
+    return () => clearInterval(id);
+  }, []);
+  return (
+    <div className="flex items-center gap-1.5 font-mono text-[0.55rem] normal-case tracking-normal text-amber-400/90">
+      <span>↗ Forecast</span>
+      <span className="text-white/60">
+        {FORECAST_CORRIDORS[i]} · opens {s}s · {conf}% demand
+      </span>
+    </div>
   );
 }
 
