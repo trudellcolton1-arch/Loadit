@@ -6,6 +6,7 @@ import { RailArchitecture } from "@/components/sections/RailArchitecture";
 import { HowItWorks } from "@/components/sections/HowItWorks";
 import { FutureOfMoney } from "@/components/sections/FutureOfMoney";
 import { AeroSimulator } from "@/components/sections/AeroSimulator";
+import { AeroLiveMind } from "@/components/sections/AeroLiveMind";
 import { Security } from "@/components/sections/Security";
 import { Roadmap } from "@/components/sections/Roadmap";
 import { Investors } from "@/components/sections/Investors";
@@ -25,6 +26,7 @@ export default function Home() {
         <HowItWorks />
         <FutureOfMoney />
         <AeroSimulator />
+        <AeroLiveMind />
         <Security />
         <Roadmap />
         <Investors />
