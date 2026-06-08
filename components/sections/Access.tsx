@@ -8,12 +8,28 @@ import { Button } from "@/components/ui/Button";
 export function Access() {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.includes("@")) return;
-    // Wire to your CRM / waitlist provider here.
-    setSent(true);
+    if (!email.includes("@") || busy) return;
+    setBusy(true);
+    setError("");
+    try {
+      const res = await fetch("/api/waitlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, source: "request_access" }),
+      });
+      const data = await res.json();
+      if (data?.ok) setSent(true);
+      else setError("That email didn't look right — try again.");
+    } catch {
+      setError("Couldn't submit just now. Try again in a moment.");
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -56,8 +72,8 @@ export function Access() {
                       className="w-full rounded-full border border-white/10 bg-white/[0.03] px-5 py-3 text-sm text-white outline-none transition-colors placeholder:text-white/30 focus:border-rail-400/50"
                       aria-label="Email address"
                     />
-                    <Button type="submit" className="shrink-0">
-                      Request Access
+                    <Button type="submit" disabled={busy} className="shrink-0">
+                      {busy ? "Submitting…" : "Request Access"}
                     </Button>
                   </motion.form>
                 ) : (
@@ -71,6 +87,9 @@ export function Access() {
                   </motion.div>
                 )}
               </AnimatePresence>
+              {error && !sent && (
+                <p className="mt-3 text-sm text-amber-400/90">{error}</p>
+              )}
             </div>
           </div>
         </Reveal>
