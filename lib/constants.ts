@@ -14,10 +14,10 @@ export const SITE = {
 
 export const NAV_LINKS = [
   { label: "The Rail", href: "#architecture" },
-  { label: "Routing", href: "#routing" },
-  { label: "How it works", href: "#how-it-works" },
   { label: "Demo", href: "#demo" },
-  { label: "Roadmap", href: "#roadmap" },
+  { label: "Live Mind", href: "#live-mind" },
+  { label: "Developers", href: "#api" },
+  { label: "Patents", href: "#patents" },
   { label: "Investors", href: "#investors" },
 ] as const;
 
