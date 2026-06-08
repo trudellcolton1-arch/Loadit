@@ -6,40 +6,52 @@ import { Badge } from "@/components/ui/Badge";
 
 const PATENTS = [
   {
-    code: "AERO",
-    title: "AI Enhanced Routing Optimization",
-    desc: "Real-time scoring of every settlement path across processors, L1s, L2s, and liquidity pools.",
-    claims: 14,
+    code: "AI ROUTER",
+    title: "AI-Orchestrated Settlement Router",
+    desc: "Evaluates live network conditions, liquidity, fees, and compliance to select the optimal path; predicts congestion, gas-fee volatility, and processor downtime.",
+    claims: "Claims 7, 17",
   },
   {
-    code: "QFR",
-    title: "Quantum Financial Router",
-    desc: "Explores millions of candidate paths in parallel when quantum hardware is available; classical fallback.",
-    claims: 9,
+    code: "QUANTUM",
+    title: "Quantum Optimization Layer",
+    desc: "Quantum-assisted search, quantum annealing, and variational algorithms to evaluate settlement paths — with a quantum-secure key-distribution subsystem.",
+    claims: "Claims 9, 18",
   },
   {
     code: "TEMPORAL",
-    title: "Temporal Settlement",
-    desc: "Decouples initiation from settlement — lock rates, target gas windows, release on verified conditions.",
-    claims: 11,
+    title: "Temporal Settlement Subsystem",
+    desc: "Retroactive, delayed, predictive, and condition-based settlement, with historical-state proofs via zero-knowledge proofs and verifiable state commitments.",
+    claims: "Claims 10, 19, 20",
   },
   {
-    code: "ENERGY",
-    title: "Energy-Denominated Rails",
-    desc: "Settle value in tokenized kWh backed by production data and IoT-verified generation.",
-    claims: 8,
+    code: "CONVERSION",
+    title: "Universal Value Conversion",
+    desc: "Non-custodial conversion between fiat, crypto, stablecoins, tokenized assets, loyalty units, energy credits, and programmable value instruments.",
+    claims: "Claims 5, 8",
   },
   {
-    code: "IDENTITY",
-    title: "Offline Identity & Escrow",
-    desc: "Identity-bound value transfer during outages, with cryptographic audit on reconnect.",
-    claims: 10,
+    code: "IVOR",
+    title: "Identity-Verified Offline Rail",
+    desc: "Biometrics, decentralized identity, and behavioral signatures authenticate offline; transactions seal in post-quantum escrow and reconcile via satellite/mesh on reconnect.",
+    claims: "Claims 11, 12, 21",
   },
   {
-    code: "ORCHESTRATOR",
-    title: "Unified Rail Orchestrator",
-    desc: "Binds routing, quantum, temporal, energy, and offline identity into one transaction object.",
-    claims: 12,
+    code: "COMPLIANCE",
+    title: "Geo-Temporal Compliance Engine",
+    desc: "Enforces jurisdiction-, asset-, and time-specific AML/KYC and data-residency in real time, dynamically selecting compliant rails.",
+    claims: "Claims 15, 23",
+  },
+  {
+    code: "SELF-HEALING",
+    title: "Self-Healing Architecture",
+    desc: "Detects rail failures and liquidity outages, replicates settlement packets across rails, and deterministically reconciles on network recovery.",
+    claims: "Claims 16, 24",
+  },
+  {
+    code: "MULTI-REALITY",
+    title: "Multi-Reality & BCI Interface",
+    desc: "Accepts transaction intent from AR/VR/XR and brain-computer-interface neural signals, converting them into cryptographically signed instructions.",
+    claims: "Claims 13, 14, 22",
   },
 ] as const;
 
@@ -48,9 +60,9 @@ export function Patents() {
     <section id="patents" className="relative section-py">
       <div className="container-px mx-auto max-w-7xl">
         <SectionHeading
-          eyebrow="The Moat"
-          title="A patent portfolio, not a feature list."
-          description="Loadit's defensibility is the IP underneath the rail — primitives no payment network has."
+          eyebrow="The Moat · Patent Pending"
+          title="One unified patent. 25 claims."
+          description="The Loadit Unified Financial Rail — a self-healing, AI-orchestrated, quantum-optimized, temporally programmable, offline-resilient, multi-reality value-conversion architecture. Eight subsystems, one application."
         />
 
         <div className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -72,7 +84,7 @@ export function Patents() {
                   {p.desc}
                 </p>
                 <div className="mt-5 border-t border-white/5 pt-4 font-mono text-xs text-white/35">
-                  {p.claims} independent claims
+                  {p.claims}
                 </div>
               </div>
             </Reveal>
