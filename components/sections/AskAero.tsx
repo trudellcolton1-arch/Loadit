@@ -72,7 +72,7 @@ export function AskAero() {
         />
 
         <div className="glass mt-12 flex h-[30rem] flex-col rounded-4xl p-4 sm:p-6">
-          <div ref={scrollRef} className="mask-fade-b flex-1 space-y-4 overflow-y-auto pr-1">
+          <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto pr-1">
             {messages.map((m, i) => (
               <div
                 key={i}
@@ -82,7 +82,7 @@ export function AskAero() {
                   initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
                   className={cn(
-                    "max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed",
+                    "max-w-[85%] whitespace-pre-wrap rounded-2xl px-4 py-2.5 text-sm leading-relaxed",
                     m.role === "user"
                       ? "bg-rail-500/15 text-white"
                       : "border border-white/8 bg-white/[0.03] text-white/80"
