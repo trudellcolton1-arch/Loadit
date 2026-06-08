@@ -13,9 +13,11 @@ export const SITE = {
 } as const;
 
 export const NAV_LINKS = [
-  { label: "The Rail", href: "#architecture" },
   { label: "Demo", href: "#demo" },
   { label: "Live Mind", href: "#live-mind" },
+  { label: "Energy", href: "#energy" },
+  { label: "Resilience", href: "#resilience" },
+  { label: "Reality", href: "#reality" },
   { label: "Developers", href: "#api" },
   { label: "Patents", href: "#patents" },
   { label: "Investors", href: "#investors" },

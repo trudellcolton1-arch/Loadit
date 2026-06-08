@@ -12,8 +12,8 @@ interface Msg {
 
 const SUGGESTIONS = [
   "How would $500 route from Lagos to a London bank?",
-  "Why is Loadit cheaper than a Bitcoin ATM?",
-  "What happens if the network goes offline?",
+  "Can I pay with a gesture or neural (BCI) signal?",
+  "What happens when a rail fails or the network goes offline?",
   "Explain energy-denominated settlement.",
 ];
 

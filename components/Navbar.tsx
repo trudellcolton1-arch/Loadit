@@ -59,12 +59,6 @@ export function Navbar() {
 
           <div className="flex items-center gap-2">
             <a
-              href="#demo"
-              className="hidden rounded-full px-4 py-2 text-sm text-white/70 transition-colors hover:text-white sm:block"
-            >
-              Try the demo
-            </a>
-            <a
               href="#access"
               className="rounded-full bg-white px-4 py-2 text-sm font-medium text-void transition-all hover:shadow-glow"
             >

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { SITE } from "@/lib/constants";
 import { JsonLd } from "@/components/JsonLd";
+import { AeroChatWidget } from "@/components/AeroChatWidget";
 import "./globals.css";
 
 const inter = Inter({
@@ -67,6 +68,7 @@ export default function RootLayout({
       <body>
         <JsonLd />
         {children}
+        <AeroChatWidget />
       </body>
     </html>
   );
