@@ -24,10 +24,42 @@ const SUGGESTIONS = [
 
 export function AeroChatWidget() {
   const [open, setOpen] = useState(false);
+  const [peek, setPeek] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([GREETING]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // One-time "Ask me anything" peek on first visit.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      if (localStorage.getItem("aero_peek_seen")) return;
+    } catch {
+      /* ignore */
+    }
+    const t1 = window.setTimeout(() => setPeek(true), 2600);
+    const t2 = window.setTimeout(() => dismissPeek(), 10000);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const dismissPeek = () => {
+    setPeek(false);
+    try {
+      localStorage.setItem("aero_peek_seen", "1");
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const toggle = () => {
+    dismissPeek();
+    setOpen((o) => !o);
+  };
 
   useEffect(() => {
     if (open)
@@ -186,9 +218,45 @@ export function AeroChatWidget() {
         )}
       </AnimatePresence>
 
+      {/* One-time peek bubble */}
+      <AnimatePresence>
+        {peek && !open && (
+          <motion.div
+            initial={{ opacity: 0, y: 10, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.9 }}
+            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+            style={{ transformOrigin: "bottom right" }}
+            className="glass glass-blur fixed bottom-[5.25rem] right-4 z-[70] flex items-center gap-2 rounded-2xl py-2.5 pl-4 pr-2.5 shadow-glass sm:right-6"
+          >
+            <button onClick={toggle} className="flex items-center gap-3 text-left">
+              <span className="relative flex h-2 w-2 shrink-0">
+                <span className="absolute inline-flex h-2 w-2 animate-ping rounded-full bg-rail-400 opacity-60" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-rail-400" />
+              </span>
+              <span>
+                <span className="block text-sm font-semibold text-white">
+                  Ask me anything
+                </span>
+                <span className="block font-mono text-[0.58rem] uppercase tracking-widest text-white/45">
+                  AERO · live intelligence
+                </span>
+              </span>
+            </button>
+            <button
+              onClick={dismissPeek}
+              aria-label="Dismiss"
+              className="grid h-6 w-6 shrink-0 place-items-center rounded-full text-white/40 transition-colors hover:text-white"
+            >
+              ✕
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Floating button */}
       <motion.button
-        onClick={() => setOpen((o) => !o)}
+        onClick={toggle}
         aria-label={open ? "Close AERO chat" : "Open AERO chat"}
         initial={{ opacity: 0, scale: 0.8, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
