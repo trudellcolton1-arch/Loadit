@@ -59,6 +59,14 @@ const NetworkStatus = dynamic(
   () => import("@/components/sections/NetworkStatus").then((m) => m.NetworkStatus),
   { loading: skeleton("min-h-[560px]") }
 );
+const MultiReality = dynamic(
+  () => import("@/components/sections/MultiReality").then((m) => m.MultiReality),
+  { loading: skeleton("min-h-[560px]") }
+);
+const SelfHealing = dynamic(
+  () => import("@/components/sections/SelfHealing").then((m) => m.SelfHealing),
+  { loading: skeleton("min-h-[560px]") }
+);
 
 export default function Home() {
   return (
@@ -79,9 +87,11 @@ export default function Home() {
         <OfflineMode />
         <ProgrammableValue />
         <Agents />
+        <MultiReality />
         <ApiPlayground />
         <AskAero />
         <Security />
+        <SelfHealing />
         <NetworkStatus />
         <Patents />
         <Roadmap />
