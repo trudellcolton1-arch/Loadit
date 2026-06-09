@@ -16,7 +16,7 @@ export function Footer() {
       <div className="container-px mx-auto max-w-7xl py-12">
         <div className="flex flex-col items-center justify-between gap-8 sm:flex-row sm:items-start">
           <div className="flex flex-col items-center gap-3 sm:items-start">
-            <a href="#top" className="flex items-center gap-2.5">
+            <a href="/" className="flex items-center gap-2.5">
               <Logo className="h-7 w-7" />
               <span className="text-base font-semibold tracking-tight">
                 {SITE.name}

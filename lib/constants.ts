@@ -13,27 +13,29 @@ export const SITE = {
 } as const;
 
 // Full list — used by the mobile menu and footer.
+// Page tabs use real routes; homepage sections use /#anchor so they work
+// from any page.
 export const NAV_LINKS = [
-  { label: "Demo", href: "#demo" },
-  { label: "Exchange", href: "#exchange" },
-  { label: "Live Mind", href: "#live-mind" },
-  { label: "Energy", href: "#energy" },
-  { label: "Resilience", href: "#resilience" },
-  { label: "Reality", href: "#reality" },
-  { label: "Developers", href: "#api" },
-  { label: "Patents", href: "#patents" },
-  { label: "Investors", href: "#investors" },
+  { label: "Demo", href: "/#demo" },
+  { label: "Exchange", href: "/exchange" },
+  { label: "Energy", href: "/energy" },
+  { label: "Live Mind", href: "/#live-mind" },
+  { label: "Resilience", href: "/#resilience" },
+  { label: "Reality", href: "/#reality" },
+  { label: "Developers", href: "/#api" },
+  { label: "Patents", href: "/#patents" },
+  { label: "Investors", href: "/#investors" },
 ] as const;
 
 // Curated subset for the desktop bar.
 export const NAV_PRIMARY = [
-  { label: "Demo", href: "#demo" },
-  { label: "Exchange", href: "#exchange" },
-  { label: "Live Mind", href: "#live-mind" },
-  { label: "Energy", href: "#energy" },
-  { label: "Developers", href: "#api" },
-  { label: "Patents", href: "#patents" },
-  { label: "Investors", href: "#investors" },
+  { label: "Demo", href: "/#demo" },
+  { label: "Exchange", href: "/exchange" },
+  { label: "Energy", href: "/energy" },
+  { label: "Live Mind", href: "/#live-mind" },
+  { label: "Developers", href: "/#api" },
+  { label: "Patents", href: "/#patents" },
+  { label: "Investors", href: "/#investors" },
 ] as const;
 
 /** Networks the AI routing engine arbitrates across. */

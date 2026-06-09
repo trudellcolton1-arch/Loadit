@@ -34,7 +34,7 @@ export function Navbar() {
           )}
         >
           <a
-            href="#top"
+            href="/"
             className="flex items-center gap-2.5 pl-2"
             aria-label={`${SITE.name} home`}
           >
@@ -59,7 +59,7 @@ export function Navbar() {
 
           <div className="flex items-center gap-2">
             <a
-              href="#access"
+              href="/#access"
               className="rounded-full bg-white px-4 py-2 text-sm font-medium text-void transition-all hover:shadow-glow"
             >
               Request Access

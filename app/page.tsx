@@ -31,16 +31,8 @@ const TemporalVault = dynamic(
   () => import("@/components/sections/TemporalVault").then((m) => m.TemporalVault),
   { loading: skeleton("min-h-[680px]") }
 );
-const TemporalExchange = dynamic(
-  () => import("@/components/sections/TemporalExchange").then((m) => m.TemporalExchange),
-  { loading: skeleton("min-h-[760px]") }
-);
 const EnergyRail = dynamic(
   () => import("@/components/sections/EnergyRail").then((m) => m.EnergyRail),
-  { loading: skeleton("min-h-[640px]") }
-);
-const EnergyDesk = dynamic(
-  () => import("@/components/sections/EnergyDesk").then((m) => m.EnergyDesk),
   { loading: skeleton("min-h-[640px]") }
 );
 const OfflineMode = dynamic(
@@ -91,9 +83,7 @@ export default function Home() {
         <AeroSimulator />
         <AeroLiveMind />
         <TemporalVault />
-        <TemporalExchange />
         <EnergyRail />
-        <EnergyDesk />
         <OfflineMode />
         <ProgrammableValue />
         <Agents />
