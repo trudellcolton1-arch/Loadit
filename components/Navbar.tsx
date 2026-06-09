@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { NAV_LINKS, SITE } from "@/lib/constants";
+import { NAV_LINKS, NAV_PRIMARY, SITE } from "@/lib/constants";
 import { Logo } from "@/components/ui/Logo";
 import { cn } from "@/lib/utils";
 
@@ -45,7 +45,7 @@ export function Navbar() {
           </a>
 
           <ul className="hidden items-center gap-1 lg:flex">
-            {NAV_LINKS.map((link) => (
+            {NAV_PRIMARY.map((link) => (
               <li key={link.href}>
                 <a
                   href={link.href}

@@ -12,12 +12,25 @@ export const SITE = {
   url: "https://loadit.net",
 } as const;
 
+// Full list — used by the mobile menu and footer.
 export const NAV_LINKS = [
   { label: "Demo", href: "#demo" },
+  { label: "Exchange", href: "#exchange" },
   { label: "Live Mind", href: "#live-mind" },
   { label: "Energy", href: "#energy" },
   { label: "Resilience", href: "#resilience" },
   { label: "Reality", href: "#reality" },
+  { label: "Developers", href: "#api" },
+  { label: "Patents", href: "#patents" },
+  { label: "Investors", href: "#investors" },
+] as const;
+
+// Curated subset for the desktop bar.
+export const NAV_PRIMARY = [
+  { label: "Demo", href: "#demo" },
+  { label: "Exchange", href: "#exchange" },
+  { label: "Live Mind", href: "#live-mind" },
+  { label: "Energy", href: "#energy" },
   { label: "Developers", href: "#api" },
   { label: "Patents", href: "#patents" },
   { label: "Investors", href: "#investors" },
