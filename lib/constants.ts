@@ -19,6 +19,7 @@ export const NAV_LINKS = [
   { label: "Demo", href: "/#demo" },
   { label: "Exchange", href: "/exchange" },
   { label: "Energy", href: "/energy" },
+  { label: "Marketplace", href: "/marketplace" },
   { label: "Live Mind", href: "/#live-mind" },
   { label: "Resilience", href: "/#resilience" },
   { label: "Reality", href: "/#reality" },
@@ -29,9 +30,9 @@ export const NAV_LINKS = [
 
 // Curated subset for the desktop bar.
 export const NAV_PRIMARY = [
-  { label: "Demo", href: "/#demo" },
   { label: "Exchange", href: "/exchange" },
   { label: "Energy", href: "/energy" },
+  { label: "Marketplace", href: "/marketplace" },
   { label: "Live Mind", href: "/#live-mind" },
   { label: "Developers", href: "/#api" },
   { label: "Patents", href: "/#patents" },
