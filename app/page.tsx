@@ -39,6 +39,10 @@ const EnergyRail = dynamic(
   () => import("@/components/sections/EnergyRail").then((m) => m.EnergyRail),
   { loading: skeleton("min-h-[640px]") }
 );
+const EnergyDesk = dynamic(
+  () => import("@/components/sections/EnergyDesk").then((m) => m.EnergyDesk),
+  { loading: skeleton("min-h-[640px]") }
+);
 const OfflineMode = dynamic(
   () => import("@/components/sections/OfflineMode").then((m) => m.OfflineMode),
   { loading: skeleton("min-h-[560px]") }
@@ -89,6 +93,7 @@ export default function Home() {
         <TemporalVault />
         <TemporalExchange />
         <EnergyRail />
+        <EnergyDesk />
         <OfflineMode />
         <ProgrammableValue />
         <Agents />
