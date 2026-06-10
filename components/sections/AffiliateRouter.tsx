@@ -12,6 +12,8 @@ import {
   type PaymentMethod,
 } from "@/lib/aero";
 import { matchProviders, type ProviderMatch } from "@/lib/providers";
+import { track, fetchLiveFees } from "@/lib/track";
+import type { NetworkId } from "@/lib/aero";
 import { cn } from "@/lib/utils";
 
 interface Outcome {
@@ -22,6 +24,7 @@ interface Outcome {
   savings: number;
   savingsPct: number;
   providers: ProviderMatch[];
+  live: boolean;
 }
 
 export function AffiliateRouter() {
@@ -31,22 +34,30 @@ export function AffiliateRouter() {
   const [loading, setLoading] = useState(false);
   const [out, setOut] = useState<Outcome | null>(null);
 
-  const run = () => {
+  const run = async () => {
     setLoading(true);
     setOut(null);
-    setTimeout(() => {
-      const r = computeRoute({ paymentMethod: method, asset, amount, wallet: "", preferred: "auto" });
-      setOut({
-        network: r.network.name,
-        eta: r.eta,
-        legacy: r.legacyFee,
-        loadit: r.loaditFee,
-        savings: r.savingsAbs,
-        savingsPct: r.savingsPct,
-        providers: matchProviders(method, asset),
-      });
-      setLoading(false);
-    }, 800);
+    const live = await fetchLiveFees();
+    const r = computeRoute({
+      paymentMethod: method,
+      asset,
+      amount,
+      wallet: "",
+      preferred: "auto",
+      feeOverrides: live?.fees as Partial<Record<NetworkId, number>> | undefined,
+    });
+    setOut({
+      network: r.network.name,
+      eta: r.eta,
+      legacy: r.legacyFee,
+      loadit: r.loaditFee,
+      savings: r.savingsAbs,
+      savingsPct: r.savingsPct,
+      providers: matchProviders(method, asset),
+      live: Boolean(live?.live),
+    });
+    setLoading(false);
+    track("route_computed", { method, asset, amount, savings: r.savingsAbs });
   };
 
   return (
@@ -116,7 +127,14 @@ export function AffiliateRouter() {
                 <motion.div key="r" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="w-full">
                   {/* savings headline */}
                   <div className="rounded-3xl border border-rail-500/30 bg-rail-500/[0.07] p-5 text-center">
-                    <div className="font-mono text-[0.62rem] uppercase tracking-[0.2em] text-rail-400">You save vs. the old way</div>
+                    <div className="flex items-center justify-center gap-2 font-mono text-[0.62rem] uppercase tracking-[0.2em] text-rail-400">
+                      You save vs. the old way
+                      {out.live && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-signal/10 px-2 py-0.5 text-signal">
+                          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-signal" /> live fees
+                        </span>
+                      )}
+                    </div>
                     <div className="mt-1 font-mono text-4xl font-semibold tracking-tight text-rail-gradient">
                       {formatUSD(out.savings)}
                     </div>
@@ -140,7 +158,13 @@ export function AffiliateRouter() {
                           href={p.needsSetup ? undefined : p.href}
                           target="_blank"
                           rel="sponsored nofollow noopener noreferrer"
-                          onClick={(e) => p.needsSetup && e.preventDefault()}
+                          onClick={(e) => {
+                            if (p.needsSetup) {
+                              e.preventDefault();
+                              return;
+                            }
+                            track("provider_click", { provider: p.id, asset, method, amount });
+                          }}
                           className={cn(
                             "flex items-center gap-4 rounded-2xl border p-4 transition-all",
                             i === 0

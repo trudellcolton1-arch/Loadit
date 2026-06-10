@@ -8,6 +8,8 @@ import {
   type NetworkId,
   type PaymentMethod,
 } from "@/lib/aero";
+import { getMergedFees } from "@/lib/liveFees";
+import { verifyApiKey } from "@/lib/apiKeys";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -87,10 +89,12 @@ async function handle(req: Request, params: Record<string, unknown>) {
       401
     );
   }
-  if (!validKeys().has(key)) {
+  const signed = verifyApiKey(key);
+  if (!validKeys().has(key) && !signed) {
     return json({ ok: false, error: "invalid_api_key" }, 401);
   }
   const isDemo = key === "demo";
+  const plan = signed?.plan ?? (isDemo ? "demo" : "static");
   if (rateLimited(key, isDemo ? 30 : 600)) {
     return json(
       { ok: false, error: "rate_limited", message: isDemo ? "Demo key is limited to 30 req/min. Request a production key for higher limits." : "Rate limit exceeded." },
@@ -117,13 +121,15 @@ async function handle(req: Request, params: Record<string, unknown>) {
     return json({ ok: false, error: "invalid_preferred", allowed: PREFERRED_NETWORKS.map((p) => p.id) }, 422);
   }
 
-  // ---- route ----
+  // ---- route (with live network fees) ----
+  const live = await getMergedFees();
   const r = computeRoute({
     paymentMethod: method,
     asset,
     amount,
     wallet: (params.destination as string) || "",
     preferred,
+    feeOverrides: live.fees,
   });
 
   return json({
@@ -151,9 +157,12 @@ async function handle(req: Request, params: Record<string, unknown>) {
     meta: {
       engine: "AERO",
       version: "v1",
+      plan,
       networks_scanned: r.metrics.networksScanned,
       pools_checked: r.metrics.poolsChecked,
-      key: isDemo ? "demo" : "live",
+      fees_live: live.live,
+      fee_sources: live.sources,
+      eth_price_usd: live.ethPriceUsd,
       disclaimer: "Estimates dependent on live market and network conditions.",
     },
   });

@@ -22,6 +22,29 @@ export function ApiDocs() {
   const [email, setEmail] = useState("");
   const [state, setState] = useState<"idle" | "loading" | "done" | "error">("idle");
   const [copied, setCopied] = useState(false);
+  const [checkout, setCheckout] = useState<"idle" | "loading">("idle");
+
+  // Start a Stripe subscription. If Stripe isn't configured yet, fall back to
+  // the key-request form so the CTA always does something useful.
+  const subscribe = async (plan: string) => {
+    setCheckout("loading");
+    try {
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan, email: email || undefined }),
+      });
+      const data = await res.json();
+      if (data.ok && data.url) {
+        window.location.href = data.url;
+        return;
+      }
+    } catch {
+      /* fall through */
+    }
+    setCheckout("idle");
+    document.getElementById("get-key")?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
 
   const curl = `curl -X POST https://loadit.net/api/v1/route \\
   -H "x-api-key: demo" \\
@@ -110,18 +133,35 @@ export function ApiDocs() {
           <h3 className="text-center font-mono text-[0.62rem] uppercase tracking-[0.25em] text-white/40">Pricing</h3>
           <div className="mt-5 grid gap-4 sm:grid-cols-3">
             {TIERS.map((t) => (
-              <div key={t.name} className={cn("rounded-3xl border p-6", t.name === "Startup" ? "border-rail-500/35 bg-rail-500/[0.05]" : "border-white/10 bg-white/[0.02]")}>
+              <div key={t.name} className={cn("flex flex-col rounded-3xl border p-6", t.name === "Startup" ? "border-rail-500/35 bg-rail-500/[0.05]" : "border-white/10 bg-white/[0.02]")}>
                 <div className="font-mono text-[0.62rem] uppercase tracking-[0.2em] text-white/40">{t.name}</div>
                 <div className="mt-2 text-2xl font-semibold text-white">{t.price}</div>
                 <div className="mt-1 font-mono text-xs text-rail-400">{t.calls}</div>
-                <p className="mt-3 text-sm text-white/50">{t.note}</p>
+                <p className="mt-3 flex-1 text-sm text-white/50">{t.note}</p>
+                {t.name === "Startup" && (
+                  <button
+                    onClick={() => subscribe("startup")}
+                    disabled={checkout === "loading"}
+                    className="mt-4 w-full rounded-full bg-rail-500 px-5 py-2.5 text-sm font-semibold text-void transition-all hover:shadow-glow disabled:opacity-60"
+                  >
+                    {checkout === "loading" ? "Redirecting…" : "Subscribe →"}
+                  </button>
+                )}
+                {t.name === "Scale" && (
+                  <button
+                    onClick={() => document.getElementById("get-key")?.scrollIntoView({ behavior: "smooth", block: "center" })}
+                    className="mt-4 w-full rounded-full border border-white/15 px-5 py-2.5 text-sm font-medium text-white transition-all hover:bg-white/5"
+                  >
+                    Contact us
+                  </button>
+                )}
               </div>
             ))}
           </div>
         </div>
 
         {/* key request */}
-        <div className="mx-auto mt-12 max-w-xl rounded-4xl border border-white/10 bg-white/[0.02] p-7 text-center">
+        <div id="get-key" className="mx-auto mt-12 max-w-xl scroll-mt-24 rounded-4xl border border-white/10 bg-white/[0.02] p-7 text-center">
           <h3 className="text-lg font-semibold text-white">Get a production API key</h3>
           <p className="mt-1 text-sm text-white/50">Drop your email — we&apos;ll send a live key and onboarding.</p>
           {state === "done" ? (

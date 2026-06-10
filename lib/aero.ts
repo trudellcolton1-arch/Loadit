@@ -122,6 +122,8 @@ export interface RouteInput {
   amount: number;
   wallet: string;
   preferred: "auto" | NetworkId;
+  /** Optional live per-network USD fees that override the static estimates. */
+  feeOverrides?: Partial<Record<NetworkId, number>>;
 }
 
 export interface RouteResult {
@@ -196,9 +198,14 @@ export function computeRoute(input: RouteInput): RouteResult {
   const network = NETWORKS[netId];
   const eth = NETWORKS.ethereum;
 
+  // Per-network base fee — live override when provided, else the static estimate.
+  const ov = input.feeOverrides;
+  const baseFeeOf = (id: NetworkId) => ov?.[id] ?? NETWORKS[id].baseFee;
+  const networkFee = baseFeeOf(netId);
+
   // Costs.
   const legacyFee = round2(legacyCost(input.paymentMethod, amount));
-  const loaditFee = round2(network.baseFee + Math.max(0.05, amount * 0.001));
+  const loaditFee = round2(networkFee + Math.max(0.05, amount * 0.001));
   const savingsAbs = round2(Math.max(0, legacyFee - loaditFee));
   const savingsPct = clamp(Math.round((1 - loaditFee / legacyFee) * 100), 1, 99);
 
@@ -237,7 +244,7 @@ export function computeRoute(input: RouteInput): RouteResult {
   path.push({ label: "Wallet", kind: "wallet" });
 
   // Dynamic explanation.
-  const pctVsEth = clamp(Math.round((1 - network.baseFee / eth.baseFee) * 100), 1, 99);
+  const pctVsEth = clamp(Math.round((1 - networkFee / baseFeeOf("ethereum")) * 100), 1, 99);
   const explanation =
     netId === "ethereum"
       ? `AERO selected Ethereum for its ${eth.liquidityWord} liquidity and settlement assurances on a ${formatUSD(amount)} transfer, accepting higher fees where finality matters most.`
@@ -259,7 +266,7 @@ export function computeRoute(input: RouteInput): RouteResult {
     const n = NETWORKS[id];
     return {
       rail: n.name,
-      fee: round2(n.baseFee + Math.max(0.05, amount * 0.001)),
+      fee: round2(baseFeeOf(id) + Math.max(0.05, amount * 0.001)),
       best: id === netId,
     };
   });
@@ -273,7 +280,7 @@ export function computeRoute(input: RouteInput): RouteResult {
       `${network.name} won on a blended score of fee, speed, and liquidity depth.`,
     ],
     costBreakdown: [
-      { label: "Network fee", value: formatUSD(network.baseFee) },
+      { label: "Network fee", value: formatUSD(networkFee) },
       { label: "Loadit spread (0.1%)", value: formatUSD(Math.max(0.05, amount * 0.001)) },
       { label: "Total cost", value: formatUSD(loaditFee) },
       { label: "Legacy equivalent", value: formatUSD(legacyFee) },
@@ -292,8 +299,8 @@ export function computeRoute(input: RouteInput): RouteResult {
               network: n.name,
               status: "rejected",
               reason:
-                n.baseFee > network.baseFee
-                  ? `Higher fees (${formatUSD(n.baseFee)}) at comparable assurance.`
+                baseFeeOf(id) > networkFee
+                  ? `Higher fees (${formatUSD(baseFeeOf(id))}) at comparable assurance.`
                   : `Thinner liquidity for ${assetMeta.name} at this size.`,
             };
           }
