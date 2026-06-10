@@ -11,33 +11,48 @@ export function ApiPlayground() {
   const [loading, setLoading] = useState(false);
   const [res, setRes] = useState<string | null>(null);
 
-  const send = () => {
-    setLoading(true);
-    setRes(null);
-    setTimeout(() => {
-      const r = computeRoute({
-        paymentMethod: "Debit Card",
-        asset,
-        amount,
-        wallet: "0xA1…f9",
-        preferred: "auto",
-      });
-      const body = {
-        id: "rt_" + Math.random().toString(36).slice(2, 10),
-        status: "routed",
+  // Local fallback if the live endpoint is unreachable, so the demo never breaks.
+  const localRoute = () => {
+    const r = computeRoute({
+      paymentMethod: "Debit Card",
+      asset,
+      amount,
+      wallet: "0xA1…f9",
+      preferred: "auto",
+    });
+    return {
+      ok: true,
+      route: {
         network: r.network.name.toLowerCase(),
         amount_usd: amount,
         asset,
-        fee_usd: r.loaditFee,
+        loadit_fee_usd: r.loaditFee,
         savings_pct: r.savingsPct,
         eta: r.eta,
-        path: r.path.map((p) => p.label),
         confidence: r.confidence / 100,
         settlement: "non_custodial",
-      };
-      setRes(JSON.stringify(body, null, 2));
+      },
+      meta: { engine: "AERO", version: "v1" },
+    };
+  };
+
+  // Hit the real public API (key: demo). This is the same endpoint customers call.
+  const send = async () => {
+    setLoading(true);
+    setRes(null);
+    try {
+      const r = await fetch("/api/v1/route?key=demo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount_usd: amount, asset, payment_method: "Debit Card", destination: "0xA1…f9" }),
+      });
+      const data = await r.json();
+      setRes(JSON.stringify(data, null, 2));
+    } catch {
+      setRes(JSON.stringify(localRoute(), null, 2));
+    } finally {
       setLoading(false);
-    }, 900);
+    }
   };
 
   const reqBody = `{

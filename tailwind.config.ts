@@ -32,6 +32,7 @@ const config: Config = {
           glow: "#5EEAD4",
         },
         signal: "#34D399", // success / settled
+        amber: "#FBBF24", // warning / attention
       },
       fontFamily: {
         sans: ["var(--font-sans)", "system-ui", "sans-serif"],

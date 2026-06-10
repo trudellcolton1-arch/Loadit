@@ -17,6 +17,7 @@ export const SITE = {
 // from any page.
 export const NAV_LINKS = [
   { label: "Demo", href: "/#demo" },
+  { label: "Compare", href: "/compare" },
   { label: "Exchange", href: "/exchange" },
   { label: "Energy", href: "/energy" },
   { label: "Marketplace", href: "/marketplace" },
@@ -24,19 +25,19 @@ export const NAV_LINKS = [
   { label: "Live Mind", href: "/#live-mind" },
   { label: "Resilience", href: "/#resilience" },
   { label: "Reality", href: "/#reality" },
-  { label: "Developers", href: "/#api" },
+  { label: "Developers", href: "/developers" },
   { label: "Patents", href: "/#patents" },
   { label: "Investors", href: "/#investors" },
 ] as const;
 
 // Curated subset for the desktop bar.
 export const NAV_PRIMARY = [
+  { label: "Compare", href: "/compare" },
   { label: "Exchange", href: "/exchange" },
   { label: "Energy", href: "/energy" },
   { label: "Marketplace", href: "/marketplace" },
   { label: "Earn", href: "/earn" },
-  { label: "Developers", href: "/#api" },
-  { label: "Patents", href: "/#patents" },
+  { label: "Developers", href: "/developers" },
   { label: "Investors", href: "/#investors" },
 ] as const;
 
