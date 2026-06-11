@@ -55,6 +55,8 @@ Help humanity move value as effortlessly as information. Every answer should rei
 /** Keyword fallback so the concierge is useful even without an API key. */
 function canned(q: string): string {
   const s = q.toLowerCase();
+  if (s.includes("patent") || s.includes("ip ") || s.includes("intellectual"))
+    return "Loadit's patent is the 'Unified Financial Rail' — one patent-pending invention with 25 claims (1 independent, 24 dependent). It covers an AI-orchestrated, quantum-optimized, temporally-programmable, offline-resilient, self-healing, multi-reality architecture that converts any form of value into any other and routes it across the cheapest, fastest, safest path — all non-custodially. Ask me about any subsystem: the settlement router, temporal settlement, the energy rail, offline mode, or the compliance engine.";
   if (s.includes("fee") || s.includes("cost") || s.includes("cheap"))
     return "AERO scores every network in real time and routes to the cheapest viable path — typically ~$0.45 vs ~$3.20 on legacy rails, an ~86% saving. It re-checks fees, liquidity, and settlement speed on every transaction.";
   if (s.includes("offline") || s.includes("blackout"))
@@ -63,11 +65,58 @@ function canned(q: string): string {
     return "Part of a payment can ride Loadit's energy rail — converted into tokenized kWh backed by production data. Settlement clears only when IoT meters confirm the energy was generated.";
   if (s.includes("quantum") || s.includes("qfr"))
     return "The Quantum Financial Router explores millions of candidate routes in parallel when quantum hardware is available, with classical AERO as the always-on fallback. The rail gets smarter as the hardware arrives.";
+  if (s.includes("secur") || s.includes("safe") || s.includes("custod"))
+    return "Loadit is non-custodial — it converts and routes value without ever holding your wallet. Every transaction is identity-bound, encrypted end-to-end, compliance-checked in-rail, and post-quantum-ready, with a self-healing architecture that reroutes around failures.";
+  if (s.includes("identity") || s.includes("kyc") || s.includes("compliance") || s.includes("aml"))
+    return "Identity is a first-class layer: every transaction carries a verifiable identity claim, and a geo-temporal compliance engine enforces jurisdiction- and asset-specific KYC/AML and data-residency rules in real time, dynamically choosing compliant rails.";
+  if (s.includes("invest") || s.includes("raise") || s.includes("fund"))
+    return "Loadit is raising to build out the Unified Financial Rail. The moat is one patent-pending invention with 25 claims across routing, temporal settlement, quantum optimization, offline mode, and multi-reality input. See the Investors section, or ask about the technology.";
   if (s.includes("how") && (s.includes("work") || s.includes("route")))
     return "Walk into a store, scan a QR, pay with cash or card. Loadit tokenizes it, verifies identity, and AERO routes the value — e.g. Cash → USDC → Solana → your asset → wallet — settling on-chain in ~2 seconds while the merchant still gets fiat.";
   if (s.includes("send") || s.includes("remit") || s.includes("transfer"))
     return "Tell me the amount, asset, and destination and AERO will pick the optimal corridor. A $500 USDC transfer to Manila would likely route Debit → USDC → Solana (or Lightning for BTC), ~$0.45 fee, arriving in under 2 seconds.";
-  return "Loadit is the AI-powered financial rail: cash, cards, stablecoins, and crypto routed across 14 networks for the cheapest, fastest, safest settlement. Ask me about fees, how routing works, offline payments, energy settlement, or how a specific transfer would route.";
+  if (s.includes("what is loadit") || s.includes("about loadit") || s.includes("who is loadit"))
+    return "Loadit is the world's first Universal Value Rail — it turns cash, cards, fiat, stablecoins, crypto, tokenized assets, and even energy credits into one another and routes them across 14+ networks for the cheapest, fastest, safest settlement, non-custodially. The AERO engine is the intelligence that picks every route.";
+  return "Loadit is the AI-powered financial rail: cash, cards, stablecoins, and crypto routed across 14 networks for the cheapest, fastest, safest settlement. Ask me about the patent, fees, how routing works, offline payments, energy settlement, security, or how a specific transfer would route.";
+}
+
+const OPENAI_URL = "https://api.openai.com/v1/chat/completions";
+
+/**
+ * Diagnostics. GET /api/ask reports whether the key is configured (no secrets
+ * leaked). GET /api/ask?test=1 makes a tiny real call and surfaces OpenAI's
+ * actual status + error so misconfig (bad key, no credits, wrong project,
+ * unknown model) is visible instead of silently falling back.
+ */
+export async function GET(req: Request) {
+  const key = process.env.OPENAI_API_KEY;
+  const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
+  const configured = Boolean(key);
+  const url = new URL(req.url);
+
+  if (!url.searchParams.get("test")) {
+    return NextResponse.json({ configured, model });
+  }
+  if (!key) {
+    return NextResponse.json({ configured: false, ok: false, reason: "no_key", hint: "Set OPENAI_API_KEY in the deployment env, then redeploy." });
+  }
+  try {
+    const res = await fetch(OPENAI_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
+      body: JSON.stringify({ model, messages: [{ role: "user", content: "ping" }], max_tokens: 5 }),
+    });
+    const text = await res.text();
+    return NextResponse.json({
+      configured: true,
+      model,
+      status: res.status,
+      ok: res.ok,
+      detail: res.ok ? "OpenAI reachable — key valid." : text.slice(0, 400),
+    });
+  } catch (e) {
+    return NextResponse.json({ configured: true, model, ok: false, reason: "network_error", detail: String(e).slice(0, 200) });
+  }
 }
 
 export async function POST(req: Request) {
@@ -82,20 +131,21 @@ export async function POST(req: Request) {
 
   const key = process.env.OPENAI_API_KEY;
   if (!key) {
-    return NextResponse.json({ ok: true, fallback: true, reply: canned(lastUser) });
+    return NextResponse.json({ ok: true, fallback: true, reason: "no_key", reply: canned(lastUser) });
   }
 
+  const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 12000);
-    const res = await fetch("https://api.openai.com/v1/chat/completions", {
+    const timeout = setTimeout(() => controller.abort(), 20000);
+    const res = await fetch(OPENAI_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${key}`,
       },
       body: JSON.stringify({
-        model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+        model,
         messages: [{ role: "system", content: SYSTEM }, ...messages],
         temperature: 0.6,
         max_tokens: 1500,
@@ -103,11 +153,24 @@ export async function POST(req: Request) {
       signal: controller.signal,
     });
     clearTimeout(timeout);
-    if (!res.ok) return NextResponse.json({ ok: true, fallback: true, reply: canned(lastUser) });
+    if (!res.ok) {
+      const err = await res.text();
+      console.error(`[ask] OpenAI ${res.status}:`, err.slice(0, 500));
+      return NextResponse.json({
+        ok: true,
+        fallback: true,
+        reason: `openai_${res.status}`,
+        reply: canned(lastUser),
+      });
+    }
     const data = await res.json();
-    const reply = data?.choices?.[0]?.message?.content?.trim() || canned(lastUser);
+    const reply = data?.choices?.[0]?.message?.content?.trim();
+    if (!reply) {
+      return NextResponse.json({ ok: true, fallback: true, reason: "empty", reply: canned(lastUser) });
+    }
     return NextResponse.json({ ok: true, reply });
-  } catch {
-    return NextResponse.json({ ok: true, fallback: true, reply: canned(lastUser) });
+  } catch (e) {
+    console.error("[ask] request failed:", String(e));
+    return NextResponse.json({ ok: true, fallback: true, reason: "network_error", reply: canned(lastUser) });
   }
 }
