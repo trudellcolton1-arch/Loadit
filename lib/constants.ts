@@ -16,6 +16,7 @@ export const SITE = {
 // Page tabs use real routes; homepage sections use /#anchor so they work
 // from any page.
 export const NAV_LINKS = [
+  { label: "AI Router", href: "/intent" },
   { label: "Demo", href: "/#demo" },
   { label: "Compare", href: "/compare" },
   { label: "Platform", href: "/platform" },
@@ -31,6 +32,7 @@ export const NAV_LINKS = [
 
 // Curated subset for the desktop bar.
 export const NAV_PRIMARY = [
+  { label: "AI Router", href: "/intent" },
   { label: "Compare", href: "/compare" },
   { label: "Platform", href: "/platform" },
   { label: "Technology", href: "/technology" },
