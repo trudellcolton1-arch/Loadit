@@ -28,6 +28,8 @@ export function AeroChatWidget() {
   const [messages, setMessages] = useState<Msg[]>([GREETING]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  // Whether the last reply came from the live model vs the offline fallback.
+  const [mode, setMode] = useState<"unknown" | "live" | "offline">("unknown");
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // One-time "Ask me anything" peek on first visit.
@@ -86,6 +88,7 @@ export function AeroChatWidget() {
         body: JSON.stringify({ messages: next }),
       });
       const data = await res.json();
+      setMode(data?.fallback ? "offline" : "live");
       setMessages((m) => [
         ...m,
         { role: "assistant", content: data?.reply ?? "Something went wrong — try again." },
@@ -122,9 +125,26 @@ export function AeroChatWidget() {
                 </span>
                 <div>
                   <div className="text-sm font-semibold text-white">Ask AERO</div>
-                  <div className="font-mono text-[0.55rem] uppercase tracking-widest text-white/40">
-                    Loadit intelligence layer
-                  </div>
+                  {mode === "unknown" ? (
+                    <div className="font-mono text-[0.55rem] uppercase tracking-widest text-white/40">
+                      Loadit intelligence layer
+                    </div>
+                  ) : (
+                    <div
+                      className={cn(
+                        "flex items-center gap-1 font-mono text-[0.55rem] uppercase tracking-widest",
+                        mode === "live" ? "text-rail-400" : "text-amber"
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          "h-1.5 w-1.5 rounded-full",
+                          mode === "live" ? "bg-rail-400" : "bg-amber"
+                        )}
+                      />
+                      {mode === "live" ? "Live AI" : "Offline mode"}
+                    </div>
+                  )}
                 </div>
               </div>
               <button

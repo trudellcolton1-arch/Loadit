@@ -112,7 +112,7 @@ export async function GET(req: Request) {
       model,
       status: res.status,
       ok: res.ok,
-      detail: res.ok ? "OpenAI reachable — key valid." : text.slice(0, 400),
+      detail: res.ok ? "OpenAI reachable - key valid." : text.slice(0, 400),
     });
   } catch (e) {
     return NextResponse.json({ configured: true, model, ok: false, reason: "network_error", detail: String(e).slice(0, 200) });
