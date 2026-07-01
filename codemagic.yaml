@@ -1,0 +1,122 @@
+# Codemagic CI/CD for the Loadit mobile app (Expo / React Native, in ./mobile).
+# Builds signed iOS (.ipa) + Android (.aab) and can publish to TestFlight /
+# Google Play. Codemagic reads this file from the repo root.
+#
+# ONE-TIME SETUP in the Codemagic UI (Teams → Integrations / App settings):
+#   Android:
+#     - Upload your upload keystore as a reference named  loadit_keystore
+#     - Add a Google Play service-account JSON as an env var GOOGLE_PLAY_SA
+#       (group: loadit_env) to enable publishing.
+#   iOS:
+#     - Add an App Store Connect API key integration named  Loadit ASC
+#     - Bundle id must exist in your Apple Developer account: net.loadit.app
+#   Both: create an env group  loadit_env  (holds any extra secrets).
+#
+# You can also just run the workflows to get artifacts and upload manually.
+
+workflows:
+  # ------------------------------------------------------------------ Android
+  android:
+    name: Loadit Android
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    environment:
+      android_signing:
+        - loadit_keystore
+      groups:
+        - loadit_env
+      vars:
+        PACKAGE_NAME: "net.loadit.app"
+      node: 20.15.1
+    cache:
+      cache_paths:
+        - $HOME/.npm
+    scripts:
+      - name: Install dependencies
+        script: cd mobile && npm ci
+      - name: Expo prebuild (android)
+        script: cd mobile && npx expo prebuild --platform android --no-install --clean
+      - name: Point Gradle at the Android SDK
+        script: cd mobile/android && echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
+      - name: Wire release signing to the Codemagic keystore
+        script: |
+          cd mobile/android
+          # Codemagic exposes the keystore it injected via CM_KEYSTORE_* vars.
+          cat >> gradle.properties <<EOF
+          RELEASE_STORE_FILE=$CM_KEYSTORE_PATH
+          RELEASE_STORE_PASSWORD=$CM_KEYSTORE_PASSWORD
+          RELEASE_KEY_ALIAS=$CM_KEY_ALIAS
+          RELEASE_KEY_PASSWORD=$CM_KEY_PASSWORD
+          EOF
+          # Use the release keystore for the release build type.
+          sed -i '' "s#signingConfig signingConfigs.debug#signingConfig signingConfigs.release#g" app/build.gradle || true
+          # Add a release signingConfig if the template only shipped debug.
+          if ! grep -q "signingConfigs {" app/build.gradle; then true; fi
+      - name: Build release AAB
+        script: cd mobile/android && ./gradlew bundleRelease
+    artifacts:
+      - mobile/android/app/build/outputs/**/*.aab
+      - mobile/android/app/build/outputs/**/mapping.txt
+    publishing:
+      email:
+        recipients:
+          - trudellcolton@gmail.com
+        notify:
+          success: true
+          failure: true
+      # Uncomment once GOOGLE_PLAY_SA is set (a Play service-account JSON):
+      # google_play:
+      #   credentials: $GOOGLE_PLAY_SA
+      #   track: internal
+      #   submit_as_draft: true
+
+  # ---------------------------------------------------------------------- iOS
+  ios:
+    name: Loadit iOS
+    max_build_duration: 90
+    instance_type: mac_mini_m2
+    integrations:
+      app_store_connect: Loadit ASC
+    environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: net.loadit.app
+      groups:
+        - loadit_env
+      vars:
+        BUNDLE_ID: "net.loadit.app"
+        XCODE_SCHEME: "Loadit"
+      node: 20.15.1
+      xcode: latest
+      cocoapods: default
+    cache:
+      cache_paths:
+        - $HOME/.npm
+    scripts:
+      - name: Install dependencies
+        script: cd mobile && npm ci
+      - name: Expo prebuild (ios)
+        script: cd mobile && npx expo prebuild --platform ios --no-install --clean
+      - name: Install CocoaPods
+        script: cd mobile/ios && pod install
+      - name: Set up code signing
+        script: xcode-project use-profiles
+      - name: Build IPA
+        script: |
+          cd mobile/ios
+          xcode-project build-ipa \
+            --workspace "$(ls -d *.xcworkspace | head -1)" \
+            --scheme "$XCODE_SCHEME"
+    artifacts:
+      - mobile/ios/build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      email:
+        recipients:
+          - trudellcolton@gmail.com
+        notify:
+          success: true
+          failure: true
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
