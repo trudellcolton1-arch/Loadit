@@ -23,7 +23,7 @@
       "package": "net.loadit.app",
       "permissions": ["RECORD_AUDIO", "INTERNET"]
     },
-    "plugins": ["expo-router", "expo-secure-store", "expo-web-browser"],
+    "plugins": ["expo-router", "expo-secure-store"],
     "extra": {
       "apiBase": "https://loadit.net",
       "aeroApiKey": "demo",
