@@ -73,11 +73,22 @@ export default function Home() {
             </View>
           )}
 
+          <TouchableOpacity style={styles.cashQr} onPress={() => router.push("/register")}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.cashQrTitle}>🏪 Cash at any register</Text>
+              <Text style={styles.cashQrSub}>
+                Deposit paper cash at 90k+ stores, then buy crypto through
+                Coinbase or Stripe — straight to your wallet.
+              </Text>
+            </View>
+            <Text style={styles.cashQrArrow}>→</Text>
+          </TouchableOpacity>
+
           <TouchableOpacity style={styles.cashQr} onPress={() => router.push("/receive")}>
             <View style={{ flex: 1 }}>
               <Text style={styles.cashQrTitle}>💵 Cash QR</Text>
               <Text style={styles.cashQrSub}>
-                Taking cash in hand? Show a code — they scan, pay via Coinbase or
+                Taking cash in hand? Show a QR — they scan, pay via Coinbase or
                 Stripe, and the crypto lands in your wallet.
               </Text>
             </View>
