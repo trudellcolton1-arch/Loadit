@@ -1,18 +1,15 @@
 # Codemagic CI/CD for the Loadit mobile app (Expo / React Native, in ./mobile).
-# Builds signed iOS (.ipa) + Android (.aab) and can publish to TestFlight /
-# Google Play. Codemagic reads this file from the repo root.
+# Builds signed iOS (.ipa) + Android (.aab). Fully env-var driven — all signing
+# material lives in the Codemagic env group `loadit_env` (already configured via
+# API): APP_STORE_CONNECT_PRIVATE_KEY / _KEY_IDENTIFIER / _ISSUER_ID,
+# CERTIFICATE_PRIVATE_KEY (iOS dist cert), CM_KEYSTORE_B64 / _PASSWORD,
+# CM_KEY_ALIAS / CM_KEY_PASSWORD (Android upload keystore).
 #
-# ONE-TIME SETUP in the Codemagic UI (Teams → Integrations / App settings):
-#   Android:
-#     - Upload your upload keystore as a reference named  loadit_keystore
-#     - Add a Google Play service-account JSON as an env var GOOGLE_PLAY_SA
-#       (group: loadit_env) to enable publishing.
-#   iOS:
-#     - Add an App Store Connect API key integration named  Loadit ASC
-#     - Bundle id must exist in your Apple Developer account: net.loadit.app
-#   Both: create an env group  loadit_env  (holds any extra secrets).
-#
-# You can also just run the workflows to get artifacts and upload manually.
+# Remaining manual steps:
+#   - iOS: create the app record in App Store Connect (bundle id net.loadit.app)
+#     so TestFlight submission has somewhere to land.
+#   - Android: to auto-publish, add a Play service-account JSON as GOOGLE_PLAY_SA
+#     in loadit_env and uncomment the google_play block.
 
 workflows:
   # ------------------------------------------------------------------ Android
@@ -21,37 +18,45 @@ workflows:
     max_build_duration: 60
     instance_type: mac_mini_m2
     environment:
-      android_signing:
-        - loadit_keystore
       groups:
         - loadit_env
       vars:
         PACKAGE_NAME: "net.loadit.app"
       node: 20.15.1
+      java: 17
     cache:
       cache_paths:
         - $HOME/.npm
     scripts:
       - name: Install dependencies
-        script: cd mobile && npm ci
+        script: cd mobile && npm install
       - name: Expo prebuild (android)
-        script: cd mobile && npx expo prebuild --platform android --no-install --clean
-      - name: Point Gradle at the Android SDK
-        script: cd mobile/android && echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
-      - name: Wire release signing to the Codemagic keystore
+        script: cd mobile && npx expo prebuild --platform android --no-install
+      - name: Decode upload keystore
+        script: |
+          echo "$CM_KEYSTORE_B64" | base64 --decode > "$CM_BUILD_DIR/loadit-upload.keystore"
+          echo "CM_KEYSTORE_PATH=$CM_BUILD_DIR/loadit-upload.keystore" >> $CM_ENV
+      - name: Wire release signing
         script: |
           cd mobile/android
-          # Codemagic exposes the keystore it injected via CM_KEYSTORE_* vars.
-          cat >> gradle.properties <<EOF
-          RELEASE_STORE_FILE=$CM_KEYSTORE_PATH
-          RELEASE_STORE_PASSWORD=$CM_KEYSTORE_PASSWORD
-          RELEASE_KEY_ALIAS=$CM_KEY_ALIAS
-          RELEASE_KEY_PASSWORD=$CM_KEY_PASSWORD
+          cat >> app/build.gradle <<'EOF'
+
+          android {
+              signingConfigs {
+                  release {
+                      storeFile file(System.getenv("CM_KEYSTORE_PATH"))
+                      storePassword System.getenv("CM_KEYSTORE_PASSWORD")
+                      keyAlias System.getenv("CM_KEY_ALIAS")
+                      keyPassword System.getenv("CM_KEY_PASSWORD")
+                  }
+              }
+              buildTypes {
+                  release {
+                      signingConfig signingConfigs.release
+                  }
+              }
+          }
           EOF
-          # Use the release keystore for the release build type.
-          sed -i '' "s#signingConfig signingConfigs.debug#signingConfig signingConfigs.release#g" app/build.gradle || true
-          # Add a release signingConfig if the template only shipped debug.
-          if ! grep -q "signingConfigs {" app/build.gradle; then true; fi
       - name: Build release AAB
         script: cd mobile/android && ./gradlew bundleRelease
     artifacts:
@@ -64,7 +69,7 @@ workflows:
         notify:
           success: true
           failure: true
-      # Uncomment once GOOGLE_PLAY_SA is set (a Play service-account JSON):
+      # Uncomment once GOOGLE_PLAY_SA (Play service-account JSON) is in loadit_env:
       # google_play:
       #   credentials: $GOOGLE_PLAY_SA
       #   track: internal
@@ -75,12 +80,7 @@ workflows:
     name: Loadit iOS
     max_build_duration: 90
     instance_type: mac_mini_m2
-    integrations:
-      app_store_connect: Loadit ASC
     environment:
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: net.loadit.app
       groups:
         - loadit_env
       vars:
@@ -94,13 +94,22 @@ workflows:
         - $HOME/.npm
     scripts:
       - name: Install dependencies
-        script: cd mobile && npm ci
+        script: cd mobile && npm install
       - name: Expo prebuild (ios)
-        script: cd mobile && npx expo prebuild --platform ios --no-install --clean
+        script: cd mobile && npx expo prebuild --platform ios --no-install
       - name: Install CocoaPods
         script: cd mobile/ios && pod install
-      - name: Set up code signing
-        script: xcode-project use-profiles
+      - name: Fetch or create signing files from App Store Connect
+        script: |
+          keychain initialize
+          # Creates the bundle id, distribution certificate (from
+          # CERTIFICATE_PRIVATE_KEY), and provisioning profile if missing.
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --create
+          keychain add-certificates
+      - name: Apply provisioning profiles
+        script: cd mobile/ios && xcode-project use-profiles
       - name: Build IPA
         script: |
           cd mobile/ios
@@ -118,5 +127,7 @@ workflows:
           success: true
           failure: true
       app_store_connect:
-        auth: integration
+        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
         submit_to_testflight: true

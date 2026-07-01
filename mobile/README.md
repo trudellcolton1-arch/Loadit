@@ -62,17 +62,22 @@ npm run android          # needs Android Studio
 `codemagic.yaml` (repo root) defines two workflows: **Loadit Android** and
 **Loadit iOS**. They run `expo prebuild` then a native gradle/Xcode build.
 
-One-time in the Codemagic UI:
+**Already configured** (via the Codemagic API) in env group `loadit_env` on the
+Loadit app: the App Store Connect API key (`APP_STORE_CONNECT_*`), an iOS
+certificate key (`CERTIFICATE_PRIVATE_KEY`), and the Android upload keystore
+(`CM_KEYSTORE_B64` / `CM_KEYSTORE_PASSWORD` / `CM_KEY_ALIAS` / `CM_KEY_PASSWORD`).
+iOS signing files (bundle id, dist cert, provisioning profile) are fetched or
+created automatically at build time from the ASC key.
 
-- **Android** — upload your upload-keystore as reference `loadit_keystore`.
-  For Play publishing, add a service-account JSON as env var `GOOGLE_PLAY_SA`
-  (group `loadit_env`) and uncomment the `google_play:` block.
-- **iOS** — add an App Store Connect API key integration named `Loadit ASC`;
-  ensure the bundle id `net.loadit.app` exists in your Apple account.
-- Create env group `loadit_env` for any extra secrets.
+Remaining manual steps:
 
-Then trigger a build — artifacts (`.aab` / `.ipa`) are emailed and can auto-ship
-to Google Play (internal) and TestFlight.
+- **iOS** — create the app record in App Store Connect (My Apps → New App,
+  bundle id `net.loadit.app`) so TestFlight submission has a destination.
+- **Android** — to auto-publish, add a Google Play service-account JSON as
+  `GOOGLE_PLAY_SA` in `loadit_env` and uncomment the `google_play:` block.
+  First upload to a new Play app must be done manually in the Play Console.
+
+Artifacts (`.aab` / `.ipa`) are emailed on every build either way.
 
 ### Alternative: EAS
 
