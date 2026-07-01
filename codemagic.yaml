@@ -57,10 +57,14 @@ workflows:
               }
           }
           EOF
-      - name: Build release AAB
-        script: cd mobile/android && ./gradlew bundleRelease
+      - name: Build release AAB + APK
+        script: |
+          cd mobile/android
+          ./gradlew bundleRelease   # .aab for the Play Store
+          ./gradlew assembleRelease # .apk for direct link-install on any Android
     artifacts:
       - mobile/android/app/build/outputs/**/*.aab
+      - mobile/android/app/build/outputs/**/*.apk
       - mobile/android/app/build/outputs/**/mapping.txt
     publishing:
       email:
@@ -131,3 +135,57 @@ workflows:
         key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
         issuer_id: $APP_STORE_CONNECT_ISSUER_ID
         submit_to_testflight: true
+
+  # ------------------------------------------------------------- iOS (ad hoc)
+  # Direct OTA installs for demo devices — no TestFlight review needed. Apple
+  # restriction: installs ONLY on iPhones whose UDIDs are registered in the
+  # developer account (Certificates → Devices). Open the .ipa artifact link on
+  # a registered iPhone (Codemagic shows an install QR/link on the build page).
+  ios-adhoc:
+    name: Loadit iOS Ad Hoc
+    max_build_duration: 90
+    instance_type: mac_mini_m2
+    environment:
+      groups:
+        - loadit_env
+      vars:
+        BUNDLE_ID: "net.loadit.app"
+        XCODE_SCHEME: "Loadit"
+      node: 20.15.1
+      xcode: latest
+      cocoapods: default
+    cache:
+      cache_paths:
+        - $HOME/.npm
+    scripts:
+      - name: Install dependencies
+        script: cd mobile && npm install
+      - name: Expo prebuild (ios)
+        script: cd mobile && npx expo prebuild --platform ios --no-install
+      - name: Install CocoaPods
+        script: cd mobile/ios && pod install
+      - name: Fetch or create AD HOC signing files
+        script: |
+          keychain initialize
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_ADHOC \
+            --create
+          keychain add-certificates
+      - name: Apply provisioning profiles
+        script: cd mobile/ios && xcode-project use-profiles
+      - name: Build IPA
+        script: |
+          cd mobile/ios
+          xcode-project build-ipa \
+            --workspace "$(ls -d *.xcworkspace | head -1)" \
+            --scheme "$XCODE_SCHEME"
+    artifacts:
+      - mobile/ios/build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      email:
+        recipients:
+          - trudellcolton@gmail.com
+        notify:
+          success: true
+          failure: true
