@@ -73,6 +73,17 @@ export default function Home() {
             </View>
           )}
 
+          <TouchableOpacity style={styles.cashQr} onPress={() => router.push("/receive")}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.cashQrTitle}>💵 Cash QR</Text>
+              <Text style={styles.cashQrSub}>
+                Taking cash in hand? Show a code — they scan, pay via Coinbase or
+                Stripe, and the crypto lands in your wallet.
+              </Text>
+            </View>
+            <Text style={styles.cashQrArrow}>→</Text>
+          </TouchableOpacity>
+
           {result && (
             <View style={styles.card}>
               <Text style={styles.aero}>AERO</Text>
@@ -144,6 +155,10 @@ const styles = StyleSheet.create({
   statLabel: { color: BRAND.faint, fontSize: 10, letterSpacing: 1, textTransform: "uppercase" },
   statValue: { color: BRAND.text, fontSize: 16, fontWeight: "700", marginTop: 4 },
   statSub: { color: BRAND.faint, fontSize: 11, marginTop: 2 },
+  cashQr: { flexDirection: "row", alignItems: "center", gap: 12, marginTop: 20, backgroundColor: "rgba(34,169,92,0.06)", borderColor: "rgba(34,169,92,0.35)", borderWidth: 1, borderRadius: 20, padding: 16 },
+  cashQrTitle: { color: BRAND.text, fontSize: 16, fontWeight: "700" },
+  cashQrSub: { color: BRAND.dim, fontSize: 12, lineHeight: 17, marginTop: 3 },
+  cashQrArrow: { color: BRAND.railLight, fontSize: 20, fontWeight: "700" },
   buy: { backgroundColor: BRAND.rail, borderRadius: 999, paddingVertical: 15, alignItems: "center", marginTop: 16 },
   buyText: { color: "#04060B", fontWeight: "700", fontSize: 16 },
   disclaimer: { color: BRAND.faint, fontSize: 11, lineHeight: 16, marginTop: 12, textAlign: "center" },
