@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet, Alert } from "react-native";
+import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet, Alert, Image } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { signInWithHylaq, signInGuest, hylaqConfigured } from "@/lib/auth";
@@ -34,6 +34,7 @@ export default function Login() {
   return (
     <SafeAreaView style={styles.wrap}>
       <View style={styles.center}>
+        <Image source={require("../assets/mark.png")} style={styles.mark} />
         <Text style={styles.logo}>Loadit</Text>
         <Text style={styles.tag}>Cash & card to crypto — routed the cheapest way by AERO.</Text>
 
@@ -58,6 +59,7 @@ export default function Login() {
 const styles = StyleSheet.create({
   wrap: { flex: 1, backgroundColor: BRAND.bg, padding: 24, justifyContent: "space-between" },
   center: { flex: 1, justifyContent: "center", gap: 14 },
+  mark: { width: 72, height: 72, borderRadius: 18, marginBottom: 6 },
   logo: { color: BRAND.text, fontSize: 40, fontWeight: "800", letterSpacing: -1 },
   tag: { color: BRAND.dim, fontSize: 15, marginBottom: 24, lineHeight: 22 },
   primary: { backgroundColor: BRAND.rail, borderRadius: 999, paddingVertical: 16, alignItems: "center" },
