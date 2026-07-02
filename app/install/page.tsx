@@ -40,6 +40,19 @@ export default function InstallPage() {
 
               <div className="mt-6 border-t border-white/8 pt-6">
                 <a
+                  href="/app/loadit.apk"
+                  className="block w-full rounded-full bg-rail-500 px-6 py-4 text-sm font-semibold text-void transition-all hover:shadow-glow"
+                >
+                  Download for Android (.apk) →
+                </a>
+                <p className="mt-2 text-[0.7rem] text-white/35">
+                  Works on any Android phone — open the file and approve
+                  &quot;install from browser&quot; when prompted.
+                </p>
+              </div>
+
+              <div className="mt-6 border-t border-white/8 pt-6">
+                <a
                   href="https://testflight.apple.com/join/XxdDFBeF"
                   className="block w-full rounded-full border border-white/15 px-6 py-4 text-sm font-medium text-white transition-all hover:bg-white/5"
                 >
