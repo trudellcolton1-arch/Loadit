@@ -103,6 +103,15 @@ workflows:
         script: cd mobile && npx expo prebuild --platform ios --no-install
       - name: Install CocoaPods
         script: cd mobile/ios && pod install
+      - name: Bump build number past latest TestFlight build
+        script: |
+          # ASC rejects uploads whose build number was already used; expo
+          # prebuild always regenerates 1. Set it to latest-on-TestFlight + 1.
+          LATEST=$(app-store-connect get-latest-testflight-build-number 6786469160 2>/dev/null | tail -1)
+          case "$LATEST" in (*[!0-9]*|"") LATEST=$BUILD_NUMBER ;; esac
+          NEW=$((LATEST + 1))
+          echo "Latest TestFlight build: $LATEST -> using $NEW"
+          cd mobile/ios && agvtool new-version -all "$NEW"
       - name: Fetch or create signing files from App Store Connect
         script: |
           keychain initialize
