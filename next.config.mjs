@@ -25,6 +25,15 @@ const nextConfig = {
     return [
       { source: "/:path*", headers: security },
       {
+        // Stellar SEP-1 requires CORS + text/plain on the info file
+        // (MoneyGram Ramps onboarding reads this).
+        source: "/.well-known/stellar.toml",
+        headers: [
+          { key: "Access-Control-Allow-Origin", value: "*" },
+          { key: "Content-Type", value: "text/plain; charset=utf-8" },
+        ],
+      },
+      {
         // Immutable hashed build assets.
         source: "/_next/static/:path*",
         headers: [
