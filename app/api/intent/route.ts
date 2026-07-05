@@ -5,6 +5,7 @@ import {
   heuristicParse,
   routeIntent,
 } from "@/lib/intent";
+import { getHQQuote, toWire } from "@/lib/hq";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -36,7 +37,17 @@ export async function POST(req: Request) {
   const aiParsed = Boolean(intent);
   if (!intent) intent = heuristicParse(message);
 
-  const routed = await routeIntent(intent);
+  // AERO engine + live HQ provider check in parallel; HQ is additive and
+  // absent whenever the service or key is unavailable.
+  const [routed, live] = await Promise.all([
+    routeIntent(intent),
+    getHQQuote({
+      amountUsd: intent.amount_usd,
+      asset: intent.asset,
+      payMethod: intent.payment_method,
+      wallet: intent.destination,
+    }),
+  ]);
 
   return NextResponse.json({
     ok: true,
@@ -44,6 +55,7 @@ export async function POST(req: Request) {
     fees_live: routed.fees_live,
     intent,
     route: routed.route,
+    hq: live ? toWire(live) : undefined,
     explanation: explainRoute(intent, routed.result),
   });
 }

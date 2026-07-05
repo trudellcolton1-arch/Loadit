@@ -110,6 +110,11 @@ export default function Home() {
             <View style={styles.card}>
               <Text style={styles.aero}>AERO</Text>
               <Text style={styles.explain}>{result.explanation}</Text>
+              {result.hq && (
+                <Text style={styles.liveQuote}>
+                  ⚡ Live: {result.hq.provider} — you receive ~{result.hq.asset_out} {result.intent.asset}
+                </Text>
+              )}
 
               <View style={styles.statsRow}>
                 <Stat label="Route" value={result.route.network_name} />
@@ -133,6 +138,20 @@ export default function Home() {
                 }
               >
                 <Text style={styles.buyText}>Buy {result.intent.asset} now →</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() =>
+                  router.push({
+                    pathname: "/quote",
+                    params: {
+                      asset: result.intent.asset,
+                      amount: String(result.intent.amount_usd),
+                      payMethod: result.intent.payment_method,
+                    },
+                  })
+                }
+              >
+                <Text style={styles.quoteLink}>See live provider quotes + receipt →</Text>
               </TouchableOpacity>
               <Text style={styles.disclaimer}>
                 Completed by a licensed partner (Stripe / Coinbase) to your own wallet. Loadit never holds funds. Estimates depend on live conditions.
@@ -172,6 +191,8 @@ const styles = StyleSheet.create({
   card: { marginTop: 20, backgroundColor: BRAND.card, borderColor: BRAND.border, borderWidth: 1, borderRadius: 24, padding: 18 },
   aero: { color: BRAND.railLight, fontSize: 10, fontWeight: "700", letterSpacing: 2, marginBottom: 6 },
   explain: { color: BRAND.text, fontSize: 15, lineHeight: 22 },
+  liveQuote: { color: BRAND.amber, fontSize: 12, fontWeight: "600", marginTop: 8 },
+  quoteLink: { color: BRAND.railLight, fontSize: 13, fontWeight: "600", textAlign: "center", marginTop: 12 },
   statsRow: { flexDirection: "row", gap: 10, marginTop: 12 },
   stat: { flex: 1, backgroundColor: "rgba(255,255,255,0.02)", borderColor: BRAND.border, borderWidth: 1, borderRadius: 16, padding: 12 },
   statLabel: { color: BRAND.faint, fontSize: 10, letterSpacing: 1, textTransform: "uppercase" },

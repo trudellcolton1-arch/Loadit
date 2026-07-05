@@ -17,6 +17,7 @@ import { BRAND } from "@/lib/config";
 
 interface Bubble extends HQMessage {
   route?: HQResult["route"];
+  hq?: HQResult["hq"];
 }
 
 const GREETING: Bubble = {
@@ -59,6 +60,7 @@ export default function HQ() {
           role: "assistant",
           content: data.reply || "I hit a snag reaching HQ — try that again in a moment.",
           route: data.route,
+          hq: data.hq,
         },
       ]);
     } catch {
@@ -87,6 +89,11 @@ export default function HQ() {
                 <Text style={styles.msg}>{m.content}</Text>
                 {m.route && (
                   <View style={styles.routeCard}>
+                    {m.hq && (
+                      <Text style={styles.liveQuote}>
+                        ⚡ Live: {m.hq.provider} — you receive ~{m.hq.asset_out} {m.route.asset}
+                      </Text>
+                    )}
                     <View style={styles.statsRow}>
                       <Stat label="Route" value={m.route.network_name} />
                       <Stat label="Settles" value={m.route.eta} />
@@ -105,6 +112,16 @@ export default function HQ() {
                       }
                     >
                       <Text style={styles.buyText}>Buy {m.route.asset} now →</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() =>
+                        router.push({
+                          pathname: "/quote",
+                          params: { asset: m.route!.asset, amount: String(m.route!.amount_usd), payMethod: m.route!.payment_method },
+                        })
+                      }
+                    >
+                      <Text style={styles.quoteLink}>See live provider quotes + receipt →</Text>
                     </TouchableOpacity>
                   </View>
                 )}
@@ -179,6 +196,8 @@ const styles = StyleSheet.create({
   thinking: { flexDirection: "row", alignItems: "center", gap: 8 },
   thinkingText: { color: BRAND.dim, fontSize: 13 },
   routeCard: { marginTop: 10 },
+  liveQuote: { color: BRAND.amber, fontSize: 12, fontWeight: "600", marginTop: 2 },
+  quoteLink: { color: BRAND.railLight, fontSize: 13, fontWeight: "600", textAlign: "center", marginTop: 12 },
   statsRow: { flexDirection: "row", gap: 8, marginTop: 8 },
   stat: { flex: 1, backgroundColor: "rgba(255,255,255,0.03)", borderColor: BRAND.border, borderWidth: 1, borderRadius: 14, padding: 10 },
   statLabel: { color: BRAND.faint, fontSize: 9, letterSpacing: 1, textTransform: "uppercase" },

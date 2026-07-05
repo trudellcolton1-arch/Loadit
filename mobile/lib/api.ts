@@ -14,12 +14,26 @@ export interface Route {
   savings_pct: number;
   eta: string;
 }
+/** Live provider quote from the HQ (Hylaq) routing service, via the backend. */
+export interface HQLiveQuote {
+  provider: string;
+  rail: string;
+  fee_usd: number;
+  spread_pct: number;
+  eta_minutes: number;
+  asset_out: number;
+  price_usd: number;
+  savings_usd: number;
+  mode: string;
+}
+
 export interface IntentResult {
   ok: boolean;
   ai: boolean;
   fees_live: boolean;
   intent: Intent;
   route: Route;
+  hq?: HQLiveQuote;
   explanation: string;
 }
 
@@ -58,7 +72,8 @@ export interface HQResult {
   fees_live?: boolean;
   reply?: string;
   intent?: Intent;
-  route?: Route & { asset: string; amount_usd: number };
+  route?: Route & { asset: string; amount_usd: number; payment_method?: string };
+  hq?: HQLiveQuote;
 }
 
 /**
@@ -70,6 +85,51 @@ export async function askHQ(messages: HQMessage[]): Promise<HQResult> {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ messages }),
+  });
+  return res.json();
+}
+
+/** One provider quote from the HQ (Hylaq) routing service. */
+export interface HQProviderQuote {
+  provider: string;
+  rail: string;
+  feeUsd: number;
+  spreadPct: number;
+  etaMinutes: number;
+  accepts: boolean;
+  source: string;
+  note?: string;
+  assetOut: number;
+}
+
+/** Full HQ quote payload, proxied verbatim by the backend (key stays server-side). */
+export interface HQRouteQuote {
+  ok?: boolean; // present (false) only on backend error responses
+  reason?: string;
+  best?: HQProviderQuote;
+  quotes?: HQProviderQuote[];
+  priceUsd?: number;
+  savingsUsd?: number;
+  mode?: string; // "sandbox" → show the test-mode badge, never hide it
+  receipt?: { statement?: string; attestation?: { model?: string; ts?: string; reqId?: string } };
+  /** Execution handle for the chosen provider (Zero Hash / Transak / MoonPay / MoneyGram SDKs). */
+  execute?: { provider?: string; rail?: string } & Record<string, unknown>;
+}
+
+/**
+ * Live provider quote — talks to loadit.net's backend, never to HQ directly.
+ * The HQ key lives on the server and is never shipped in the app.
+ */
+export async function getRoute(
+  amountUsd: number,
+  asset: string,
+  payMethod?: string,
+  wallet?: string
+): Promise<HQRouteQuote> {
+  const res = await fetch(`${API_BASE}/api/quote`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ amountUsd, asset, payMethod, wallet }),
   });
   return res.json();
 }

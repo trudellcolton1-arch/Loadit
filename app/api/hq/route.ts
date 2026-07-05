@@ -9,6 +9,7 @@ import {
   type RoutedIntent,
 } from "@/lib/intent";
 import { formatUSD } from "@/lib/aero";
+import { getHQQuote, toWire, type HQQuote } from "@/lib/hq";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -70,15 +71,34 @@ function canned(q: string): string {
 }
 
 /** HQ-voiced version of the route explanation. */
-function hqExplain(intent: Intent, routed: RoutedIntent): string {
+function hqExplain(intent: Intent, routed: RoutedIntent, live?: HQQuote | null): string {
   const dest = intent.destination ? ` to ${intent.destination}` : "";
   const r = routed.result;
-  return (
+  const base =
     `Here's your route: ${formatUSD(intent.amount_usd)} from your ${intent.payment_method.toLowerCase()} ` +
     `into ${intent.asset}${dest}, over ${r.network.name}. About ${formatUSD(r.loaditFee)} in costs versus ` +
     `~${formatUSD(r.legacyFee)} the old way — roughly ${r.savingsPct}% cheaper — settling in ${r.eta}. ` +
-    `A licensed partner completes it straight to your wallet; I never hold your funds. Ready when you are.`
+    `A licensed partner completes it straight to your wallet; I never hold your funds.`;
+  if (!live) return `${base} Ready when you are.`;
+  const beat = live.savingsUsd > 0 ? `, beating the next-best offer by ${formatUSD(live.savingsUsd)}` : "";
+  return (
+    `${base} I also checked live providers: best execution right now is ${live.best.provider} — ` +
+    `you'd receive about ${live.best.assetOut} ${intent.asset}${beat}. Ready when you are.`
   );
+}
+
+/** Run the AERO engine and the live HQ provider check in parallel. */
+async function routeWithLiveQuote(intent: Intent) {
+  const [routed, live] = await Promise.all([
+    routeIntent(intent),
+    getHQQuote({
+      amountUsd: intent.amount_usd,
+      asset: intent.asset,
+      payMethod: intent.payment_method,
+      wallet: intent.destination,
+    }),
+  ]);
+  return { routed, live };
 }
 
 interface ChatMsg {
@@ -160,14 +180,15 @@ export async function POST(req: Request) {
   if (key) {
     const ai = await aiChat(messages, key);
     if (ai?.intent) {
-      const routed = await routeIntent(ai.intent);
+      const { routed, live } = await routeWithLiveQuote(ai.intent);
       return NextResponse.json({
         ok: true,
         ai: true,
         fees_live: routed.fees_live,
-        reply: hqExplain(ai.intent, routed),
+        reply: hqExplain(ai.intent, routed, live),
         intent: ai.intent,
         route: routed.route,
+        hq: live ? toWire(live) : undefined,
       });
     }
     if (ai?.reply) {
@@ -178,15 +199,16 @@ export async function POST(req: Request) {
 
   if (looksLikeMoneyIntent(lastUser)) {
     const intent = heuristicParse(lastUser);
-    const routed = await routeIntent(intent);
+    const { routed, live } = await routeWithLiveQuote(intent);
     return NextResponse.json({
       ok: true,
       ai: false,
       fallback: !key ? undefined : true,
       fees_live: routed.fees_live,
-      reply: hqExplain(intent, routed),
+      reply: hqExplain(intent, routed, live),
       intent,
       route: routed.route,
+      hq: live ? toWire(live) : undefined,
     });
   }
 

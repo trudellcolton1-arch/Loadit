@@ -35,6 +35,7 @@ app.json     Expo config (bundle ids: net.loadit.app, scheme: loadit)
 ```
 
 Backend endpoints it uses (already deployed): `/api/intent`, `/api/hq`,
+`/api/quote` (live HQ provider quotes — the HQ key stays server-side),
 `/api/v1/route`, `/api/onramp/coinbase`, `/api/onramp/stripe`.
 
 ## Configure
