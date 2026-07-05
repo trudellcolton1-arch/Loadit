@@ -23,7 +23,7 @@ import {
   type PulseNote,
 } from "@/lib/pulseClaim";
 import { scanNearby, bleReady, type NearbyPeer } from "@/lib/pulseNearby";
-import { tapAvailable, hostNote, receiveNote } from "@/lib/pulseMultipeer";
+import { tapAvailable, startPresence, armSend, receiveNote } from "@/lib/pulseMultipeer";
 import { useTheme, type Theme } from "@/lib/theme";
 import { HandleAvatar } from "@/components/HandleAvatar";
 import * as SecureStore from "expo-secure-store";
@@ -142,26 +142,56 @@ export default function Pulse() {
     })();
   }, [ready, session, refreshQueue]);
 
-  // Look for nearby phones whenever the Beam screen is in front.
-  useEffect(() => {
-    if (mode === "send" && !note) scanForPhones();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode, note]);
+  // Discovery: on tap-capable phones, MultipeerConnectivity presence surfaces
+  // nearby Loadit users (by @handle) with their Hylaq profile. Falls back to a
+  // BLE scan on phones without the tap module.
+  const addFace = useCallback(async (handle: string) => {
+    const h = handle.replace(/^@/, "").toLowerCase();
+    if (!h || h === "loadit" || h === me?.handle?.toLowerCase()) return;
+    const r = await resolveHandle(h).catch(() => null);
+    if (r?.ok && r.profile) {
+      setNearbyUsers((prev) => (prev.some((u) => u.profile.handle.toLowerCase() === r.profile!.handle.toLowerCase())
+        ? prev : [...prev, { profile: r.profile!, rssi: null }]));
+    }
+  }, [me?.handle]);
+  const removeFace = useCallback((handle: string) => {
+    const h = handle.replace(/^@/, "").toLowerCase();
+    setNearbyUsers((prev) => prev.filter((u) => u.profile.handle.toLowerCase() !== h));
+  }, []);
 
-  // Beam over Bluetooth: advertise the signed note and push it on connect.
+  useEffect(() => {
+    if (mode !== "send") return;
+    if (tapAvailable()) {
+      let cancelled = false;
+      let cleanup: (() => void) | null = null;
+      setNearbyUsers([]);
+      startPresence(me?.handle || "loadit", {
+        onPeer: addFace,
+        onLost: removeFace,
+        onNote: (payload) => onScan(payload),
+        onError: () => {},
+      }).then((c) => { if (cancelled) c(); else cleanup = c; });
+      return () => { cancelled = true; cleanup?.(); };
+    }
+    if (!note) scanForPhones();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, addFace, removeFace]);
+
+  // Beam over Bluetooth: send the signed note across the live presence session
+  // — directly to the picked person, or to whoever taps if none is chosen.
   useEffect(() => {
     if (mode !== "send" || !note || handoff !== "tap" || !tapAvailable()) return;
     let cancelled = false;
     let cleanup: (() => void) | null = null;
     setSent(false);
-    setTapStatus("Starting Bluetooth…");
-    hostNote(me?.handle || "loadit", encodeNote(note), {
+    setTapStatus(toUser ? `Reaching @${toUser.handle}…` : "Hold the phones together…");
+    armSend(toUser?.handle ?? null, encodeNote(note), {
       onStatus: (s) => { if (!cancelled) setTapStatus(s); },
       onSent: () => { if (!cancelled) setSent(true); },
       onError: (m) => { if (!cancelled) setTapStatus(m); },
     }).then((c) => { if (cancelled) c(); else cleanup = c; });
     return () => { cancelled = true; cleanup?.(); };
-  }, [mode, note, handoff, me?.handle]);
+  }, [mode, note, handoff, toUser?.handle]);
 
   // Tear down any receive session when Pulse unmounts.
   useEffect(() => () => { recvCleanup.current?.(); }, []);
@@ -347,7 +377,16 @@ export default function Pulse() {
           ))}
         </View>
 
-        {mode === "send" && !note && (
+        {mode === "send" && !note && tapAvailable() && (
+          <View style={[styles.blePill, { borderColor: t.accentTint, backgroundColor: t.accentSoft }]}>
+            <View style={[styles.bleDot, { backgroundColor: t.accent }]} />
+            <Text style={[styles.bleText, { color: t.accentText }]}>
+              {nearbyUsers.length ? `${nearbyUsers.length} Loadit ${nearbyUsers.length === 1 ? "user" : "users"} nearby` : "Bluetooth on · looking for people near you"}
+            </Text>
+          </View>
+        )}
+
+        {mode === "send" && !note && !tapAvailable() && (
           <TouchableOpacity style={styles.blePill} onPress={scanForPhones} activeOpacity={0.8}>
             <View style={[styles.bleDot, {
               backgroundColor: bleState === "scanning" ? t.warn : nearby.length ? t.accent : t.faint,
