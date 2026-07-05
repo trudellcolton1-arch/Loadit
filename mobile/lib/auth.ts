@@ -38,15 +38,25 @@ export function hylaqConfigured(): boolean {
 }
 
 /**
- * Login with Hylaq — standard OIDC Authorization Code + PKCE (public client,
- * no secret in the app). Fill HYLAQ.issuer + clientId in app.json → extra.hylaq
- * once hylaq.com sends OAuth details. Discovery is auto-fetched from the issuer.
+ * Login with Hylaq — Authorization Code + PKCE (public client, no secret in
+ * the app; the client secret lives only on the Loadit backend). Hylaq doesn't
+ * publish an OIDC discovery document, so the endpoints are pinned to its
+ * OAuth routes under the issuer (https://www.hylaq.com/api/oauth/*).
  */
+function hylaqDiscovery(): AuthSession.DiscoveryDocument {
+  const base = HYLAQ.issuer.replace(/\/$/, "");
+  return {
+    authorizationEndpoint: `${base}/api/oauth/authorize`,
+    tokenEndpoint: `${base}/api/oauth/token`,
+    userInfoEndpoint: `${base}/api/oauth/userinfo`,
+  };
+}
+
 export async function signInWithHylaq(): Promise<Session> {
   if (!hylaqConfigured()) {
     throw new Error("Hylaq SSO isn't configured yet. Add issuer + clientId in app.json.");
   }
-  const discovery = await AuthSession.fetchDiscoveryAsync(HYLAQ.issuer);
+  const discovery = hylaqDiscovery();
   const redirectUri = AuthSession.makeRedirectUri({ scheme: "loadit", path: "redirect" });
 
   const request = new AuthSession.AuthRequest({
@@ -78,6 +88,23 @@ export async function signInWithHylaq(): Promise<Session> {
     accessToken: token.accessToken,
     idToken: token.idToken,
   };
+
+  // Best-effort profile fetch — login still succeeds if userinfo is unavailable.
+  if (token.accessToken && discovery.userInfoEndpoint) {
+    try {
+      const res = await fetch(discovery.userInfoEndpoint, {
+        headers: { Authorization: `Bearer ${token.accessToken}` },
+      });
+      if (res.ok) {
+        const info = (await res.json()) as { name?: string; email?: string };
+        session.name = info.name;
+        session.email = info.email;
+      }
+    } catch {
+      /* profile is optional */
+    }
+  }
+
   await saveSession(session);
   return session;
 }

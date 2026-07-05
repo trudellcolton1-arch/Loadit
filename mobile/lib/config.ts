@@ -14,11 +14,11 @@ export const API_BASE = extra.apiBase || "https://loadit.net";
 /** Public AERO API key ('demo' works out of the box). */
 export const AERO_API_KEY = extra.aeroApiKey || "demo";
 
-/** Hylaq SSO config — fill issuer + clientId in app.json → extra.hylaq. */
+/** Hylaq SSO config — issuer + clientId live in app.json → extra.hylaq. */
 export const HYLAQ = {
   issuer: extra.hylaq?.issuer || "",
   clientId: extra.hylaq?.clientId || "",
-  scopes: extra.hylaq?.scopes || ["openid", "profile", "email"],
+  scopes: extra.hylaq?.scopes || ["read"],
 };
 
 export const BRAND = {

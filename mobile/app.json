@@ -35,9 +35,9 @@
       "apiBase": "https://loadit.net",
       "aeroApiKey": "demo",
       "hylaq": {
-        "issuer": "",
-        "clientId": "",
-        "scopes": ["openid", "profile", "email"]
+        "issuer": "https://www.hylaq.com",
+        "clientId": "hyq_client_dc0eb8d82bb0af1a2d4961ac",
+        "scopes": ["read"]
       },
       "router": { "origin": false }
     }
