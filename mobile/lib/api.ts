@@ -9,6 +9,8 @@ export interface Intent {
 export interface Route {
   network_name: string;
   loadit_fee_usd: number;
+  fee_pct?: number;
+  total_usd?: number;
   legacy_fee_usd: number;
   savings_usd: number;
   savings_pct: number;

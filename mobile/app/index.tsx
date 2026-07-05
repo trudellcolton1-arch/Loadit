@@ -127,8 +127,14 @@ export default function Home() {
                 <Stat styles={styles} label="Settles" value={result.route.eta} />
               </View>
               <View style={styles.statsRow}>
-                <Stat styles={styles} label="Loadit cost" value={money(result.route.loadit_fee_usd)} />
-                <Stat styles={styles} label="You save" value={money(result.route.savings_usd)} sub={`${result.route.savings_pct}% cheaper`} accent />
+                <Stat styles={styles} label="Loadit fee (0.75%)" value={money(result.route.loadit_fee_usd)} />
+                <Stat
+                  styles={styles}
+                  label="You pay"
+                  value={money(result.route.total_usd ?? result.intent.amount_usd + result.route.loadit_fee_usd)}
+                  sub={result.route.savings_pct > 0 ? `${result.route.savings_pct}% cheaper` : "all in"}
+                  accent
+                />
               </View>
 
               <TouchableOpacity

@@ -126,11 +126,21 @@ export interface RouteInput {
   feeOverrides?: Partial<Record<NetworkId, number>>;
 }
 
+/** Loadit's flat convenience fee on every conversion. */
+export const LOADIT_FEE_PCT = 0.0075;
+
 export interface RouteResult {
-  /** Visual chain: User → AERO → … → Wallet */
+  /** Visual chain: User → HQ → … → Wallet */
   path: { label: string; kind: "origin" | "engine" | "asset" | "network" | "wallet" }[];
   network: NetworkMeta;
+  /** What the user pays Loadit — the 0.75% convenience fee. */
   loaditFee: number;
+  /** Fraction charged (0.0075). */
+  feePct: number;
+  /** Order amount + convenience fee. */
+  total: number;
+  /** Underlying on-chain settlement cost (informational). */
+  networkCost: number;
   legacyFee: number;
   savingsPct: number;
   savingsAbs: number;
@@ -203,11 +213,15 @@ export function computeRoute(input: RouteInput): RouteResult {
   const baseFeeOf = (id: NetworkId) => ov?.[id] ?? NETWORKS[id].baseFee;
   const networkFee = baseFeeOf(netId);
 
-  // Costs.
+  // Costs. Loadit charges a flat 0.75% convenience fee; the on-chain settlement
+  // cost is tracked separately for transparency. Savings compare that flat fee
+  // to the legacy rail's all-in cost for the chosen funding method.
   const legacyFee = round2(legacyCost(input.paymentMethod, amount));
-  const loaditFee = round2(networkFee + Math.max(0.05, amount * 0.001));
+  const networkCost = round2(networkFee + Math.max(0.05, amount * 0.001));
+  const loaditFee = round2(amount * LOADIT_FEE_PCT);
+  const total = round2(amount + loaditFee);
   const savingsAbs = round2(Math.max(0, legacyFee - loaditFee));
-  const savingsPct = clamp(Math.round((1 - loaditFee / legacyFee) * 100), 1, 99);
+  const savingsPct = clamp(Math.round((1 - loaditFee / legacyFee) * 100), 0, 99);
 
   // Timing.
   const eta =
@@ -280,9 +294,9 @@ export function computeRoute(input: RouteInput): RouteResult {
       `${network.name} won on a blended score of fee, speed, and liquidity depth.`,
     ],
     costBreakdown: [
-      { label: "Network fee", value: formatUSD(networkFee) },
-      { label: "Loadit spread (0.1%)", value: formatUSD(Math.max(0.05, amount * 0.001)) },
-      { label: "Total cost", value: formatUSD(loaditFee) },
+      { label: "Loadit fee (0.75%)", value: formatUSD(loaditFee) },
+      { label: "Network settlement", value: formatUSD(networkCost) },
+      { label: "You pay", value: formatUSD(total) },
       { label: "Legacy equivalent", value: formatUSD(legacyFee) },
     ],
     settlementAnalysis: `Median settlement on ${network.name} is ${eta} with ${network.liquidityWord} liquidity at this ticket size. Non-custodial release fires on on-chain confirmation; no intermediary holds funds.`,
@@ -317,6 +331,9 @@ export function computeRoute(input: RouteInput): RouteResult {
     path,
     network,
     loaditFee,
+    feePct: LOADIT_FEE_PCT,
+    total,
+    networkCost,
     legacyFee,
     savingsPct,
     savingsAbs,

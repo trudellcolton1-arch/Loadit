@@ -39,6 +39,7 @@ GROUND TRUTH ABOUT LOADIT (use this, never contradict it)
 - Non-custodial: Loadit never holds user funds. Purchases are completed by licensed partners (Coinbase or Stripe) straight to the user's own wallet.
 - Cash at any register: THE way to turn paper cash into crypto — deposit cash at 90,000+ stores (Walmart, Walgreens, 7-Eleven, CVS…), then buy through a licensed on-ramp straight to the user's own wallet.
 - You route across networks (Lightning, Solana, Base, Ethereum, Polygon, XRPL) for the cheapest, fastest settlement; typical savings vs legacy rails (Bitcoin ATMs, card spreads) are large but always estimates.
+- Pricing: Loadit charges ONE flat 0.75% convenience fee on the amount converted — shown before the user confirms, no hidden spread. At 0.75% Loadit undercuts everything: bank/debit on-ramps (~1-2%), cards (4-5%), and Bitcoin ATMs (7-15%). Cheaper than the bank is the whole point. Be upfront about the fee; never hide it or claim it's free.
 - Provider preference: Coinbase covers BTC/SOL/XRP natively; Stripe is great for card→USDC/ETH.
 
 WHEN TO ACT
@@ -55,7 +56,7 @@ function canned(q: string): string {
   if (s.includes("register") || s.includes("qr") || (s.includes("cash") && s.includes("store")))
     return "Cash at any register: deposit paper cash at 90,000+ stores, then buy crypto through Coinbase or Stripe — it lands in your own wallet. Tap the register card on the home screen and I'll walk you through it.";
   if (s.includes("fee") || s.includes("cost") || s.includes("cheap"))
-    return "I check live fees across Lightning, Solana, Base, Ethereum, Polygon, and XRPL and pick the cheapest viable route — usually a fraction of what a Bitcoin ATM or card spread charges. Tell me an amount and asset and I'll quote a real route.";
+    return "Loadit charges one flat 0.75% convenience fee on the amount you convert — shown before you confirm, no hidden spread. On $150 that's about $1.13. It undercuts banks and debit rails (~1–2%), cards (4–5%), and Bitcoin ATMs (7–15%). Tell me an amount and asset and I'll quote the exact fee and total.";
   if (s.includes("safe") || s.includes("secur") || s.includes("custod") || s.includes("trust"))
     return "Loadit is non-custodial — your money never sits with us. Every purchase is completed by a licensed partner (Coinbase or Stripe) directly to a wallet you control. I route; I never hold.";
   if (s.includes("coinbase") || s.includes("stripe") || s.includes("provider"))
@@ -71,10 +72,11 @@ function canned(q: string): string {
 function hqExplain(intent: Intent, routed: RoutedIntent, live?: HQQuote | null): string {
   const dest = intent.destination ? ` to ${intent.destination}` : "";
   const r = routed.result;
+  const cheaper = r.savingsPct > 0 ? `, ~${r.savingsPct}% cheaper than the old way` : "";
   const base =
     `Here's your route: ${formatUSD(intent.amount_usd)} from your ${intent.payment_method.toLowerCase()} ` +
-    `into ${intent.asset}${dest}, over ${r.network.name}. About ${formatUSD(r.loaditFee)} in costs versus ` +
-    `~${formatUSD(r.legacyFee)} the old way — roughly ${r.savingsPct}% cheaper — settling in ${r.eta}. ` +
+    `into ${intent.asset}${dest}, settling over ${r.network.name} in ${r.eta}. ` +
+    `My flat 0.75% fee is ${formatUSD(r.loaditFee)}, so you pay ${formatUSD(r.total)} all in${cheaper}. ` +
     `A licensed partner completes it straight to your wallet; I never hold your funds.`;
   if (!live) return `${base} Ready when you are.`;
   const beat = live.savingsUsd > 0 ? `, beating the next-best offer by ${formatUSD(live.savingsUsd)}` : "";

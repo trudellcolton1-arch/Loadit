@@ -128,6 +128,8 @@ export interface RoutedIntent {
     amount_usd: number;
     payment_method: PaymentMethod;
     loadit_fee_usd: number;
+    fee_pct: number;
+    total_usd: number;
     legacy_fee_usd: number;
     savings_usd: number;
     savings_pct: number;
@@ -161,6 +163,8 @@ export async function routeIntent(intent: Intent): Promise<RoutedIntent> {
       amount_usd: intent.amount_usd,
       payment_method: intent.payment_method,
       loadit_fee_usd: r.loaditFee,
+      fee_pct: r.feePct,
+      total_usd: r.total,
       legacy_fee_usd: r.legacyFee,
       savings_usd: r.savingsAbs,
       savings_pct: r.savingsPct,
@@ -175,11 +179,12 @@ export async function routeIntent(intent: Intent): Promise<RoutedIntent> {
 
 export function explainRoute(intent: Intent, r: ReturnType<typeof computeRoute>): string {
   const dest = intent.destination ? ` to ${intent.destination}` : "";
+  const cheaper = r.savingsPct > 0 ? ` — about ${r.savingsPct}% cheaper than the old way` : "";
   return (
     `Got it — moving ${formatUSD(intent.amount_usd)} from your ${intent.payment_method.toLowerCase()} ` +
-    `into ${intent.asset}${dest}. HQ routes this over ${r.network.name} for about ` +
-    `${formatUSD(r.loaditFee)} — versus ~${formatUSD(r.legacyFee)} the old way, ~${r.savingsPct}% cheaper — ` +
-    `settling in ${r.eta}. It's non-custodial: Loadit converts and routes, it never holds your funds.`
+    `into ${intent.asset}${dest}, settling over ${r.network.name} in ${r.eta}. ` +
+    `Loadit's flat 0.75% fee is ${formatUSD(r.loaditFee)}, so you pay ${formatUSD(r.total)} all in${cheaper}. ` +
+    `It's non-custodial: Loadit converts and routes, it never holds your funds.`
   );
 }
 

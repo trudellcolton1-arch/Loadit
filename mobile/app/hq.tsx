@@ -101,8 +101,14 @@ export default function HQ() {
                       <Stat styles={styles} label="Settles" value={m.route.eta} />
                     </View>
                     <View style={styles.statsRow}>
-                      <Stat styles={styles} label="Cost" value={money(m.route.loadit_fee_usd)} />
-                      <Stat styles={styles} label="You save" value={money(m.route.savings_usd)} sub={`${m.route.savings_pct}% cheaper`} accent />
+                      <Stat styles={styles} label="Loadit fee (0.75%)" value={money(m.route.loadit_fee_usd)} />
+                      <Stat
+                        styles={styles}
+                        label="You pay"
+                        value={money(m.route.total_usd ?? m.route.amount_usd + m.route.loadit_fee_usd)}
+                        sub={m.route.savings_pct > 0 ? `${m.route.savings_pct}% cheaper` : "all in"}
+                        accent
+                      />
                     </View>
                     <TouchableOpacity
                       style={styles.buy}

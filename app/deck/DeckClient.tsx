@@ -272,16 +272,16 @@ const SLIDES: ReactNode[] = [
   /* 08 — BUSINESS MODEL */
   <div key="model" className="deck-body">
     <Eyebrow>07 · Business Model</Eyebrow>
-    <h2 className="deck-h2">A flat 3% convenience fee on every conversion.</h2>
+    <h2 className="deck-h2">A flat 0.75% fee — cheaper than the bank.</h2>
     <div className="deck-two">
       <ul className="deck-list">
         <li>
-          <b>3% flat, shown before you confirm.</b> One transparent fee on the amount
+          <b>0.75% flat, shown before you confirm.</b> One transparent fee on the amount
           converted — no hidden spread, no surprise math.
         </li>
         <li>
-          <b>Still the cheapest way in.</b> 3% all-in beats Bitcoin ATMs (7–15%) and card
-          on-ramps (4–5%). Transparency is the wedge.
+          <b>Undercuts every rail.</b> 0.75% beats bank &amp; debit on-ramps (1–2%), cards
+          (4–5%), and Bitcoin ATMs (7–15%). Price is the moat.
         </li>
         <li>
           <b>Non-custodial by design</b> — licensed partners settle the money, so Loadit
@@ -291,9 +291,9 @@ const SLIDES: ReactNode[] = [
       <div className="deck-econ glass">
         <div className="deck-econ-title font-mono">Unit economics · $150 order</div>
         <div className="deck-econ-row"><span>Order value</span><b>$150.00</b></div>
-        <div className="deck-econ-row"><span>Convenience fee (3%)</span><b className="text-rail-gradient">$4.50</b></div>
+        <div className="deck-econ-row"><span>Convenience fee (0.75%)</span><b className="text-rail-gradient">$1.13</b></div>
         <div className="deck-econ-row"><span>Marginal cost</span><b>~$0.05</b></div>
-        <div className="deck-econ-row deck-econ-total"><span>Contribution</span><b>~$4.45</b></div>
+        <div className="deck-econ-row deck-econ-total"><span>Contribution</span><b>~$1.08</b></div>
       </div>
     </div>
   </div>,
@@ -304,10 +304,10 @@ const SLIDES: ReactNode[] = [
     <h2 className="deck-h2">Revenue scales with usage, not store count.</h2>
     <div className="deck-scenarios">
       {[
-        { k: "Wedge", u: "10K", tx: "1×", gmv: "$1.5M/mo", rev: "$540K", w: 8, hot: false },
-        { k: "Traction", u: "100K", tx: "2×", gmv: "$30M/mo", rev: "$10.8M", w: 34, hot: true },
-        { k: "Scale", u: "1M", tx: "2×", gmv: "$400M/mo", rev: "$144M", w: 72, hot: false },
-        { k: "Cash App scale", u: "57M", tx: "2×", gmv: "$20B/mo", rev: "$7.2B", w: 100, hot: false },
+        { k: "Wedge", u: "10K", tx: "1×", gmv: "$1.5M/mo", rev: "$135K", w: 8, hot: false },
+        { k: "Traction", u: "100K", tx: "2×", gmv: "$30M/mo", rev: "$2.7M", w: 34, hot: true },
+        { k: "Scale", u: "1M", tx: "2×", gmv: "$400M/mo", rev: "$36M", w: 72, hot: false },
+        { k: "Cash App scale", u: "57M", tx: "2×", gmv: "$20B/mo", rev: "$2.0B", w: 100, hot: false },
       ].map((s) => (
         <div key={s.k} className={`deck-scn ${s.hot ? "deck-scn-hot" : ""}`}>
           <div className="deck-scn-top">
@@ -321,7 +321,7 @@ const SLIDES: ReactNode[] = [
         </div>
       ))}
     </div>
-    <p className="deck-note font-mono">3% convenience fee, ~$150–200 avg order. Illustrative, not a forecast.</p>
+    <p className="deck-note font-mono">0.75% convenience fee, ~$150–200 avg order. Illustrative, not a forecast.</p>
   </div>,
 
   /* 10 — TRACTION */

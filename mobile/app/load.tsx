@@ -50,6 +50,7 @@ export default function Load() {
   if (ready && !session) return <Redirect href="/login" />;
 
   const amt = Math.max(1, parseFloat(amount) || 0);
+  const fee = Math.round(amt * 0.0075 * 100) / 100;
 
   const startCheckout = async () => {
     if (!wallet.trim()) {
@@ -184,11 +185,15 @@ export default function Load() {
                 autoCapitalize="none"
                 autoCorrect={false}
               />
+              <View style={styles.feeCard}>
+                <View style={styles.feeRow}><Text style={styles.feeLabel}>Amount</Text><Text style={styles.feeVal}>${amt.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Text></View>
+                <View style={styles.feeRow}><Text style={styles.feeLabel}>Loadit fee (0.75%)</Text><Text style={styles.feeVal}>${fee.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Text></View>
+                <View style={[styles.feeRow, styles.feeTotal]}><Text style={styles.feeTotalLabel}>You pay</Text><Text style={styles.feeTotalVal}>${(amt + fee).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Text></View>
+              </View>
               <View style={styles.qrHero}>
                 <Image source={require("../assets/mark.png")} style={styles.qrMark} />
                 <Text style={styles.caption}>
-                  ${amt.toLocaleString()} → {coin}, delivered straight to this wallet.{"\n"}
-                  Loadit never holds your funds.
+                  {coin} delivered straight to this wallet. Loadit never holds your funds.
                 </Text>
               </View>
               <TouchableOpacity style={styles.cta} onPress={startCheckout} disabled={busy}>
@@ -254,6 +259,13 @@ const makeStyles = (t: Theme) =>
     amountInput: { color: t.text, fontSize: 34, fontWeight: "800", minWidth: 120, textAlign: "left", padding: 0 },
     caption: { color: t.dim, fontSize: 13, textAlign: "center", marginTop: 10, lineHeight: 19 },
     walletInput: { backgroundColor: t.card, borderColor: t.border, borderWidth: 1, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14, color: t.text, fontSize: 15 },
+    feeCard: { backgroundColor: t.card, borderColor: t.border, borderWidth: 1, borderRadius: 14, padding: 14, marginTop: 14 },
+    feeRow: { flexDirection: "row", justifyContent: "space-between", paddingVertical: 5 },
+    feeLabel: { color: t.dim, fontSize: 13 },
+    feeVal: { color: t.text, fontSize: 13, fontWeight: "600" },
+    feeTotal: { borderTopColor: t.border, borderTopWidth: 1, marginTop: 4, paddingTop: 9 },
+    feeTotalLabel: { color: t.text, fontSize: 14, fontWeight: "700" },
+    feeTotalVal: { color: t.accentText, fontSize: 15, fontWeight: "800" },
     qrHero: { alignItems: "center", marginTop: 26, gap: 6 },
     qrMark: { width: 170, height: 170 },
     cta: { backgroundColor: t.button, borderRadius: 999, paddingVertical: 16, alignItems: "center", marginTop: 26 },

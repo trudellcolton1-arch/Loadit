@@ -18,6 +18,10 @@ export default function Buy() {
   const [loading, setLoading] = useState(false);
   const [url, setUrl] = useState<string | null>(null);
 
+  const amt = Math.max(1, Number(amount) || 0);
+  const fee = Math.round(amt * 0.0075 * 100) / 100;
+  const fmt = (n: number) => `$${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
   const cont = async () => {
     if (!wallet.trim()) {
       Alert.alert("Wallet needed", "Enter the wallet address where you want to receive your crypto. Loadit is non-custodial — the asset goes straight to you.");
@@ -57,6 +61,12 @@ export default function Buy() {
     <SafeAreaView style={styles.wrap} edges={["bottom"]}>
       <View style={styles.body}>
         <Text style={styles.summary}>Buy <Text style={styles.hl}>${Number(amount).toLocaleString()}</Text> of <Text style={styles.hl}>{asset}</Text></Text>
+
+        <View style={styles.feeCard}>
+          <View style={styles.feeRow}><Text style={styles.feeLabel}>Amount</Text><Text style={styles.feeVal}>{fmt(amt)}</Text></View>
+          <View style={styles.feeRow}><Text style={styles.feeLabel}>Loadit fee (0.75%)</Text><Text style={styles.feeVal}>{fmt(fee)}</Text></View>
+          <View style={[styles.feeRow, styles.feeTotal]}><Text style={styles.feeTotalLabel}>You pay</Text><Text style={styles.feeTotalVal}>{fmt(amt + fee)}</Text></View>
+        </View>
 
         <Text style={styles.label}>Your wallet address ({asset})</Text>
         <TextInput
@@ -106,6 +116,13 @@ const makeStyles = (t: Theme) =>
     body: { padding: 20, gap: 8 },
     summary: { color: t.text, fontSize: 22, fontWeight: "700", marginBottom: 8 },
     hl: { color: t.accentText },
+    feeCard: { backgroundColor: t.card, borderColor: t.border, borderWidth: 1, borderRadius: 16, padding: 14, marginTop: 4 },
+    feeRow: { flexDirection: "row", justifyContent: "space-between", paddingVertical: 5 },
+    feeLabel: { color: t.dim, fontSize: 13 },
+    feeVal: { color: t.text, fontSize: 13, fontWeight: "600" },
+    feeTotal: { borderTopColor: t.border, borderTopWidth: 1, marginTop: 4, paddingTop: 9 },
+    feeTotalLabel: { color: t.text, fontSize: 14, fontWeight: "700" },
+    feeTotalVal: { color: t.accentText, fontSize: 15, fontWeight: "800" },
     label: { color: t.faint, fontSize: 11, letterSpacing: 1, textTransform: "uppercase", marginTop: 12 },
     input: { backgroundColor: t.surface, borderColor: t.border, borderWidth: 1, borderRadius: 16, paddingHorizontal: 16, paddingVertical: 14, color: t.text, fontSize: 14, marginTop: 6 },
     hint: { color: t.faint, fontSize: 12, marginTop: 6, lineHeight: 17 },
