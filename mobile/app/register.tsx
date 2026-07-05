@@ -39,17 +39,20 @@ export default function Register() {
         </Text>
 
         <Step styles={styles} n="1" title="Deposit your cash at the register">
-          Open Cash App → Money → <Text style={styles.hl}>Deposit paper money</Text>.
-          Show its deposit code at the register of Walmart, Walgreens, 7-Eleven,
-          CVS, Dollar General and 90k+ other stores, and hand the cashier your
-          cash. It lands on your balance in seconds.
-          {"\n"}
-          <Text style={styles.link} onPress={() => Linking.openURL("https://cash.app/launch")}>
-            Open Cash App →
+          <Text style={styles.stepBody}>
+            Open Cash App → Money → <Text style={styles.hl}>Deposit paper money</Text>.
+            Show its deposit code at the register of Walmart, Walgreens, 7-Eleven,
+            CVS, Dollar General and 90k+ other stores, and hand the cashier your
+            cash. It lands on your balance in seconds.
+            {"\n"}
+            <Text style={styles.link} onPress={() => Linking.openURL("https://cash.app/launch")}>
+              Open Cash App →
+            </Text>
           </Text>
         </Step>
 
         <Step styles={styles} n="2" title="Pick what you want">
+          <Text style={styles.stepLabel}>Asset</Text>
           <View style={styles.row}>
             {ASSETS.map((a) => (
               <TouchableOpacity key={a} style={[styles.chip, asset === a && styles.chipOn]} onPress={() => setAsset(a)}>
@@ -57,7 +60,8 @@ export default function Register() {
               </TouchableOpacity>
             ))}
           </View>
-          <View style={[styles.row, { marginTop: 8 }]}>
+          <Text style={[styles.stepLabel, { marginTop: 12 }]}>Amount</Text>
+          <View style={styles.row}>
             {AMOUNTS.map((v) => (
               <TouchableOpacity key={v} style={[styles.chip, amount === v && styles.chipOn]} onPress={() => setAmount(v)}>
                 <Text style={[styles.chipText, amount === v && styles.chipTextOn]}>${v}</Text>
@@ -67,9 +71,11 @@ export default function Register() {
         </Step>
 
         <Step styles={styles} n="3" title="Buy through a licensed partner">
-          Pay with your Cash App card or Apple Pay in Coinbase or Stripe&apos;s
-          secure checkout. The {asset} is delivered straight to your own wallet —
-          Loadit never holds your money.
+          <Text style={styles.stepBody}>
+            Pay with your Cash App card or Apple Pay in Coinbase or Stripe&apos;s
+            secure checkout. The {asset} is delivered straight to your own wallet —
+            Loadit never holds your money.
+          </Text>
         </Step>
 
         <TouchableOpacity
@@ -98,7 +104,7 @@ function Step({ styles, n, title, children }: { styles: Styles; n: string; title
         <View style={styles.badge}><Text style={styles.badgeText}>{n}</Text></View>
         <Text style={styles.stepTitle}>{title}</Text>
       </View>
-      <Text style={styles.stepBody}>{children}</Text>
+      <View style={styles.stepBodyWrap}>{children}</View>
     </View>
   );
 }
@@ -114,7 +120,9 @@ const makeStyles = (t: Theme) =>
     badge: { width: 26, height: 26, borderRadius: 13, backgroundColor: t.accentTint, alignItems: "center", justifyContent: "center" },
     badgeText: { color: t.accentText, fontWeight: "800", fontSize: 13 },
     stepTitle: { color: t.text, fontWeight: "700", fontSize: 15, flex: 1 },
-    stepBody: { color: t.dim, fontSize: 13, lineHeight: 19, marginTop: 8 },
+    stepBodyWrap: { marginTop: 8 },
+    stepBody: { color: t.dim, fontSize: 13, lineHeight: 19 },
+    stepLabel: { color: t.faint, fontSize: 10, letterSpacing: 1, textTransform: "uppercase", marginBottom: 8 },
     hl: { color: t.text, fontWeight: "600" },
     link: { color: t.accentText, fontWeight: "700" },
     row: { flexDirection: "row", gap: 8, flexWrap: "wrap" },
