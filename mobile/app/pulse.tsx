@@ -321,11 +321,21 @@ export default function Pulse() {
       const deviceId = await getDeviceId();
       const res = await syncPackets(token, queue, deviceId, me!.id);
       if (!res) { Alert.alert("Offline", "Couldn't reach Hylaq — your Pulses stay pending and will settle later."); return; }
-      const settled = res.results.filter((r) => r.status === "accepted").map((r) => r.nonce);
+      const results = res.results || [];
+      const settled = results.filter((r) => r.status === "accepted").map((r) => r.nonce);
       if (settled.length) await clearSettled(settled);
       await refreshQueue();
       setPassword("");
-      Alert.alert("Synced", `${settled.length} Pulse${settled.length === 1 ? "" : "s"} settled into your wallet.`);
+      if (settled.length) {
+        Alert.alert("Synced", `${settled.length} Pulse${settled.length === 1 ? "" : "s"} settled into your wallet.`);
+      } else {
+        // Surface exactly why Hylaq didn't settle, so we can see if it's a
+        // missing escrow (no drop) vs a verification failure.
+        const why = results.length
+          ? results.map((r) => `• ${r.status}${r.verificationResult ? ` · ${r.verificationResult}` : ""}${r.resolutionOutcome ? ` — ${r.resolutionOutcome}` : ""}`).join("\n")
+          : "Hylaq returned no result for these Pulses — the matching escrow wasn't found (the pulse-drop lock hasn't happened server-side yet).";
+        Alert.alert("Not settled yet", `Hylaq didn't accept ${queue.length} pending Pulse${queue.length === 1 ? "" : "s"}:\n\n${why}`);
+      }
     } catch {
       Alert.alert("Sync failed", "Try again when you have a stronger connection.");
     } finally {
