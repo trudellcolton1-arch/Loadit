@@ -1,4 +1,5 @@
-import { getDeviceId, type ProximityEvidence, type ClaimPacket } from "./pulse";
+import { sha256 } from "@noble/hashes/sha256";
+import { getDeviceId, type ProximityEvidence, type ClaimPacket, type PulseManifest } from "./pulse";
 import { publicKeySpkiBase64, signBase64, verifyBase64 } from "./deviceKey";
 
 /**
@@ -34,6 +35,10 @@ export interface PulseNote {
   asset: string;
   memo?: string;
   createdAt: number;
+  /** Hylaq's LOCKED escrow id (drop.id) — what the claim settles against. */
+  pulseId?: string;
+  /** The signed manifest Hylaq generated, beamed so the receiver claims offline. */
+  manifest?: PulseManifest;
   evidence?: ProximityEvidence;
   /** base64 DER signature over canonicalBody(note) by the sender device key. */
   sig: string;
@@ -53,6 +58,7 @@ function canonicalBody(n: Omit<PulseNote, "sig">): string {
     n.asset,
     n.memo ?? "",
     n.createdAt,
+    n.pulseId ?? "",
   ]);
 }
 
@@ -71,6 +77,8 @@ export interface MakeNoteParams {
   memo?: string;
   to?: string;
   createdAt: number; // caller supplies the clock (Date.now unavailable in some contexts)
+  pulseId?: string;
+  manifest?: PulseManifest;
   evidence?: ProximityEvidence;
 }
 
@@ -88,10 +96,30 @@ export async function makePulseNote(p: MakeNoteParams): Promise<PulseNote> {
     asset: p.asset || "USDC",
     memo: p.memo,
     createdAt: p.createdAt,
+    pulseId: p.pulseId,
+    manifest: p.manifest,
     evidence: p.evidence,
   };
   const sig = await signBase64(canonicalBody(body));
   return { ...body, sig };
+}
+
+/** hex SHA-256 of a UTF-8 string (no TextEncoder — Hermes lacks it). */
+function sha256Hex(s: string): string {
+  const bytes: number[] = [];
+  for (let i = 0; i < s.length; i++) {
+    let c = s.charCodeAt(i);
+    if (c < 0x80) bytes.push(c);
+    else if (c < 0x800) bytes.push(0xc0 | (c >> 6), 0x80 | (c & 0x3f));
+    else if (c >= 0xd800 && c <= 0xdbff) {
+      c = 0x10000 + ((c & 0x3ff) << 10) + (s.charCodeAt(++i) & 0x3ff);
+      bytes.push(0xf0 | (c >> 18), 0x80 | ((c >> 12) & 0x3f), 0x80 | ((c >> 6) & 0x3f), 0x80 | (c & 0x3f));
+    } else bytes.push(0xe0 | (c >> 12), 0x80 | ((c >> 6) & 0x3f), 0x80 | (c & 0x3f));
+  }
+  const h = sha256(Uint8Array.from(bytes));
+  let out = "";
+  for (let i = 0; i < h.length; i++) out += h[i].toString(16).padStart(2, "0");
+  return out;
 }
 
 /** Verify a received note's signature against the sender key it carries. */
@@ -136,12 +164,20 @@ export async function noteToClaimPacket(
   monotonicClock: number
 ): Promise<ClaimPacket> {
   const deviceId = await getDeviceId();
+  const man = n.manifest;
+  // payloadHash: prefer the value Hylaq put in the manifest; else derive it from
+  // the manifest payloads with the same canonicalization the server uses.
+  const payloadHash = man?.payloadHash
+    ?? (man?.payloads !== undefined ? sha256Hex(JSON.stringify(man.payloads)) : undefined);
   const packet: Omit<ClaimPacket, "signature"> = {
-    pulseId: n.id,
+    pulseId: n.pulseId || n.id,
     handleId: collectorHandleId,
     deviceId,
     nonce: n.id,
     monotonicClock,
+    manifestId: man?.id,
+    manifestVersion: man?.version,
+    payloadHash,
     evidence: { ...(n.evidence || {}), beaconToken: n.sig },
     integritySignals: {},
     amountUsd: n.amountUsd,

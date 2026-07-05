@@ -14,7 +14,7 @@ import { API_BASE } from "@/lib/config";
 import { mintApiToken } from "@/lib/hylaqWallet";
 import { publicKeySpkiBase64 } from "@/lib/deviceKey";
 import {
-  getDeviceId, registerDevice, syncPackets, dropPulse,
+  getDeviceId, registerDevice, syncPackets, dropPulse, fetchManifest, cancelDrop,
   readQueue, enqueueClaim, clearSettled,
   type ClaimPacket, type ProximityEvidence,
 } from "@/lib/pulse";
@@ -81,6 +81,8 @@ export default function Pulse() {
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<PulseNote | null>(null);
   const [escrowLocked, setEscrowLocked] = useState(false);
+  const [dropId, setDropId] = useState<string | null>(null);
+  const tokenRef = useRef<string | null>(null);
 
   // Tap-first handoff: "tap" = Bluetooth (MultipeerConnectivity), "qr" = fallback.
   const [handoff, setHandoff] = useState<"tap" | "qr">("qr");
@@ -199,8 +201,26 @@ export default function Pulse() {
   if (ready && !session) return <Redirect href="/login" />;
 
   const resetBeam = () => {
-    setNote(null); setSent(false); setTapStatus("");
+    setNote(null); setSent(false); setTapStatus(""); setDropId(null);
     setAmountText("20"); setMemo(""); setToUser(null);
+  };
+
+  /** Cancel an unclaimed drop and refund the escrow back to the sender. */
+  const cancelBeam = async () => {
+    if (!dropId || !me) { resetBeam(); return; }
+    setBusy(true);
+    try {
+      const token = tokenRef.current || (await ensureToken());
+      if (!token) { resetBeam(); return; }
+      const r = await cancelDrop(token, me.id, dropId);
+      if (r?.canceled || r?.refundTxHash) Alert.alert("Refunded", "The funds were returned to your wallet.");
+      else if (r?.error) Alert.alert("Couldn't cancel", r.error);
+      resetBeam();
+    } catch {
+      Alert.alert("Couldn't cancel", "Try again from your wallet.");
+    } finally {
+      setBusy(false);
+    }
   };
 
   const stopReceiving = () => {
@@ -245,30 +265,62 @@ export default function Pulse() {
     return token;
   };
 
-  /** Beam: lock escrow (best-effort while online), sign a note, show its QR. */
+  /**
+   * Beam: lock the funds in Hylaq escrow (POST /api/wallet/pulse-drop, one-shot
+   * with the wallet password + GPS), fetch the signed manifest, and sign a note
+   * that carries the pulseId + manifest so the receiver can claim fully offline.
+   */
   const beam = async () => {
     if (amount < 1) { Alert.alert("Amount", "Enter at least $1."); return; }
+    if (!online) { Alert.alert("Go online to lock funds", "Beaming needs a connection to lock the money in escrow. Reconnect and try again."); return; }
+    if (!me) { Alert.alert("Hylaq needed", "Log in with Hylaq to send."); return; }
+    if (!password) { Alert.alert("Wallet password", "Enter your Hylaq wallet password to lock the funds."); return; }
     setBusy(true);
     try {
+      const token = await ensureToken();
+      if (!token) return; // ensureToken already alerted
+      tokenRef.current = token; // kept for a cancel/refund of this same drop
+
+      // GPS is required by the drop (proximity is enforced server-side).
+      let coords: { lat: number; lng: number } | null = null;
+      try {
+        const perm = await Location.requestForegroundPermissionsAsync();
+        if (perm.status === "granted") {
+          const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+          coords = { lat: loc.coords.latitude, lng: loc.coords.longitude };
+        }
+      } catch { /* handled below */ }
+      if (!coords) { Alert.alert("Location needed", "Turn on location so Loadit can lock the funds in escrow for the person nearby."); return; }
+
       const deviceId = await getDeviceId();
-      let locked = false;
-      if (online) {
-        const token = await ensureToken();
-        if (!token) return; // ensureToken already alerted
-        const drop = await dropPulse(token, {
-          handleId: me!.id, deviceId, amountUsd: amount, asset: "USDC",
-          noteId: `${deviceId}:${Date.now()}`, toHandle: toUser?.handle,
-        });
-        locked = Boolean(drop?.locked);
+      const drop = await dropPulse(token, {
+        handleId: me.id, password,
+        lat: coords.lat, lng: coords.lng,
+        recipientHandle: toUser?.handle, // omitted → public drop
+        amountUsd: amount, currency: "USDC",
+        message: memo.trim() || undefined,
+        offlinePolicy: "proximity_offline_settle_online",
+        offlineClaimWindow: 86400,
+        verificationMode: "gps",
+        radiusMeters: 100,
+      });
+      if (!drop || drop.error || !drop.id) {
+        Alert.alert("Couldn't lock funds", drop?.error || "Hylaq didn't confirm the escrow. Check your balance and password.");
+        return;
       }
+
+      // Fetch the signed manifest to beam alongside the note (offline claiming).
+      const manifest = await fetchManifest(token, { pulseId: drop.id, handleId: me.id, deviceId });
+
       const evidence = await captureEvidence();
       if (nearby[0]) { evidence.bleRssi = nearby[0].rssi ?? undefined; evidence.bleDeviceId = nearby[0].id; }
       const n = await makePulseNote({
-        fromHandle: me?.handle, fromHandleId: me?.id, to: toUser?.handle,
+        fromHandle: me.handle, fromHandleId: me.id, to: toUser?.handle,
         amountUsd: amount, asset: "USDC", memo: memo.trim() || undefined,
-        createdAt: Date.now(), evidence,
+        createdAt: Date.now(), pulseId: drop.id, manifest: manifest ?? undefined, evidence,
       });
-      setEscrowLocked(locked);
+      setDropId(drop.id);
+      setEscrowLocked(drop.status === "LOCKED" || Boolean(drop.id));
       setHandoff(tapAvailable() ? "tap" : "qr");
       setSent(false);
       setNote(n);
@@ -458,7 +510,7 @@ export default function Pulse() {
                     <Text style={styles.tapStatus}>{tapStatus}</Text>
                     <Text style={styles.noteSub}>Hold your phone against theirs. The money crosses over Bluetooth + Wi-Fi — no internet needed.</Text>
                     <TouchableOpacity style={styles.secondaryCta} onPress={() => setHandoff("qr")}><Text style={styles.secondaryText}>Show QR instead</Text></TouchableOpacity>
-                    <TouchableOpacity onPress={resetBeam}><Text style={styles.back}>Cancel</Text></TouchableOpacity>
+                    <TouchableOpacity onPress={cancelBeam} disabled={busy}><Text style={styles.back}>Cancel &amp; refund</Text></TouchableOpacity>
                   </>
                 )
               ) : (

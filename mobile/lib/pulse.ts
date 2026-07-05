@@ -66,6 +66,11 @@ export interface ClaimPacket {
   deviceId: string;
   nonce: string;
   monotonicClock: number;
+  /** From the beamed manifest — Hylaq matches these to the locked escrow. */
+  manifestId?: string;
+  manifestVersion?: number;
+  /** SHA-256 of the manifest's canonical payloads (payload_hash_mismatch if wrong). */
+  payloadHash?: string;
   evidence: ProximityEvidence;
   integritySignals: {
     appIntegrityToken?: string;
@@ -88,7 +93,9 @@ export interface SyncResult {
 
 /* ------------------------------------------------------------- API calls */
 
-async function authed<T>(method: "GET" | "POST", path: string, token: string, body?: unknown): Promise<T | null> {
+type Method = "GET" | "POST" | "DELETE";
+
+async function authed<T>(method: Method, path: string, token: string, body?: unknown): Promise<T | null> {
   try {
     const res = await fetch(`${BASE}${path}`, {
       method,
@@ -106,6 +113,27 @@ async function authed<T>(method: "GET" | "POST", path: string, token: string, bo
   }
 }
 
+/**
+ * Like `authed` but returns the parsed body even on a non-2xx status, so the
+ * caller can surface server error text (e.g. "Insufficient USDC balance. You
+ * have $X, need $Y"). Injects a friendly message for rate limits / network.
+ */
+async function authedRaw<T extends { error?: string }>(method: Method, path: string, token: string, body?: unknown): Promise<T | null> {
+  try {
+    const res = await fetch(`${BASE}${path}`, {
+      method,
+      headers: { Authorization: `Bearer ${token}`, ...(body ? { "Content-Type": "application/json" } : {}) },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    const data = (await res.json().catch(() => ({}))) as T;
+    if (res.status === 429) return { ...(data as object), error: (data.error as string) || "Too many requests — wait a moment and try again." } as T;
+    return data;
+  } catch (e) {
+    console.warn(`[pulse] ${method} ${path} failed`, String(e));
+    return null;
+  }
+}
+
 /** Register this device's public key with Hylaq (once, while online). */
 export async function registerDevice(token: string, p: RegisterDeviceParams) {
   return authed<{ id: string; registered: boolean; serverTime: string }>(
@@ -116,20 +144,74 @@ export async function registerDevice(token: string, p: RegisterDeviceParams) {
   );
 }
 
+export interface DropResult {
+  id?: string;
+  status?: string; // "LOCKED" when the escrow is funded
+  fundingTxReference?: string;
+  error?: string;
+  [k: string]: unknown;
+}
+
 /**
- * Lock money in escrow for an offline note while still online (the sender side).
- * Returns null if the drop endpoint isn't live yet — the caller may still beam a
- * signed note (sender-vouched) and settlement reconciles on sync.
+ * Escrow-lock (POST /api/wallet/pulse-drop): one-shot. Hylaq verifies the wallet
+ * password, moves the USDC from the sender's wallet into the Pulse escrow
+ * on-chain, creates the drop, and (for offline policies) generates the signed
+ * manifest — all in this single call. Returns the LOCKED drop.id, or a typed
+ * error (insufficient balance, invalid password, escrow not configured, …).
+ * The escrow endpoint is authed by the same JWT and shares the TRANSACTION
+ * rate bucket; body.handleId must equal the token's handleId.
  */
 export async function dropPulse(
   token: string,
-  p: { handleId: string; deviceId: string; amountUsd: number; asset: string; noteId: string; toHandle?: string }
-) {
-  return authed<{ escrowId: string; locked: boolean; expiresAt?: string }>(
-    "POST",
-    "/api/wallet/pulse-offline/drop",
+  p: {
+    handleId: string;
+    password: string;
+    lat: number;
+    lng: number;
+    recipientHandle?: string; // targeted; omit for a public drop
+    isPublic?: boolean;
+    amountUsd: number;
+    currency?: string;
+    message?: string;
+    radiusMeters?: number;
+    offlinePolicy?: string;
+    offlineClaimWindow?: number;
+    verificationMode?: string;
+    expiresAt?: string;
+  }
+): Promise<DropResult | null> {
+  const payloads: Array<{ type: string; data: Record<string, unknown> }> = [
+    { type: "money", data: { amount: Math.round(p.amountUsd * 100) / 100, currency: p.currency || "USDC" } },
+  ];
+  if (p.message) payloads.push({ type: "message", data: { text: p.message } });
+
+  const body: Record<string, unknown> = {
+    handleId: p.handleId,
+    password: p.password,
+    lat: p.lat,
+    lng: p.lng,
+    payloads,
+    radiusMeters: p.radiusMeters ?? 100,
+    claimType: "SINGLE",
+    // offline-capable policy is REQUIRED or the manifest endpoint refuses.
+    offlinePolicy: p.offlinePolicy || "proximity_offline_settle_online",
+    offlineClaimWindow: p.offlineClaimWindow ?? 86400,
+    verificationMode: p.verificationMode || "gps",
+  };
+  if (p.recipientHandle) body.recipientHandle = p.recipientHandle;
+  else body.isPublic = true;
+  if (p.expiresAt) body.expiresAt = p.expiresAt;
+
+  return authedRaw<DropResult>("POST", "/api/wallet/pulse-drop", token, body);
+}
+
+/** Cancel an unclaimed drop and refund the escrow to the sender (returns refundTxHash). */
+export async function cancelDrop(token: string, handleId: string, dropId: string) {
+  return authed<{ refundTxHash?: string; canceled?: boolean; error?: string }>(
+    "DELETE",
+    "/api/wallet/pulse-drop",
     token,
-    p
+    { handleId, dropId }
   );
 }
 
@@ -149,6 +231,29 @@ export async function cacheManifest(
     `/api/wallet/pulse-offline/manifest?${params.toString()}`,
     token
   );
+}
+
+export interface PulseManifest {
+  id?: string;
+  version?: number;
+  payloadHash?: string;
+  payloads?: unknown;
+  [k: string]: unknown;
+}
+
+/**
+ * Sender fetches the signed manifest for a LOCKED drop, then beams the whole
+ * JSON to the receiver alongside the pulseId — that's what lets a fully-offline
+ * receiver build a claim without ever contacting Hylaq. Requires the drop to
+ * have an offline-capable policy.
+ */
+export async function fetchManifest(
+  token: string,
+  q: { pulseId: string; handleId: string; deviceId: string }
+): Promise<PulseManifest | null> {
+  const params = new URLSearchParams({ pulseId: q.pulseId, handleId: q.handleId, deviceId: q.deviceId, currentVersion: "0" });
+  const res = await authed<{ manifest?: PulseManifest }>("GET", `/api/wallet/pulse-offline/manifest?${params.toString()}`, token);
+  return res?.manifest ?? null;
 }
 
 /** Upload queued claim packets (max 10) — where USDC leaves escrow. */
