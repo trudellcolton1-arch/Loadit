@@ -6,7 +6,9 @@ import { Redirect, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@/lib/authContext";
 import { getMyHandle, type HandleProfile } from "@/lib/api";
+import { API_BASE } from "@/lib/config";
 import { useTheme, type Theme } from "@/lib/theme";
+import { HandleAvatar } from "@/components/HandleAvatar";
 
 /**
  * PROFILE — the user's Hylaq identity inside Loadit.
@@ -26,6 +28,7 @@ export default function Profile() {
   const router = useRouter();
   const [state, setState] = useState<"loading" | "linked" | "unlinked" | "error">("loading");
   const [profile, setProfile] = useState<HandleProfile | null>(null);
+  const [receiveNet, setReceiveNet] = useState("");
 
   useEffect(() => {
     if (!ready) return;
@@ -45,8 +48,6 @@ export default function Profile() {
     })();
   }, [ready, session]);
 
-  if (ready && !session) return <Redirect href="/login" />;
-
   const addresses = profile
     ? ([
         ["Solana", profile.addresses.solana],
@@ -56,16 +57,30 @@ export default function Profile() {
       ].filter(([, v]) => v) as [string, string][])
     : [];
 
+  useEffect(() => {
+    if (addresses.length && !receiveNet) setReceiveNet(addresses[0][0]);
+  }, [addresses, receiveNet]);
+
+  if (ready && !session) return <Redirect href="/login" />;
+
+  const activeAddr = (addresses.find(([n]) => n === receiveNet) || addresses[0])?.[1] || null;
+
   return (
     <SafeAreaView style={styles.wrap} edges={["bottom"]}>
       <ScrollView contentContainerStyle={styles.scroll}>
         <View style={styles.hero}>
-          <Image source={require("../assets/hylaq-logo.png")} style={styles.logo} />
+          {state === "linked" && profile ? (
+            <HandleAvatar handle={profile.handle} avatarUrl={profile.avatarUrl} size={96} />
+          ) : (
+            <Image source={require("../assets/hylaq-logo.png")} style={styles.logo} />
+          )}
           {state === "loading" && <ActivityIndicator color={t.accentText} style={{ marginTop: 18 }} />}
 
           {state === "linked" && profile && (
             <>
-              <Text style={styles.handle}>@{profile.handle}</Text>
+              {profile.displayName && <Text style={styles.displayName}>{profile.displayName}</Text>}
+              <Text style={profile.displayName ? styles.handleSmall : styles.handle}>@{profile.handle}</Text>
+              {profile.bio ? <Text style={styles.bio}>{profile.bio}</Text> : null}
               <View style={styles.badgeRow}>
                 <View style={styles.hylaqBadge}>
                   <Image source={require("../assets/hylaq-logo.png")} style={styles.badgeIcon} />
@@ -110,13 +125,29 @@ export default function Profile() {
 
             {addresses.length > 0 && (
               <View style={styles.card}>
-                <Text style={styles.label}>Value lands at</Text>
-                {addresses.map(([net, addr]) => (
-                  <View key={net} style={styles.addrRow}>
-                    <Text style={styles.addrNet}>{net}</Text>
-                    <Text style={styles.addrVal}>{short(addr)}</Text>
+                <Text style={styles.label}>Top up your wallet</Text>
+                <Text style={styles.receiveHint}>Show this QR or share an address to receive crypto into your wallet.</Text>
+                <View style={styles.netRow}>
+                  {addresses.map(([net]) => (
+                    <TouchableOpacity key={net} style={[styles.netChip, receiveNet === net && styles.netChipOn]} onPress={() => setReceiveNet(net)}>
+                      <Text style={[styles.netChipText, receiveNet === net && styles.netChipTextOn]}>{net}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+                {activeAddr && (
+                  <View style={styles.receiveBox}>
+                    <View style={styles.qrBox}>
+                      <Image source={{ uri: `${API_BASE}/api/qr?size=512&data=${encodeURIComponent(activeAddr)}` }} style={styles.qr} />
+                    </View>
+                    <Text style={styles.fullAddr}>{activeAddr}</Text>
+                    <TouchableOpacity
+                      style={styles.receiveShare}
+                      onPress={() => Share.share({ message: `My ${receiveNet} address (@${profile.handle} on Loadit):\n${activeAddr}` })}
+                    >
+                      <Text style={styles.receiveShareText}>Share {receiveNet} address</Text>
+                    </TouchableOpacity>
                   </View>
-                ))}
+                )}
               </View>
             )}
 
@@ -141,6 +172,9 @@ const makeStyles = (t: Theme) =>
     hero: { alignItems: "center", marginTop: 12, marginBottom: 8 },
     logo: { width: 88, height: 88, borderRadius: 24 },
     handle: { color: t.text, fontSize: 30, fontWeight: "800", letterSpacing: -0.5, marginTop: 16 },
+    displayName: { color: t.text, fontSize: 26, fontWeight: "800", letterSpacing: -0.5, marginTop: 14 },
+    handleSmall: { color: t.accentText, fontSize: 16, fontWeight: "700", marginTop: 2 },
+    bio: { color: t.dim, fontSize: 14, lineHeight: 20, textAlign: "center", marginTop: 8, paddingHorizontal: 24 },
     sub: { color: t.dim, fontSize: 14, lineHeight: 20, marginTop: 10, textAlign: "center", paddingHorizontal: 20 },
     badgeRow: { flexDirection: "row", gap: 8, marginTop: 12, alignItems: "center" },
     hylaqBadge: { flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: t.accentSoft, borderColor: t.accentTint, borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5 },
@@ -156,6 +190,18 @@ const makeStyles = (t: Theme) =>
     addrRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 8, borderTopColor: t.border, borderTopWidth: StyleSheet.hairlineWidth, marginTop: 8 },
     addrNet: { color: t.dim, fontSize: 13, fontWeight: "600" },
     addrVal: { color: t.text, fontSize: 13, fontFamily: "Courier" },
+    receiveHint: { color: t.dim, fontSize: 12, lineHeight: 17, marginTop: 6 },
+    netRow: { flexDirection: "row", gap: 8, flexWrap: "wrap", marginTop: 12 },
+    netChip: { borderColor: t.border, borderWidth: 1, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 8 },
+    netChipOn: { borderColor: t.accent, backgroundColor: t.accentSoft },
+    netChipText: { color: t.dim, fontWeight: "600", fontSize: 12 },
+    netChipTextOn: { color: t.text },
+    receiveBox: { alignItems: "center", marginTop: 16 },
+    qrBox: { backgroundColor: "#FFFFFF", borderRadius: 18, padding: 12 },
+    qr: { width: 200, height: 200, borderRadius: 6 },
+    fullAddr: { color: t.text, fontSize: 12, fontFamily: "Courier", textAlign: "center", marginTop: 12, paddingHorizontal: 8, lineHeight: 18 },
+    receiveShare: { marginTop: 12, backgroundColor: t.button, borderRadius: 999, paddingVertical: 12, paddingHorizontal: 22 },
+    receiveShareText: { color: t.buttonText, fontWeight: "700", fontSize: 13 },
     themeNote: { color: t.faint, fontSize: 12, textAlign: "center", marginTop: 16 },
     back: { color: t.faint, textAlign: "center", marginTop: 22, fontSize: 14 },
   });

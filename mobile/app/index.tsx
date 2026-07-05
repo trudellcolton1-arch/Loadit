@@ -1,13 +1,14 @@
 import { useMemo, useState } from "react";
 import {
   View, Text, TextInput, TouchableOpacity, ActivityIndicator,
-  ScrollView, StyleSheet, KeyboardAvoidingView, Platform, Image,
+  ScrollView, StyleSheet, KeyboardAvoidingView, Platform,
 } from "react-native";
 import { Redirect, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@/lib/authContext";
 import { routeIntent, type IntentResult } from "@/lib/api";
 import { useTheme, type Theme } from "@/lib/theme";
+import { Mark } from "@/components/Mark";
 
 const EXAMPLES = [
   "Turn $500 cash into Bitcoin",
@@ -45,7 +46,7 @@ export default function Home() {
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           <View style={styles.headRow}>
-            <Image source={require("../assets/mark.png")} style={styles.mark} />
+            <Mark size={40} color={t.accent} />
             <View style={styles.headActions}>
               <TouchableOpacity onPress={() => router.push("/profile")}>
                 <Text style={styles.headAction}>👤</Text>
@@ -213,7 +214,7 @@ const makeStyles = (t: Theme) =>
     signout: { color: t.faint, fontSize: 13 },
     loadCta: { flexDirection: "row", alignItems: "center", gap: 12, marginTop: 16, backgroundColor: t.button, borderRadius: 20, padding: 18 },
     loadCtaTitle: { color: t.buttonText, fontSize: 18, fontWeight: "800" },
-    loadCtaSub: { color: t.mode === "light" ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.6)", fontSize: 12, marginTop: 3 },
+    loadCtaSub: { color: t.buttonText, opacity: 0.72, fontSize: 12, marginTop: 3 },
     loadCtaArrow: { color: t.buttonText, fontSize: 22, fontWeight: "700" },
     h1: { color: t.text, fontSize: 30, fontWeight: "800", letterSpacing: -0.5, marginTop: 22 },
     sub: { color: t.dim, fontSize: 14, marginTop: 6, marginBottom: 18, lineHeight: 20 },

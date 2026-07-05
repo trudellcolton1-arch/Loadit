@@ -9,6 +9,7 @@ import { WebView } from "react-native-webview";
 import { useAuth } from "@/lib/authContext";
 import { getOnramp, getRoute, preferredProvider } from "@/lib/api";
 import { useTheme, type Theme } from "@/lib/theme";
+import { Mark } from "@/components/Mark";
 
 /**
  * LOAD — the signature stepped flow:
@@ -105,7 +106,7 @@ export default function Load() {
           {step === "method" && (
             <>
               <View style={styles.brand}>
-                <Image source={require("../assets/mark.png")} style={styles.mark} />
+                <Mark size={96} color={t.accent} />
                 <Text style={styles.wordmark}>Loadit</Text>
               </View>
               <Text style={styles.sectionTitle}>Payment Method</Text>
@@ -191,7 +192,7 @@ export default function Load() {
                 <View style={[styles.feeRow, styles.feeTotal]}><Text style={styles.feeTotalLabel}>You pay</Text><Text style={styles.feeTotalVal}>${(amt + fee).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Text></View>
               </View>
               <View style={styles.qrHero}>
-                <Image source={require("../assets/mark.png")} style={styles.qrMark} />
+                <Mark size={170} color={t.accent} />
                 <Text style={styles.caption}>
                   {coin} delivered straight to this wallet. Loadit never holds your funds.
                 </Text>

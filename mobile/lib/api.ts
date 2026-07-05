@@ -179,6 +179,10 @@ export async function getMoneyGramPlan(
 export interface HandleProfile {
   id: string;
   handle: string;
+  displayName: string | null;
+  bio: string | null;
+  avatarUrl: string | null;
+  links: { label: string; url: string }[];
   accountType: string | null;
   profileTheme: string | null;
   preferredReceiveAsset: string | null;

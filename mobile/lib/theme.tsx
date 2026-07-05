@@ -114,8 +114,10 @@ export function buildTheme(mode: ThemeMode, accent: string): Theme {
       text: "#0B0D12",
       dim: "rgba(11,13,18,0.60)",
       faint: "rgba(11,13,18,0.40)",
-      button: "#101114",
-      buttonText: "#FFFFFF",
+      // Primary actions carry the user's color in both modes, so picking a
+      // theme visibly repaints the whole app — not just tints and links.
+      button: a,
+      buttonText: contrastOn(a),
       warn: "#B45309",
     };
   }

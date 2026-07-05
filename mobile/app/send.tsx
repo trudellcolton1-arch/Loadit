@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   View, Text, TextInput, TouchableOpacity, ActivityIndicator,
   ScrollView, StyleSheet, Image, KeyboardAvoidingView, Platform, Alert,
@@ -15,6 +15,7 @@ import {
   mintApiToken, buildSend, signAndSubmit, type SendAsset, type SendBuild,
 } from "@/lib/hylaqWallet";
 import { useTheme, type Theme } from "@/lib/theme";
+import { HandleAvatar } from "@/components/HandleAvatar";
 
 /**
  * SEND — pay a @handle or a raw crypto address, two ways:
@@ -58,8 +59,10 @@ export default function Send() {
   const [notFound, setNotFound] = useState(false);
 
   const [asset, setAsset] = useState<SendAsset>("USDC");
-  const [amount, setAmount] = useState(50);
+  const [amountText, setAmountText] = useState("50");
+  const amount = Math.max(0, parseFloat(amountText) || 0);
   const [btcLightning, setBtcLightning] = useState(true);
+  const mintedFor = useRef<string | null>(null);
   const [source, setSource] = useState<"wallet" | "buy">("wallet");
   const [password, setPassword] = useState("");
 
@@ -106,11 +109,18 @@ export default function Send() {
   const preview = async () => {
     if (!me) { Alert.alert("Hylaq needed", "Log in with Hylaq to send from your wallet."); return; }
     if (!password) { Alert.alert("Wallet password", "Enter your Hylaq wallet password to sign."); return; }
+    if (amount < 1) { Alert.alert("Amount", "Enter an amount of at least $1."); return; }
     setBusy(true);
     try {
-      const token = await mintApiToken(me.id, password);
-      if (!token) { Alert.alert("Couldn't authorize", "Check your wallet password and try again."); return; }
-      setTokenHold(token);
+      // Reuse the minted token across previews for the same password — fewer
+      // calls, so we don't trip Hylaq's transaction rate limit while adjusting.
+      let token = tokenHold;
+      if (!token || mintedFor.current !== password) {
+        token = await mintApiToken(me.id, password);
+        if (!token) { Alert.alert("Couldn't authorize", "Check your wallet password and try again."); return; }
+        setTokenHold(token);
+        mintedFor.current = password;
+      }
       const b = await buildSend(token, {
         fromHandleId: me.id,
         toHandle: recipient ? recipient.handle : undefined,
@@ -151,6 +161,7 @@ export default function Send() {
 
   // "Buy & send": on-ramp mints to the recipient's address.
   const buyAndSend = async () => {
+    if (amount < 1) { Alert.alert("Amount", "Enter an amount of at least $1."); return; }
     const dest = externalAddr || (recipient ? addressFor(recipient, asset) : null);
     if (!dest) {
       Alert.alert("No address", recipient ? `@${recipient.handle} can't receive ${asset} yet.` : "Enter a valid recipient.");
@@ -243,9 +254,11 @@ export default function Send() {
               {hasTarget && (
                 <>
                   <View style={styles.recipient}>
-                    <Image source={require("../assets/hylaq-logo.png")} style={styles.recipientLogo} />
+                    {recipient
+                      ? <HandleAvatar handle={recipient.handle} avatarUrl={recipient.avatarUrl} size={44} />
+                      : <Image source={require("../assets/hylaq-logo.png")} style={styles.recipientLogo} />}
                     <View style={{ flex: 1 }}>
-                      <Text style={styles.recipientHandle}>{targetLabel}</Text>
+                      <Text style={styles.recipientHandle}>{recipient?.displayName || targetLabel}</Text>
                       <Text style={styles.recipientMeta}>
                         {recipient ? `Hylaq handle${recipient.accountType ? ` · ${recipient.accountType}` : ""}` : "External wallet address"}
                       </Text>
@@ -271,9 +284,22 @@ export default function Send() {
                   )}
 
                   <Text style={styles.label}>Amount (USD)</Text>
+                  <View style={styles.amountBox}>
+                    <Text style={styles.amountCurrency}>$</Text>
+                    <TextInput
+                      style={styles.amountInput}
+                      value={amountText}
+                      onChangeText={(v) => setAmountText(v.replace(/[^0-9.]/g, ""))}
+                      keyboardType="decimal-pad"
+                      placeholder="0"
+                      placeholderTextColor={t.faint}
+                      maxLength={9}
+                      selectionColor={t.accent}
+                    />
+                  </View>
                   <View style={styles.row}>
                     {AMOUNTS.map((v) => (
-                      <TouchableOpacity key={v} style={[styles.chip, amount === v && styles.chipOn]} onPress={() => setAmount(v)}>
+                      <TouchableOpacity key={v} style={[styles.chip, amount === v && styles.chipOn]} onPress={() => setAmountText(String(v))}>
                         <Text style={[styles.chipText, amount === v && styles.chipTextOn]}>${v}</Text>
                       </TouchableOpacity>
                     ))}
@@ -388,6 +414,9 @@ const makeStyles = (t: Theme) =>
     sourceTitleOn: { color: t.text },
     sourceSub: { color: t.faint, fontSize: 11, marginTop: 3 },
     input: { backgroundColor: t.surface, borderColor: t.border, borderWidth: 1, borderRadius: 16, paddingHorizontal: 16, paddingVertical: 14, color: t.text, fontSize: 15, marginTop: 8 },
+    amountBox: { flexDirection: "row", alignItems: "center", backgroundColor: t.surface, borderColor: t.border, borderWidth: 1, borderRadius: 16, paddingHorizontal: 16, paddingVertical: 12, marginTop: 8 },
+    amountCurrency: { color: t.text, fontSize: 22, fontWeight: "800", marginRight: 2 },
+    amountInput: { flex: 1, color: t.text, fontSize: 22, fontWeight: "800", padding: 0 },
     hint: { color: t.faint, fontSize: 11, lineHeight: 16, marginTop: 8 },
     feeCard: { backgroundColor: t.surface, borderColor: t.border, borderWidth: 1, borderRadius: 14, padding: 14, marginTop: 18 },
     feeRow: { flexDirection: "row", justifyContent: "space-between", paddingVertical: 5 },

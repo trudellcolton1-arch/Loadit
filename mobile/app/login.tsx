@@ -1,10 +1,11 @@
 import { useMemo, useState } from "react";
-import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet, Alert, Image } from "react-native";
+import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet, Alert } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { signInWithHylaq, signInGuest, hylaqConfigured } from "@/lib/auth";
 import { useAuth } from "@/lib/authContext";
 import { useTheme, type Theme } from "@/lib/theme";
+import { Mark } from "@/components/Mark";
 
 export default function Login() {
   const router = useRouter();
@@ -36,7 +37,7 @@ export default function Login() {
   return (
     <SafeAreaView style={styles.wrap}>
       <View style={styles.center}>
-        <Image source={require("../assets/mark.png")} style={styles.mark} />
+        <Mark size={88} color={t.accent} />
         <Text style={styles.logo}>Loadit</Text>
         <Text style={styles.tag}>Cash & card to crypto — routed the cheapest way by HQ.</Text>
 

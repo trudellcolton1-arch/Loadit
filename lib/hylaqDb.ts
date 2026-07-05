@@ -53,6 +53,12 @@ export interface HandleProfile {
   /** Handle DB id — used as fromHandleId when sending from this wallet. */
   id: string;
   handle: string;
+  /** Display name from the user's Hylaq profile, if set. */
+  displayName: string | null;
+  bio: string | null;
+  /** Absolute URL to the user's Hylaq profile picture, if they have one. */
+  avatarUrl: string | null;
+  links: { label: string; url: string }[];
   accountType: string | null;
   profileTheme: string | null;
   preferredReceiveAsset: string | null;
@@ -64,15 +70,45 @@ export interface HandleProfile {
   };
 }
 
+const HYLAQ_BASE = (process.env.HYLAQ_ISSUER || "https://www.hylaq.com").replace(/\/$/, "");
+
 const PROFILE_SELECT = `
-  select id, handle, "accountType", "profileTheme", "preferredReceiveAsset",
-         "solanaAddress", "evmAddress", "bitcoinAddress", "externalUSDCAddress"
-  from "Handle"`;
+  select h.id, h.handle, h."accountType", h."profileTheme", h."preferredReceiveAsset",
+         h."solanaAddress", h."evmAddress", h."bitcoinAddress", h."externalUSDCAddress",
+         hr.profile as record_profile
+  from "Handle" h
+  left join "HandleRecord" hr on hr."handleId" = h.id`;
+
+interface RecordProfile {
+  displayName?: string;
+  bio?: string;
+  avatar?: string;
+  links?: { label?: string; url?: string }[];
+}
 
 function toProfile(r: Record<string, unknown>): HandleProfile {
+  let rec: RecordProfile = {};
+  try {
+    const raw = r.record_profile;
+    if (raw) rec = (typeof raw === "string" ? JSON.parse(raw) : raw) as RecordProfile;
+  } catch {
+    /* profile blob is optional */
+  }
+  const avatar = rec.avatar;
+  const avatarUrl = avatar ? (/^https?:/.test(avatar) ? avatar : `${HYLAQ_BASE}${avatar}`) : null;
+
   return {
     id: String(r.id),
     handle: String(r.handle),
+    displayName: rec.displayName?.trim() || null,
+    bio: rec.bio?.trim() || null,
+    avatarUrl,
+    links: Array.isArray(rec.links)
+      ? rec.links
+          .filter((l) => l && l.url)
+          .map((l) => ({ label: String(l.label || "").slice(0, 40), url: String(l.url).slice(0, 200) }))
+          .slice(0, 6)
+      : [],
     accountType: (r.accountType as string) ?? null,
     profileTheme: (r.profileTheme as string) ?? null,
     preferredReceiveAsset: (r.preferredReceiveAsset as string) ?? null,
@@ -92,7 +128,7 @@ function toProfile(r: Record<string, unknown>): HandleProfile {
  */
 export async function handleByOwnerEmail(email: string): Promise<HandleProfile | null> {
   const rows = await hylaqQuery<Record<string, unknown>>(
-    `${PROFILE_SELECT} where lower(owner) = lower($1) order by "createdAt" asc limit 1`,
+    `${PROFILE_SELECT} where lower(h.owner) = lower($1) order by h."createdAt" asc limit 1`,
     [email]
   );
   return rows.length ? toProfile(rows[0]) : null;
@@ -122,7 +158,7 @@ export async function handleByName(name: string): Promise<HandleProfile | null> 
   const clean = name.replace(/^@/, "").trim();
   if (!clean) return null;
   const rows = await hylaqQuery<Record<string, unknown>>(
-    `${PROFILE_SELECT} where lower(handle) = lower($1) limit 1`,
+    `${PROFILE_SELECT} where lower(h.handle) = lower($1) limit 1`,
     [clean]
   );
   return rows.length ? toProfile(rows[0]) : null;
