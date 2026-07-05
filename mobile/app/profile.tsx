@@ -6,6 +6,7 @@ import { Redirect, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@/lib/authContext";
 import { getMyHandle, type HandleProfile } from "@/lib/api";
+import { getWalletBalance, type WalletBalance } from "@/lib/hylaqWallet";
 import { API_BASE } from "@/lib/config";
 import { useTheme, type Theme } from "@/lib/theme";
 import { HandleAvatar } from "@/components/HandleAvatar";
@@ -28,6 +29,7 @@ export default function Profile() {
   const router = useRouter();
   const [state, setState] = useState<"loading" | "linked" | "unlinked" | "error">("loading");
   const [profile, setProfile] = useState<HandleProfile | null>(null);
+  const [balance, setBalance] = useState<WalletBalance | null>(null);
   const [receiveNet, setReceiveNet] = useState("");
 
   useEffect(() => {
@@ -39,6 +41,7 @@ export default function Profile() {
         if (r.ok && r.linked && r.profile) {
           setProfile(r.profile);
           setState("linked");
+          getWalletBalance(r.profile.handle).then(setBalance).catch(() => {});
         } else {
           setState("unlinked");
         }
@@ -116,6 +119,35 @@ export default function Profile() {
 
         {state === "linked" && profile && (
           <>
+            {balance && balance.hasWallet && (
+              <View style={styles.balanceCard}>
+                <Text style={styles.label}>Balance</Text>
+                <Text style={styles.balanceBig}>{balance.displayBalance || balance.balanceFormatted || `$${balance.balance.toFixed(2)}`}</Text>
+                <Text style={styles.balanceSub}>USDC</Text>
+                <View style={styles.nativeRow}>
+                  {([
+                    ["SOL", balance.solBalance],
+                    ["ETH", balance.ethBalance],
+                    ["BNB", balance.bnbBalance],
+                    ["BTC", balance.btcOnchainBalance],
+                  ] as [string, number | undefined][])
+                    .filter(([sym, v]) => sym === "SOL" || (v && v > 0))
+                    .map(([sym, v]) => (
+                      <View key={sym} style={styles.native}>
+                        <Text style={styles.nativeSym}>{sym}</Text>
+                        <Text style={styles.nativeVal}>{(v ?? 0).toLocaleString(undefined, { maximumFractionDigits: 6 })}</Text>
+                      </View>
+                    ))}
+                </View>
+                {balance.hasGas === false && (
+                  <Text style={styles.gasWarn}>⚠ Low SOL for network fees — top up SOL to send.</Text>
+                )}
+                {balance.hasStuckWsol && balance.wsolRecoveryMessage ? (
+                  <Text style={styles.gasWarn}>{balance.wsolRecoveryMessage}</Text>
+                ) : null}
+              </View>
+            )}
+
             {profile.preferredReceiveAsset && (
               <View style={styles.card}>
                 <Text style={styles.label}>Preferred receive asset</Text>
@@ -190,6 +222,14 @@ const makeStyles = (t: Theme) =>
     addrRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 8, borderTopColor: t.border, borderTopWidth: StyleSheet.hairlineWidth, marginTop: 8 },
     addrNet: { color: t.dim, fontSize: 13, fontWeight: "600" },
     addrVal: { color: t.text, fontSize: 13, fontFamily: "Courier" },
+    balanceCard: { backgroundColor: t.card, borderColor: t.border, borderWidth: 1, borderRadius: 18, padding: 18, marginTop: 14 },
+    balanceBig: { color: t.text, fontSize: 40, fontWeight: "800", letterSpacing: -1, marginTop: 6 },
+    balanceSub: { color: t.dim, fontSize: 13, fontWeight: "600", marginTop: 2 },
+    nativeRow: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginTop: 14 },
+    native: { backgroundColor: t.surface, borderColor: t.border, borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8, minWidth: 78 },
+    nativeSym: { color: t.faint, fontSize: 10, fontWeight: "700", letterSpacing: 1 },
+    nativeVal: { color: t.text, fontSize: 14, fontWeight: "700", marginTop: 2 },
+    gasWarn: { color: t.warn, fontSize: 12, marginTop: 12, lineHeight: 17 },
     receiveHint: { color: t.dim, fontSize: 12, lineHeight: 17, marginTop: 6 },
     netRow: { flexDirection: "row", gap: 8, flexWrap: "wrap", marginTop: 12 },
     netChip: { borderColor: t.border, borderWidth: 1, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 8 },

@@ -42,6 +42,40 @@ export interface SendSubmit {
   errorType?: string;
 }
 
+export interface WalletBalance {
+  hasWallet: boolean;
+  address?: string;
+  evmAddress?: string | null;
+  bitcoinAddress?: string | null;
+  balance: number;
+  balanceFormatted?: string;
+  displayBalance?: string;
+  solBalance?: number;
+  hasGas?: boolean;
+  ethBalance?: number;
+  bnbBalance?: number;
+  btcOnchainBalance?: number;
+  hasStuckWsol?: boolean;
+  wsolRecoveryMessage?: string | null;
+  message?: string;
+}
+
+/**
+ * Live wallet balance for a @handle. Public endpoint (rate-limited by IP,
+ * 10s server cache) so the app calls Hylaq directly. Returns null on failure.
+ */
+export async function getWalletBalance(handle: string): Promise<WalletBalance | null> {
+  try {
+    const clean = handle.replace(/^@/, "").trim();
+    if (!clean) return null;
+    const res = await fetch(`${BASE}/api/wallet/balance?handle=${encodeURIComponent(clean)}`);
+    if (!res.ok) return null;
+    return (await res.json()) as WalletBalance;
+  } catch {
+    return null;
+  }
+}
+
 async function postJson<T>(path: string, body: unknown, token?: string): Promise<T> {
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   if (token) headers.Authorization = `Bearer ${token}`;
