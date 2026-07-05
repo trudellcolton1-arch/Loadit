@@ -93,6 +93,17 @@ export default function Home() {
             </View>
           )}
 
+          <TouchableOpacity style={styles.featureCard} onPress={() => router.push("/send")}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.featureTitle}>➡️ Send to a @handle</Text>
+              <Text style={styles.featureSub}>
+                Pay anyone by their Hylaq name. Type @colt, pick an amount —
+                the crypto lands straight in their wallet.
+              </Text>
+            </View>
+            <Text style={styles.featureArrow}>→</Text>
+          </TouchableOpacity>
+
           <TouchableOpacity style={styles.featureCard} onPress={() => router.push("/hq")}>
             <View style={{ flex: 1 }}>
               <Text style={styles.featureTitle}>🧠 HQ — your AI</Text>

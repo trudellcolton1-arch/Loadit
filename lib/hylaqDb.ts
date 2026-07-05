@@ -9,6 +9,8 @@
  * are never selected here.
  */
 
+import { createHash } from "crypto";
+
 interface NeonRow {
   [key: string]: unknown;
 }
@@ -91,6 +93,25 @@ export async function handleByOwnerEmail(email: string): Promise<HandleProfile |
     [email]
   );
   return rows.length ? toProfile(rows[0]) : null;
+}
+
+/**
+ * Authoritative owner email for a Hylaq access token, looked up directly in
+ * Hylaq's OAuthAccessToken table (sha256(token) = tokenHash), rejecting revoked
+ * or expired tokens. This proves the caller holds the real token without
+ * trusting any client-supplied identity. Returns null if not found.
+ */
+export async function ownerEmailFromAccessToken(token: string): Promise<string | null> {
+  const clean = token.trim();
+  if (!clean) return null;
+  const hash = createHash("sha256").update(clean).digest("hex");
+  const rows = await hylaqQuery<Record<string, unknown>>(
+    `select "userEmail" from "OAuthAccessToken"
+     where "tokenHash" = $1 and "revokedAt" is null and "expiresAt" > now()
+     limit 1`,
+    [hash]
+  );
+  return rows.length && rows[0].userEmail ? String(rows[0].userEmail) : null;
 }
 
 /** Resolve a public @handle (with or without the leading @). */

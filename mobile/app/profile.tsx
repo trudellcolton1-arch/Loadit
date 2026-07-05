@@ -32,7 +32,7 @@ export default function Profile() {
     if (!session) return;
     (async () => {
       try {
-        const r = await getMyHandle(session.accessToken, session.email);
+        const r = await getMyHandle(session.accessToken);
         if (r.ok && r.linked && r.profile) {
           setProfile(r.profile);
           setState("linked");

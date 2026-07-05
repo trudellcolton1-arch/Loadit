@@ -21,6 +21,7 @@ function ThemedStack() {
         <Stack.Screen name="load" options={{ headerShown: false }} />
         <Stack.Screen name="hq" options={{ title: "HQ — your AI" }} />
         <Stack.Screen name="profile" options={{ title: "Profile" }} />
+        <Stack.Screen name="send" options={{ title: "Send to a @handle" }} />
         <Stack.Screen name="login" options={{ headerShown: false }} />
         <Stack.Screen name="buy" options={{ title: "Buy" }} />
         <Stack.Screen name="quote" options={{ title: "Live quote" }} />

@@ -195,12 +195,12 @@ export interface MyHandleResult {
   profile?: HandleProfile;
 }
 
-/** The signed-in user's own Hylaq @handle (verified via their Hylaq token). */
-export async function getMyHandle(token?: string, email?: string): Promise<MyHandleResult> {
+/** The signed-in user's own Hylaq @handle (verified server-side via their token). */
+export async function getMyHandle(token?: string): Promise<MyHandleResult> {
   const res = await fetch(`${API_BASE}/api/handle/me`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ token, email }),
+    body: JSON.stringify({ token }),
   });
   return res.json();
 }

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { handleByOwnerEmail, hylaqConfigured } from "@/lib/hylaqDb";
+import { handleByOwnerEmail, hylaqConfigured, ownerEmailFromAccessToken } from "@/lib/hylaqDb";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -7,28 +7,40 @@ export const dynamic = "force-dynamic";
 /**
  * GET the signed-in user's own Hylaq @handle profile.
  *
- * The app posts its Hylaq access token; we verify it against Hylaq's userinfo
- * to get the authoritative email, then look up the Handle that email owns.
- * Only public-safe fields come back (handle, theme, receive addresses).
+ * Token-verified only: the caller must present a valid Hylaq access token. We
+ * establish their email authoritatively — first from Hylaq's OAuthAccessToken
+ * table (sha256 of the token), then falling back to Hylaq's userinfo endpoint.
+ * A client-supplied email is never trusted (that would allow email→handle
+ * enumeration). Only public-safe handle fields are returned.
  */
 export async function POST(req: Request) {
   if (!hylaqConfigured()) {
     return NextResponse.json({ ok: false, reason: "not_configured" }, { status: 503 });
   }
 
-  let body: { token?: string; email?: string };
+  let body: { token?: string };
   try {
     body = await req.json();
   } catch {
     body = {};
   }
 
-  const issuer = (process.env.HYLAQ_ISSUER || "https://www.hylaq.com").replace(/\/$/, "");
-  let email = "";
-
-  // Prefer token-verified identity.
   const token = (body.token || "").trim();
-  if (token) {
+  if (!token) {
+    return NextResponse.json({ ok: true, linked: false, reason: "no_token" });
+  }
+
+  // 1) Authoritative: match the token hash in Hylaq's token store.
+  let email = "";
+  try {
+    email = (await ownerEmailFromAccessToken(token)) || "";
+  } catch (e) {
+    console.error("[handle/me] token lookup failed:", String(e));
+  }
+
+  // 2) Fallback: verify the token against Hylaq's userinfo endpoint.
+  if (!email) {
+    const issuer = (process.env.HYLAQ_ISSUER || "https://www.hylaq.com").replace(/\/$/, "");
     try {
       const res = await fetch(`${issuer}/api/oauth/userinfo`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -38,15 +50,13 @@ export async function POST(req: Request) {
         const info = (await res.json()) as { email?: string };
         if (info.email) email = info.email;
       }
-    } catch {
-      /* fall through to provided email */
+    } catch (e) {
+      console.error("[handle/me] userinfo failed:", String(e));
     }
   }
-  // Fallback to the email captured at login (profile is public-safe either way).
-  if (!email && typeof body.email === "string") email = body.email.trim();
 
   if (!email) {
-    return NextResponse.json({ ok: true, linked: false, reason: "no_identity" });
+    return NextResponse.json({ ok: true, linked: false, reason: "unverified" });
   }
 
   try {
