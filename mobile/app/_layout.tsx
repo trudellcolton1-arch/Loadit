@@ -18,6 +18,7 @@ export default function RootLayout() {
           }}
         >
           <Stack.Screen name="index" options={{ title: "Loadit" }} />
+          <Stack.Screen name="hq" options={{ title: "HQ — your AI" }} />
           <Stack.Screen name="login" options={{ headerShown: false }} />
           <Stack.Screen name="buy" options={{ title: "Buy" }} />
           <Stack.Screen name="receive" options={{ title: "Cash QR" }} />

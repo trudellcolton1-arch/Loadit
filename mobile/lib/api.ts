@@ -47,6 +47,33 @@ export async function computeRoute(params: {
   return res.json();
 }
 
+export interface HQMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+export interface HQResult {
+  ok: boolean;
+  ai?: boolean;
+  fallback?: boolean;
+  fees_live?: boolean;
+  reply?: string;
+  intent?: Intent;
+  route?: Route & { asset: string; amount_usd: number };
+}
+
+/**
+ * HQ — your AI. Send the running chat thread; HQ replies, and when the
+ * message is a money move it also returns a grounded route to render inline.
+ */
+export async function askHQ(messages: HQMessage[]): Promise<HQResult> {
+  const res = await fetch(`${API_BASE}/api/hq`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ messages }),
+  });
+  return res.json();
+}
+
 export type OnrampProvider = "coinbase" | "stripe";
 
 export interface OnrampResult {

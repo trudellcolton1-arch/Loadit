@@ -73,6 +73,17 @@ export default function Home() {
             </View>
           )}
 
+          <TouchableOpacity style={styles.hqCard} onPress={() => router.push("/hq")}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.cashQrTitle}>🧠 HQ — your AI</Text>
+              <Text style={styles.cashQrSub}>
+                Chat with the brain behind your money. Ask anything, or say a
+                move and HQ routes it — cheapest real way, every time.
+              </Text>
+            </View>
+            <Text style={styles.hqArrow}>→</Text>
+          </TouchableOpacity>
+
           <TouchableOpacity style={styles.cashQr} onPress={() => router.push("/register")}>
             <View style={{ flex: 1 }}>
               <Text style={styles.cashQrTitle}>🏪 Cash at any register</Text>
@@ -167,6 +178,8 @@ const styles = StyleSheet.create({
   statValue: { color: BRAND.text, fontSize: 16, fontWeight: "700", marginTop: 4 },
   statSub: { color: BRAND.faint, fontSize: 11, marginTop: 2 },
   cashQr: { flexDirection: "row", alignItems: "center", gap: 12, marginTop: 20, backgroundColor: "rgba(34,169,92,0.06)", borderColor: "rgba(34,169,92,0.35)", borderWidth: 1, borderRadius: 20, padding: 16 },
+  hqCard: { flexDirection: "row", alignItems: "center", gap: 12, marginTop: 20, backgroundColor: "rgba(124,92,255,0.08)", borderColor: "rgba(124,92,255,0.4)", borderWidth: 1, borderRadius: 20, padding: 16 },
+  hqArrow: { color: "#A78BFF", fontSize: 20, fontWeight: "700" },
   cashQrTitle: { color: BRAND.text, fontSize: 16, fontWeight: "700" },
   cashQrSub: { color: BRAND.dim, fontSize: 12, lineHeight: 17, marginTop: 3 },
   cashQrArrow: { color: BRAND.railLight, fontSize: 20, fontWeight: "700" },

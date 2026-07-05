@@ -13,6 +13,10 @@ Built with **Expo (React Native)**. Ships to the App Store + Google Play, and is
    (**Stripe Crypto** or **Coinbase Onramp**), and the provider's hosted flow
    opens in-app. They do KYC + the conversion and deliver crypto straight to
    your wallet.
+4. **HQ — your AI** — a personal AI chat (`/api/hq`) that answers anything
+   about your money and Loadit; say a move ("turn $200 cash into Bitcoin") and
+   HQ drops a grounded route card into the thread with one-tap buy. Works even
+   without an `OPENAI_API_KEY` on the backend (deterministic fallback).
 
 > **Non-custodial by design.** Loadit never holds, converts, or transmits funds.
 > Licensed partners (Stripe, Coinbase) are the money transmitters. This is what
@@ -25,13 +29,13 @@ The app is a thin native client over the **existing Next.js backend** at
 `loadit.net`. No separate server to run.
 
 ```
-app/         expo-router screens: login, index (Intent Router), buy (on-ramp)
+app/         expo-router screens: login, index (Intent Router), hq (HQ — your AI), buy (on-ramp)
 lib/         config, api client, Hylaq auth, auth context
 app.json     Expo config (bundle ids: net.loadit.app, scheme: loadit)
 ```
 
-Backend endpoints it uses (already deployed): `/api/intent`, `/api/v1/route`,
-`/api/onramp/coinbase`, `/api/onramp/stripe`.
+Backend endpoints it uses (already deployed): `/api/intent`, `/api/hq`,
+`/api/v1/route`, `/api/onramp/coinbase`, `/api/onramp/stripe`.
 
 ## Configure
 
