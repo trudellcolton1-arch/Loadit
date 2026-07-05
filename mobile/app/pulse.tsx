@@ -101,6 +101,8 @@ export default function Pulse() {
 
   const [nearby, setNearby] = useState<NearbyPeer[]>([]);
   const [nearbyUsers, setNearbyUsers] = useState<Array<{ profile: HandleProfile; rssi: number | null }>>([]);
+  const [nearbyCount, setNearbyCount] = useState(0);
+  const nearbyRef = useRef<Set<string>>(new Set());
   const [toUser, setToUser] = useState<HandleProfile | null>(null);
   const [bleState, setBleState] = useState<"idle" | "scanning" | "off">("idle");
 
@@ -149,6 +151,11 @@ export default function Pulse() {
   const addFace = useCallback(async (handle: string) => {
     const h = handle.replace(/^@/, "").toLowerCase();
     if (!h || h === "loadit" || h === me?.handle?.toLowerCase()) return;
+    // Count every nearby Loadit phone, even before we resolve a profile — so
+    // "found someone" shows immediately.
+    if (!nearbyRef.current.has(h)) { nearbyRef.current.add(h); setNearbyCount(nearbyRef.current.size); }
+    // Only real @handles resolve to a profile+photo (BLE fallback ids can't).
+    if (h.startsWith("peer-")) return;
     const r = await resolveHandle(h).catch(() => null);
     if (r?.ok && r.profile) {
       setNearbyUsers((prev) => (prev.some((u) => u.profile.handle.toLowerCase() === r.profile!.handle.toLowerCase())
@@ -157,6 +164,8 @@ export default function Pulse() {
   }, [me?.handle]);
   const removeFace = useCallback((handle: string) => {
     const h = handle.replace(/^@/, "").toLowerCase();
+    nearbyRef.current.delete(h);
+    setNearbyCount(nearbyRef.current.size);
     setNearbyUsers((prev) => prev.filter((u) => u.profile.handle.toLowerCase() !== h));
   }, []);
 
@@ -165,7 +174,7 @@ export default function Pulse() {
     if (tapAvailable()) {
       let cancelled = false;
       let cleanup: (() => void) | null = null;
-      setNearbyUsers([]);
+      setNearbyUsers([]); setNearbyCount(0); nearbyRef.current = new Set();
       startScanning(me?.handle || "loadit", { onPeer: addFace, onLost: removeFace })
         .then((c) => { if (cancelled) c(); else cleanup = c; });
       return () => { cancelled = true; cleanup?.(); };
@@ -287,7 +296,12 @@ export default function Pulse() {
         radiusMeters: 100,
       });
       if (!drop || drop.error || !drop.id) {
-        Alert.alert("Couldn't lock funds", drop?.error || "Hylaq didn't confirm the escrow. Check your balance and password.");
+        const d = drop as Record<string, unknown> | null;
+        const detail = (d?.error as string) || (d?.message as string) || (d?.detail as string) || (d?.reason as string) || "Hylaq didn't confirm the escrow.";
+        Alert.alert(
+          "Couldn't lock funds",
+          `${detail}\n\nThis is Hylaq's escrow step. Check that your Hylaq wallet holds at least $${amount.toFixed(2)} USDC (plus a little SOL for gas) and that the Pulse escrow wallet is configured.`
+        );
         return;
       }
 
@@ -425,7 +439,7 @@ export default function Pulse() {
           <View style={[styles.blePill, { borderColor: t.accentTint, backgroundColor: t.accentSoft }]}>
             <View style={[styles.bleDot, { backgroundColor: t.accent }]} />
             <Text style={[styles.bleText, { color: t.accentText }]}>
-              {nearbyUsers.length ? `${nearbyUsers.length} Loadit ${nearbyUsers.length === 1 ? "user" : "users"} nearby` : "Bluetooth on · looking for people near you"}
+              {nearbyCount ? `${nearbyCount} phone${nearbyCount === 1 ? "" : "s"} nearby — ready to send` : "Bluetooth on · looking for people near you"}
             </Text>
           </View>
         )}

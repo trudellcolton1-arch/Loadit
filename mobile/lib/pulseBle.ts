@@ -144,10 +144,13 @@ function startScan(myHandle: string) {
   if (!m || scanning) return;
   scanning = true;
   try {
-    m.startDeviceScan(null, { allowDuplicates: false }, (err: any, d: any) => {
+    // Scan FOR the Loadit service UUID. iOS all-but-ignores a nil-filter scan
+    // (it returned nothing → iPhone couldn't find anyone); Android is fine either
+    // way. A filtered hit IS a Loadit peer, and iOS often omits serviceUUIDs from
+    // a filtered result, so we do NOT re-gate on isLoaditDevice here.
+    m.startDeviceScan([SERVICE], { allowDuplicates: true }, (err: any, d: any) => {
       if (err || !d) return;
-      if (!isLoaditDevice(d)) return;
-      const handle = handleFromDevice(d) || `peer-${d.id.slice(-4)}`;
+      const handle = handleFromDevice(d) || `peer-${String(d.id).slice(-4)}`;
       if (handle === myHandle.toLowerCase()) return;
       const known = peers.has(handle);
       peers.set(handle, { deviceId: d.id, rssi: d.rssi ?? null });
