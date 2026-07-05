@@ -9,7 +9,7 @@ import QRCode from "react-native-qrcode-svg";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import * as Location from "expo-location";
 import { useAuth } from "@/lib/authContext";
-import { getMyHandle, type HandleProfile } from "@/lib/api";
+import { getMyHandle, resolveHandle, type HandleProfile } from "@/lib/api";
 import { API_BASE } from "@/lib/config";
 import { mintApiToken } from "@/lib/hylaqWallet";
 import { publicKeySpkiBase64 } from "@/lib/deviceKey";
@@ -90,6 +90,8 @@ export default function Pulse() {
   const pendingSum = queue.reduce((s, p) => s + (p.amountUsd || 0), 0);
 
   const [nearby, setNearby] = useState<NearbyPeer[]>([]);
+  const [nearbyUsers, setNearbyUsers] = useState<Array<{ profile: HandleProfile; rssi: number | null }>>([]);
+  const [toUser, setToUser] = useState<HandleProfile | null>(null);
   const [bleState, setBleState] = useState<"idle" | "scanning" | "off">("idle");
 
   const refreshQueue = useCallback(async () => setQueue(await readQueue()), []);
@@ -97,10 +99,19 @@ export default function Pulse() {
   const scanForPhones = useCallback(async () => {
     if (bleState === "scanning") return;
     const on = await bleReady();
-    if (!on) { setBleState("off"); setNearby([]); return; }
+    if (!on) { setBleState("off"); setNearby([]); setNearbyUsers([]); return; }
     setBleState("scanning");
     const peers = await scanNearby(4000);
     setNearby(peers);
+    // Resolve the peers that advertised a Loadit @handle to real profiles + photos.
+    const withHandle = peers.filter((p) => p.handle).slice(0, 6);
+    const resolved = await Promise.all(
+      withHandle.map(async (p) => {
+        const r = await resolveHandle(p.handle!).catch(() => null);
+        return r?.ok && r.profile ? { profile: r.profile, rssi: p.rssi } : null;
+      })
+    );
+    setNearbyUsers(resolved.filter(Boolean) as Array<{ profile: HandleProfile; rssi: number | null }>);
     setBleState("idle");
   }, [bleState]);
 
@@ -163,14 +174,14 @@ export default function Pulse() {
         if (!token) return; // ensureToken already alerted
         const drop = await dropPulse(token, {
           handleId: me!.id, deviceId, amountUsd: amount, asset: "USDC",
-          noteId: `${deviceId}:${Date.now()}`, toHandle: undefined,
+          noteId: `${deviceId}:${Date.now()}`, toHandle: toUser?.handle,
         });
         locked = Boolean(drop?.locked);
       }
       const evidence = await captureEvidence();
       if (nearby[0]) { evidence.bleRssi = nearby[0].rssi ?? undefined; evidence.bleDeviceId = nearby[0].id; }
       const n = await makePulseNote({
-        fromHandle: me?.handle, fromHandleId: me?.id,
+        fromHandle: me?.handle, fromHandleId: me?.id, to: toUser?.handle,
         amountUsd: amount, asset: "USDC", memo: memo.trim() || undefined,
         createdAt: Date.now(), evidence,
       });
@@ -304,6 +315,24 @@ export default function Pulse() {
           </TouchableOpacity>
         )}
 
+        {mode === "send" && !note && nearbyUsers.length > 0 && (
+          <View style={styles.facesWrap}>
+            <Text style={styles.facesLabel}>Loadit users near you — tap to send</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.facesRow}>
+              {nearbyUsers.map(({ profile, rssi }) => {
+                const on = toUser?.handle === profile.handle;
+                return (
+                  <TouchableOpacity key={profile.handle} style={[styles.face, on && styles.faceOn]} onPress={() => setToUser(on ? null : profile)}>
+                    <HandleAvatar handle={profile.handle} avatarUrl={profile.avatarUrl} size={54} />
+                    <Text style={styles.faceHandle} numberOfLines={1}>@{profile.handle}</Text>
+                    <Text style={styles.faceMeta}>{rssi != null ? signalBars(rssi) : "nearby"}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+        )}
+
         {mode === "send" ? (
           note ? (
             <View style={styles.noteWrap}>
@@ -311,6 +340,7 @@ export default function Pulse() {
                 <QRCode value={encodeNote(note)} size={236} backgroundColor="#FFFFFF" color="#0B0D12" />
               </View>
               <Text style={styles.noteAmount}>{money(note.amountUsd)} USDC</Text>
+              {note.to ? <Text style={styles.noteTo}>to @{note.to}</Text> : null}
               <Text style={styles.noteSub}>
                 {escrowLocked ? "Locked in escrow · " : ""}Have them open Pulse → Collect and scan this. It settles when either of you is back online.
               </Text>
@@ -321,12 +351,21 @@ export default function Pulse() {
             </View>
           ) : (
             <>
-              {me && (
+              {toUser ? (
+                <View style={styles.toBanner}>
+                  <HandleAvatar handle={toUser.handle} avatarUrl={toUser.avatarUrl} size={34} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.toText}>Sending to @{toUser.handle}</Text>
+                    <Text style={styles.toSub}>{toUser.displayName || "Loadit user nearby"}</Text>
+                  </View>
+                  <TouchableOpacity onPress={() => setToUser(null)}><Text style={styles.toClear}>✕</Text></TouchableOpacity>
+                </View>
+              ) : me ? (
                 <View style={styles.meRow}>
                   <HandleAvatar handle={me.handle} avatarUrl={me.avatarUrl} size={38} />
                   <Text style={styles.meHandle}>@{me.handle}</Text>
                 </View>
-              )}
+              ) : null}
               <Text style={styles.label}>Amount (USD)</Text>
               <View style={styles.amountBox}>
                 <Text style={styles.amountCurrency}>$</Text>
@@ -464,6 +503,18 @@ const makeStyles = (t: Theme) =>
     blePill: { flexDirection: "row", alignItems: "center", gap: 8, alignSelf: "flex-start", backgroundColor: t.surface, borderColor: t.border, borderWidth: 1, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 9, marginTop: 14 },
     bleDot: { width: 8, height: 8, borderRadius: 4 },
     bleText: { color: t.dim, fontSize: 12, fontWeight: "600" },
+    facesWrap: { marginTop: 16 },
+    facesLabel: { color: t.faint, fontSize: 10.5, letterSpacing: 0.8, textTransform: "uppercase", marginBottom: 10 },
+    facesRow: { gap: 14, paddingRight: 8 },
+    face: { alignItems: "center", width: 66, gap: 5, opacity: 0.9 },
+    faceOn: { opacity: 1 },
+    faceHandle: { color: t.text, fontSize: 11, fontWeight: "700", maxWidth: 66 },
+    faceMeta: { color: t.accentText, fontSize: 9.5, fontWeight: "600" },
+    toBanner: { flexDirection: "row", alignItems: "center", gap: 11, marginTop: 20, backgroundColor: t.accentSoft, borderColor: t.accentTint, borderWidth: 1, borderRadius: 16, padding: 12 },
+    toText: { color: t.text, fontSize: 15, fontWeight: "800" },
+    toSub: { color: t.accentText, fontSize: 11.5, fontWeight: "600", marginTop: 1 },
+    toClear: { color: t.dim, fontSize: 16, fontWeight: "700", paddingHorizontal: 4 },
+    noteTo: { color: t.accentText, fontSize: 14, fontWeight: "700", marginTop: 3 },
     meRow: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 20 },
     meHandle: { color: t.text, fontSize: 15, fontWeight: "700" },
     label: { color: t.faint, fontSize: 11, letterSpacing: 1, textTransform: "uppercase", marginTop: 20 },

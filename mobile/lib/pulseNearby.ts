@@ -17,6 +17,15 @@ export interface NearbyPeer {
   id: string;
   rssi: number | null;
   name: string | null;
+  /** Resolved Loadit @handle when the peer advertises one (e.g. "loadit:colt"). */
+  handle: string | null;
+}
+
+/** Loadit peers advertise their handle in the BLE local name: `loadit:<handle>`. */
+function parseHandle(localName?: string | null, name?: string | null): string | null {
+  const src = localName || name || "";
+  const m = src.match(/^loadit:([a-z0-9_.-]{1,20})$/i);
+  return m ? m[1].toLowerCase() : null;
 }
 
 type Manager = {
@@ -77,7 +86,7 @@ export function scanNearby(ms = 4000): Promise<NearbyPeer[]> {
         const prev = seen.get(d.id);
         const rssi = d.rssi ?? null;
         if (!prev || (rssi ?? -999) > (prev.rssi ?? -999)) {
-          seen.set(d.id, { id: d.id, rssi, name: d.localName || d.name || null });
+          seen.set(d.id, { id: d.id, rssi, name: d.localName || d.name || null, handle: parseHandle(d.localName, d.name) });
         }
       });
     } catch {
