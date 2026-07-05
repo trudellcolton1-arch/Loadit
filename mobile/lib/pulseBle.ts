@@ -198,39 +198,50 @@ export function tapAvailable(): boolean {
   return isBleNativeAvailable() && !!mgr();
 }
 
-export interface PresenceHandlers {
-  onPeer: (handle: string) => void;
-  onLost: (handle: string) => void;
+export interface AdvertiseHandlers {
   onNote: (payload: string) => void;
   onError?: (m: string) => void;
 }
 
-/** Advertise + serve (native) and scan (central) so nearby Loadit users appear. */
-export async function startPresence(myHandle: string, h: PresenceHandlers): Promise<() => void> {
+/**
+ * ADVERTISE (app-level): be discoverable and run the GATT server that receives
+ * notes — whenever the app is running, not just on the Pulse screen. This is why
+ * "if they have Loadit, it finds them" works: every logged-in phone is a live
+ * Pulse target. Owns the single native peripheral.
+ */
+export async function startAdvertising(handle: string, h: AdvertiseHandlers): Promise<() => void> {
+  const subNote = onNoteReceived(({ payload }) => h.onNote(payload));
+  const subErr = onBleError(({ message }) => h.onError?.(message));
+  await ensureAndroidPerms();
+  try { await startPeripheral(handle); } catch { /* best-effort */ }
+  return () => {
+    subNote?.remove(); subErr?.remove();
+    stopPeripheral().catch(() => {});
+  };
+}
+
+export interface ScanHandlers {
+  onPeer: (handle: string) => void;
+  onLost?: (handle: string) => void;
+}
+
+/** SCAN (Beam screen): discover nearby advertising Loadit phones by @handle. */
+export async function startScanning(myHandle: string, h: ScanHandlers): Promise<() => void> {
   peers.clear();
   presenceOnPeer = h.onPeer;
   handleForScan = myHandle.toLowerCase();
-  const subNote = onNoteReceived(({ payload }) => h.onNote(payload));
-  const subErr = onBleError(({ message }) => h.onError?.(message));
-
   await ensureAndroidPerms();
-  try { await startPeripheral(myHandle); } catch { /* peripheral best-effort */ }
-
   const m = mgr();
   if (m) {
-    // Start scanning as soon as the adapter is powered on (and on every re-power).
     stateSub = m.onStateChange((state: string) => {
       if (state === "PoweredOn") startScan(myHandle);
       else stopScan();
     }, true);
   }
-
   return () => {
-    subNote?.remove(); subErr?.remove();
     stateSub?.remove(); stateSub = null;
     presenceOnPeer = null;
     stopScan();
-    stopPeripheral().catch(() => {});
     peers.clear();
   };
 }
@@ -260,22 +271,6 @@ export async function armSend(target: string | null, payload: string, h: PayHand
     if (first) driveSend(first[0], first[1].deviceId); else startScan(handleForScan);
   }
   return () => { pending = null; };
-}
-
-export interface ReceiveHandlers {
-  onStatus: (s: string) => void;
-  onNote: (payload: string) => void;
-  onError: (m: string) => void;
-}
-
-/** Collect: be discoverable + serve so a nearby sender can push a note. */
-export async function receiveNote(myHandle: string, h: ReceiveHandlers): Promise<() => void> {
-  const subNote = onNoteReceived(({ payload }) => h.onNote(payload));
-  const subErr = onBleError(({ message }) => h.onError(message));
-  await ensureAndroidPerms();
-  try { await startPeripheral(myHandle); } catch { h.onError("Couldn't start Bluetooth."); }
-  h.onStatus("Ready — hold near the sender…");
-  return () => { subNote?.remove(); subErr?.remove(); stopPeripheral().catch(() => {}); };
 }
 
 export const bleTapPlatform = Platform.OS;

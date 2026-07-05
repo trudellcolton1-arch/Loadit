@@ -4,6 +4,7 @@ import { StatusBar } from "expo-status-bar";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { AuthProvider } from "@/lib/authContext";
 import { ThemeProvider, useTheme } from "@/lib/theme";
+import { PulsePresence } from "@/components/PulsePresence";
 
 function ThemedStack() {
   const { theme } = useTheme();
@@ -39,6 +40,7 @@ export default function RootLayout() {
   return (
     <ThemeProvider>
       <AuthProvider>
+        <PulsePresence />
         <ThemedStack />
       </AuthProvider>
     </ThemeProvider>

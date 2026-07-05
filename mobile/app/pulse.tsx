@@ -23,7 +23,9 @@ import {
   type PulseNote,
 } from "@/lib/pulseClaim";
 import { scanNearby, bleReady, type NearbyPeer } from "@/lib/pulseNearby";
-import { tapAvailable, startPresence, armSend, receiveNote } from "@/lib/pulseBle";
+import { tapAvailable, startScanning, armSend } from "@/lib/pulseBle";
+import { onPulseReceived } from "@/lib/pulsePresence";
+import { ingestPayload } from "@/lib/pulseInbox";
 import { useTheme, type Theme } from "@/lib/theme";
 import { HandleAvatar } from "@/components/HandleAvatar";
 import * as SecureStore from "expo-secure-store";
@@ -88,9 +90,6 @@ export default function Pulse() {
   const [handoff, setHandoff] = useState<"tap" | "qr">("qr");
   const [sent, setSent] = useState(false);
   const [tapStatus, setTapStatus] = useState("");
-  const [collecting, setCollecting] = useState(false);
-  const [recvStatus, setRecvStatus] = useState("");
-  const recvCleanup = useRef<(() => void) | null>(null);
 
   const [permission, requestPermission] = useCameraPermissions();
   const [scanning, setScanning] = useState(false);
@@ -167,17 +166,24 @@ export default function Pulse() {
       let cancelled = false;
       let cleanup: (() => void) | null = null;
       setNearbyUsers([]);
-      startPresence(me?.handle || "loadit", {
-        onPeer: addFace,
-        onLost: removeFace,
-        onNote: (payload) => onScan(payload),
-        onError: () => {},
-      }).then((c) => { if (cancelled) c(); else cleanup = c; });
+      startScanning(me?.handle || "loadit", { onPeer: addFace, onLost: removeFace })
+        .then((c) => { if (cancelled) c(); else cleanup = c; });
       return () => { cancelled = true; cleanup?.(); };
     }
     if (!note) scanForPhones();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, addFace, removeFace]);
+
+  // Money can arrive on any screen (global presence). Surface it here too.
+  useEffect(() => {
+    const off = onPulseReceived(({ note: received }) => {
+      refreshQueue();
+      setCollected(received);
+      if (mode === "send") setMode("receive");
+    });
+    return off;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Beam over Bluetooth: send the signed note across the live presence session
   // — directly to the picked person, or to whoever taps if none is chosen.
@@ -194,9 +200,6 @@ export default function Pulse() {
     }).then((c) => { if (cancelled) c(); else cleanup = c; });
     return () => { cancelled = true; cleanup?.(); };
   }, [mode, note, handoff, toUser?.handle]);
-
-  // Tear down any receive session when Pulse unmounts.
-  useEffect(() => () => { recvCleanup.current?.(); }, []);
 
   if (ready && !session) return <Redirect href="/login" />;
 
@@ -220,27 +223,6 @@ export default function Pulse() {
       Alert.alert("Couldn't cancel", "Try again from your wallet.");
     } finally {
       setBusy(false);
-    }
-  };
-
-  const stopReceiving = () => {
-    recvCleanup.current?.(); recvCleanup.current = null;
-    setCollecting(false); setRecvStatus("");
-  };
-
-  /** Collect over Bluetooth: browse, auto-connect, queue the note on arrival. */
-  const startTapReceive = async () => {
-    setCollected(null); setCollecting(true); setRecvStatus("Starting Bluetooth…");
-    try {
-      const cleanup = await receiveNote(me?.handle || "loadit", {
-        onStatus: (s) => setRecvStatus(s),
-        onNote: (payload) => { stopReceiving(); onScan(payload); },
-        onError: (m) => setRecvStatus(m),
-      });
-      recvCleanup.current = cleanup;
-    } catch {
-      setCollecting(false);
-      Alert.alert("Bluetooth", "Couldn't start Bluetooth. Try the QR scanner.");
     }
   };
 
@@ -337,13 +319,13 @@ export default function Pulse() {
     if (scanLock.current) return;
     scanLock.current = true;
     try {
-      const n = decodeNote(data);
-      if (!n) { Alert.alert("Not a Pulse", "That code isn't a Loadit Pulse."); return; }
-      if (!verifyPulseNote(n)) { Alert.alert("Couldn't verify", "This Pulse note failed its signature check."); return; }
-      if (queue.some((p) => p.nonce === n.id)) { Alert.alert("Already collected", "You already have this Pulse."); return; }
       const collectorId = me?.id || (await getDeviceId());
-      const packet = await noteToClaimPacket(n, collectorId, Date.now());
-      await enqueueClaim(packet);
+      const n = await ingestPayload(data, collectorId);
+      if (!n) {
+        if (queue.some((p) => decodeNote(data)?.id === p.nonce)) Alert.alert("Already collected", "You already have this Pulse.");
+        else Alert.alert("Couldn't collect", "That code isn't a valid Loadit Pulse.");
+        return;
+      }
       await refreshQueue();
       setCollected(n);
       setScanning(false);
@@ -433,7 +415,7 @@ export default function Pulse() {
 
         <View style={styles.segment}>
           {(["send", "receive"] as const).map((m) => (
-            <TouchableOpacity key={m} style={[styles.segBtn, mode === m && styles.segBtnOn]} onPress={() => { stopReceiving(); resetBeam(); setMode(m); }}>
+            <TouchableOpacity key={m} style={[styles.segBtn, mode === m && styles.segBtnOn]} onPress={() => { resetBeam(); setMode(m); }}>
               <Text style={[styles.segText, mode === m && styles.segTextOn]}>{m === "send" ? "Beam money" : "Collect"}</Text>
             </TouchableOpacity>
           ))}
@@ -616,38 +598,31 @@ export default function Pulse() {
                 {collected.memo ? <Text style={styles.noteMemo}>“{collected.memo}”</Text> : null}
                 <Text style={styles.noteSub}>Held as pending. It lands in your wallet on your next sync.</Text>
                 <TouchableOpacity style={styles.secondaryCta} onPress={() => setCollected(null)}>
-                  <Text style={styles.secondaryText}>Collect another</Text>
+                  <Text style={styles.secondaryText}>Done</Text>
                 </TouchableOpacity>
-              </View>
-            ) : collecting ? (
-              <View style={styles.collectHero}>
-                <View style={styles.tapRing}><ActivityIndicator size="large" color={t.accent} /></View>
-                <Text style={styles.collectTitle}>Ready to collect</Text>
-                <Text style={styles.tapStatus}>{recvStatus}</Text>
-                <Text style={styles.collectSub}>Hold your phone against the sender's. The money arrives over Bluetooth — no internet needed.</Text>
-                <TouchableOpacity style={styles.secondaryCta} onPress={() => { stopReceiving(); openScanner(); }}>
-                  <Text style={styles.secondaryText}>Scan a QR instead</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={stopReceiving}><Text style={styles.back}>Cancel</Text></TouchableOpacity>
               </View>
             ) : (
               <View style={styles.collectHero}>
-                <Text style={styles.collectEmoji}>📡</Text>
-                <Text style={styles.collectTitle}>Collect a Pulse</Text>
-                <Text style={styles.collectSub}>Get money from a phone right next to you — even with no internet.</Text>
                 {tapAvailable() ? (
                   <>
-                    <TouchableOpacity style={styles.cta} onPress={startTapReceive}>
-                      <Text style={styles.ctaText}>Hold near the sender →</Text>
-                    </TouchableOpacity>
+                    <View style={styles.tapRing}><ActivityIndicator size="large" color={t.accent} /></View>
+                    <Text style={styles.collectTitle}>You're discoverable</Text>
+                    <Text style={styles.collectSub}>
+                      Anyone nearby with Loadit can send you money over Bluetooth — you don't have to do anything. It just arrives here.
+                    </Text>
                     <TouchableOpacity style={styles.secondaryCta} onPress={openScanner}>
                       <Text style={styles.secondaryText}>Scan a QR instead</Text>
                     </TouchableOpacity>
                   </>
                 ) : (
-                  <TouchableOpacity style={styles.cta} onPress={openScanner}>
-                    <Text style={styles.ctaText}>Open scanner →</Text>
-                  </TouchableOpacity>
+                  <>
+                    <Text style={styles.collectEmoji}>📡</Text>
+                    <Text style={styles.collectTitle}>Collect a Pulse</Text>
+                    <Text style={styles.collectSub}>Scan a nearby phone's Pulse code to receive money offline.</Text>
+                    <TouchableOpacity style={styles.cta} onPress={openScanner}>
+                      <Text style={styles.ctaText}>Open scanner →</Text>
+                    </TouchableOpacity>
+                  </>
                 )}
               </View>
             )}
