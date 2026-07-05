@@ -176,6 +176,42 @@ export async function getMoneyGramPlan(
   return res.json();
 }
 
+export interface HandleProfile {
+  handle: string;
+  accountType: string | null;
+  profileTheme: string | null;
+  preferredReceiveAsset: string | null;
+  addresses: {
+    solana: string | null;
+    evm: string | null;
+    bitcoin: string | null;
+    usdc: string | null;
+  };
+}
+export interface MyHandleResult {
+  ok: boolean;
+  linked: boolean;
+  reason?: string;
+  profile?: HandleProfile;
+}
+
+/** The signed-in user's own Hylaq @handle (verified via their Hylaq token). */
+export async function getMyHandle(token?: string, email?: string): Promise<MyHandleResult> {
+  const res = await fetch(`${API_BASE}/api/handle/me`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token, email }),
+  });
+  return res.json();
+}
+
+/** Resolve any public Hylaq @handle → profile + receive addresses. */
+export async function resolveHandle(name: string): Promise<{ ok: boolean; profile?: HandleProfile; reason?: string }> {
+  const clean = name.replace(/^@/, "").trim();
+  const res = await fetch(`${API_BASE}/api/handle/${encodeURIComponent(clean)}`);
+  return res.json();
+}
+
 export type OnrampProvider = "coinbase" | "stripe";
 
 export interface OnrampResult {

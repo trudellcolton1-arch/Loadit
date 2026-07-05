@@ -47,6 +47,9 @@ export default function Home() {
           <View style={styles.headRow}>
             <Image source={require("../assets/mark.png")} style={styles.mark} />
             <View style={styles.headActions}>
+              <TouchableOpacity onPress={() => router.push("/profile")}>
+                <Text style={styles.headAction}>👤</Text>
+              </TouchableOpacity>
               <TouchableOpacity onPress={() => router.push("/appearance")}>
                 <Text style={styles.headAction}>🎨</Text>
               </TouchableOpacity>
