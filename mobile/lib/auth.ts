@@ -1,7 +1,7 @@
 import * as SecureStore from "expo-secure-store";
 import * as AuthSession from "expo-auth-session";
 import * as WebBrowser from "expo-web-browser";
-import { HYLAQ } from "./config";
+import { API_BASE, HYLAQ } from "./config";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -73,27 +73,39 @@ export async function signInWithHylaq(): Promise<Session> {
     throw new Error("Login was cancelled.");
   }
 
-  const token = await AuthSession.exchangeCodeAsync(
-    {
-      clientId: HYLAQ.clientId,
+  // Exchange the code via the Loadit backend — Hylaq's token endpoint requires
+  // the client secret, which lives ONLY on the server, never in this app.
+  const exch = await fetch(`${API_BASE}/api/auth/hylaq/token`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
       code: result.params.code,
-      redirectUri,
-      extraParams: request.codeVerifier ? { code_verifier: request.codeVerifier } : {},
-    },
-    discovery
-  );
+      redirect_uri: redirectUri,
+      code_verifier: request.codeVerifier || undefined,
+    }),
+  });
+  const token = (await exch.json()) as {
+    access_token?: string;
+    id_token?: string;
+    error?: string;
+    detail?: string;
+    error_description?: string;
+  };
+  if (!exch.ok || !token.access_token) {
+    throw new Error(token.error_description || token.detail || token.error || "Sign-in failed at token exchange.");
+  }
 
   const session: Session = {
     kind: "hylaq",
-    accessToken: token.accessToken,
-    idToken: token.idToken,
+    accessToken: token.access_token,
+    idToken: token.id_token,
   };
 
   // Best-effort profile fetch — login still succeeds if userinfo is unavailable.
-  if (token.accessToken && discovery.userInfoEndpoint) {
+  if (token.access_token && discovery.userInfoEndpoint) {
     try {
       const res = await fetch(discovery.userInfoEndpoint, {
-        headers: { Authorization: `Bearer ${token.accessToken}` },
+        headers: { Authorization: `Bearer ${token.access_token}` },
       });
       if (res.ok) {
         const info = (await res.json()) as { name?: string; email?: string };

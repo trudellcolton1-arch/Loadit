@@ -25,10 +25,10 @@ const METHODS = [
 ] as const;
 
 const COINS = [
-  { id: "BTC", label: "Bitcoin", icon: "₿" },
-  { id: "SOL", label: "Solana", icon: "◎" },
-  { id: "ETH", label: "Ethereum", icon: "Ξ" },
-  { id: "USDC", label: "USDC", icon: "$" },
+  { id: "BTC", label: "Bitcoin", logo: require("../assets/coins/btc.png") },
+  { id: "SOL", label: "Solana", logo: require("../assets/coins/sol.png") },
+  { id: "ETH", label: "Ethereum", logo: require("../assets/coins/eth.png") },
+  { id: "USDC", label: "USDC", logo: require("../assets/coins/usdc.png") },
 ] as const;
 
 export default function Load() {
@@ -153,8 +153,8 @@ export default function Load() {
                     style={[styles.rowItem, i > 0 && styles.rowDivider]}
                     onPress={() => setCoin(c.id)}
                   >
-                    <View style={[styles.rowIcon, styles.coinIcon]}>
-                      <Text style={styles.coinIconText}>{c.icon}</Text>
+                    <View style={styles.coinWrap}>
+                      <Image source={c.logo} style={styles.coinLogo} />
                     </View>
                     <Text style={styles.rowLabel}>{c.label}</Text>
                     {coin === c.id && (
@@ -244,8 +244,8 @@ const makeStyles = (t: Theme) =>
     rowDivider: { borderTopColor: t.border, borderTopWidth: StyleSheet.hairlineWidth },
     rowIcon: { width: 34, height: 34, borderRadius: 17, backgroundColor: t.surface, alignItems: "center", justifyContent: "center" },
     rowIconText: { fontSize: 16 },
-    coinIcon: { backgroundColor: t.mode === "light" ? "#101114" : "rgba(255,255,255,0.12)" },
-    coinIconText: { color: "#FFFFFF", fontSize: 15, fontWeight: "800" },
+    coinWrap: { width: 34, height: 34, borderRadius: 17, backgroundColor: "#FFFFFF", borderColor: t.border, borderWidth: 1, alignItems: "center", justifyContent: "center" },
+    coinLogo: { width: 22, height: 22, resizeMode: "contain" },
     rowLabel: { color: t.text, fontSize: 16, fontWeight: "600", flex: 1 },
     check: { width: 22, height: 22, borderRadius: 11, backgroundColor: t.accent, alignItems: "center", justifyContent: "center" },
     checkMark: { color: t.onAccent, fontSize: 13, fontWeight: "800" },
