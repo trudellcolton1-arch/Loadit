@@ -105,6 +105,17 @@ export default function Home() {
             <Text style={styles.featureArrow}>→</Text>
           </TouchableOpacity>
 
+          <TouchableOpacity style={styles.featureCard} onPress={() => router.push("/pulse")}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.featureTitle}>📡 Pulse — pay offline</Text>
+              <Text style={styles.featureSub}>
+                Send money to any phone right next to you — even with no
+                internet. It settles the moment either of you reconnects.
+              </Text>
+            </View>
+            <Text style={styles.featureArrow}>→</Text>
+          </TouchableOpacity>
+
           <TouchableOpacity style={styles.featureCard} onPress={() => router.push("/hq")}>
             <View style={{ flex: 1 }}>
               <Text style={styles.featureTitle}>🧠 HQ — your AI</Text>

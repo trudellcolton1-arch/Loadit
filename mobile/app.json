@@ -3,7 +3,7 @@
     "name": "Loadit",
     "slug": "loadit",
     "scheme": "loadit",
-    "version": "1.4.0",
+    "version": "1.5.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "backgroundColor": "#FFFFFF",
@@ -13,33 +13,94 @@
       "resizeMode": "contain",
       "backgroundColor": "#FFFFFF"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "bundleIdentifier": "net.loadit.app",
       "supportsTablet": true,
       "infoPlist": {
-        "NSMicrophoneUsageDescription": "Loadit uses the microphone so you can speak your money requests to HQ.",
-        "ITSAppUsesNonExemptEncryption": false
+        "NSMicrophoneUsageDescription": "Loadit uses the microphone so you can speak your money requests to HQ, and for ultrasonic Pulse pairing with nearby phones.",
+        "NSCameraUsageDescription": "Loadit uses the camera to scan a nearby phone's Pulse code so you can collect money offline.",
+        "NSBluetoothAlwaysUsageDescription": "Loadit uses Bluetooth so you can send and receive money with people near you — even with no internet.",
+        "NSBluetoothPeripheralUsageDescription": "Loadit advertises over Bluetooth so nearby phones can pay you offline.",
+        "NSLocationWhenInUseUsageDescription": "Loadit uses your location to find people nearby to pay and to verify offline Pulse claims.",
+        "NFCReaderUsageDescription": "Loadit uses NFC to tap-to-pay money to a nearby phone.",
+        "ITSAppUsesNonExemptEncryption": false,
+        "UIBackgroundModes": [
+          "bluetooth-central",
+          "bluetooth-peripheral",
+          "location",
+          "processing",
+          "fetch"
+        ]
       }
     },
     "android": {
       "package": "net.loadit.app",
-      "permissions": ["RECORD_AUDIO", "INTERNET"],
+      "permissions": [
+        "RECORD_AUDIO",
+        "INTERNET",
+        "BLUETOOTH",
+        "BLUETOOTH_ADMIN",
+        "BLUETOOTH_CONNECT",
+        "BLUETOOTH_SCAN",
+        "BLUETOOTH_ADVERTISE",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "NFC",
+        "CAMERA"
+      ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#04060B"
       }
     },
-    "plugins": ["expo-router", "expo-secure-store"],
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "react-native-ble-plx",
+        {
+          "isBackgroundEnabled": true,
+          "modes": ["central", "peripheral"],
+          "bluetoothAlwaysPermission": "Loadit uses Bluetooth to send and receive money with people near you — even offline."
+        }
+      ],
+      [
+        "react-native-nfc-manager",
+        {
+          "nfcPermission": "Loadit uses NFC to tap-to-pay money to a nearby phone.",
+          "selectIdentifiers": [],
+          "includeNdefEntitlement": false
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Loadit uses your location to find people nearby to pay and to verify offline Pulse claims."
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Loadit uses the camera to scan a nearby phone's Pulse code so you can collect money offline."
+        }
+      ]
+    ],
     "extra": {
       "apiBase": "https://loadit.net",
       "aeroApiKey": "demo",
       "hylaq": {
         "issuer": "https://www.hylaq.com",
         "clientId": "hyq_client_dc0eb8d82bb0af1a2d4961ac",
-        "scopes": ["read"]
+        "scopes": [
+          "read"
+        ]
       },
-      "router": { "origin": false }
+      "router": {
+        "origin": false
+      }
     }
   }
 }

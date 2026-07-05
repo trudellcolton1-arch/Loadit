@@ -116,6 +116,23 @@ export async function registerDevice(token: string, p: RegisterDeviceParams) {
   );
 }
 
+/**
+ * Lock money in escrow for an offline note while still online (the sender side).
+ * Returns null if the drop endpoint isn't live yet — the caller may still beam a
+ * signed note (sender-vouched) and settlement reconciles on sync.
+ */
+export async function dropPulse(
+  token: string,
+  p: { handleId: string; deviceId: string; amountUsd: number; asset: string; noteId: string; toHandle?: string }
+) {
+  return authed<{ escrowId: string; locked: boolean; expiresAt?: string }>(
+    "POST",
+    "/api/wallet/pulse-offline/drop",
+    token,
+    p
+  );
+}
+
 /** Pre-cache a pulse's signed manifest (unlock rules) for offline verification. */
 export async function cacheManifest(
   token: string,

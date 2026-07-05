@@ -1,3 +1,4 @@
+import "react-native-get-random-values";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -22,6 +23,7 @@ function ThemedStack() {
         <Stack.Screen name="hq" options={{ title: "HQ — your AI" }} />
         <Stack.Screen name="profile" options={{ title: "Profile" }} />
         <Stack.Screen name="send" options={{ title: "Send crypto" }} />
+        <Stack.Screen name="pulse" options={{ title: "Pulse — offline pay" }} />
         <Stack.Screen name="login" options={{ headerShown: false }} />
         <Stack.Screen name="buy" options={{ title: "Buy" }} />
         <Stack.Screen name="quote" options={{ title: "Live quote" }} />
