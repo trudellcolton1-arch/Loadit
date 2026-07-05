@@ -3,7 +3,7 @@
     "name": "Loadit",
     "slug": "loadit",
     "scheme": "loadit",
-    "version": "1.5.1",
+    "version": "1.6.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "backgroundColor": "#FFFFFF",
@@ -25,6 +25,8 @@
         "NSBluetoothAlwaysUsageDescription": "Loadit uses Bluetooth so you can send and receive money with people near you — even with no internet.",
         "NSBluetoothPeripheralUsageDescription": "Loadit advertises over Bluetooth so nearby phones can pay you offline.",
         "NSLocationWhenInUseUsageDescription": "Loadit uses your location to find people nearby to pay and to verify offline Pulse claims.",
+        "NSLocalNetworkUsageDescription": "Loadit hands money to nearby phones over Bluetooth and Wi-Fi — even with no internet.",
+        "NSBonjourServices": ["_loadit-pulse._tcp", "_loadit-pulse._udp"],
         "ITSAppUsesNonExemptEncryption": false,
         "UIBackgroundModes": [
           "bluetooth-central",

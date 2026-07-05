@@ -23,6 +23,7 @@ import {
   type PulseNote,
 } from "@/lib/pulseClaim";
 import { scanNearby, bleReady, type NearbyPeer } from "@/lib/pulseNearby";
+import { tapAvailable, hostNote, receiveNote } from "@/lib/pulseMultipeer";
 import { useTheme, type Theme } from "@/lib/theme";
 import { HandleAvatar } from "@/components/HandleAvatar";
 import * as SecureStore from "expo-secure-store";
@@ -80,6 +81,14 @@ export default function Pulse() {
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<PulseNote | null>(null);
   const [escrowLocked, setEscrowLocked] = useState(false);
+
+  // Tap-first handoff: "tap" = Bluetooth (MultipeerConnectivity), "qr" = fallback.
+  const [handoff, setHandoff] = useState<"tap" | "qr">("qr");
+  const [sent, setSent] = useState(false);
+  const [tapStatus, setTapStatus] = useState("");
+  const [collecting, setCollecting] = useState(false);
+  const [recvStatus, setRecvStatus] = useState("");
+  const recvCleanup = useRef<(() => void) | null>(null);
 
   const [permission, requestPermission] = useCameraPermissions();
   const [scanning, setScanning] = useState(false);
@@ -139,7 +148,51 @@ export default function Pulse() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, note]);
 
+  // Beam over Bluetooth: advertise the signed note and push it on connect.
+  useEffect(() => {
+    if (mode !== "send" || !note || handoff !== "tap" || !tapAvailable()) return;
+    let cancelled = false;
+    let cleanup: (() => void) | null = null;
+    setSent(false);
+    setTapStatus("Starting Bluetooth…");
+    hostNote(me?.handle || "loadit", encodeNote(note), {
+      onStatus: (s) => { if (!cancelled) setTapStatus(s); },
+      onSent: () => { if (!cancelled) setSent(true); },
+      onError: (m) => { if (!cancelled) setTapStatus(m); },
+    }).then((c) => { if (cancelled) c(); else cleanup = c; });
+    return () => { cancelled = true; cleanup?.(); };
+  }, [mode, note, handoff, me?.handle]);
+
+  // Tear down any receive session when Pulse unmounts.
+  useEffect(() => () => { recvCleanup.current?.(); }, []);
+
   if (ready && !session) return <Redirect href="/login" />;
+
+  const resetBeam = () => {
+    setNote(null); setSent(false); setTapStatus("");
+    setAmountText("20"); setMemo(""); setToUser(null);
+  };
+
+  const stopReceiving = () => {
+    recvCleanup.current?.(); recvCleanup.current = null;
+    setCollecting(false); setRecvStatus("");
+  };
+
+  /** Collect over Bluetooth: browse, auto-connect, queue the note on arrival. */
+  const startTapReceive = async () => {
+    setCollected(null); setCollecting(true); setRecvStatus("Starting Bluetooth…");
+    try {
+      const cleanup = await receiveNote(me?.handle || "loadit", {
+        onStatus: (s) => setRecvStatus(s),
+        onNote: (payload) => { stopReceiving(); onScan(payload); },
+        onError: (m) => setRecvStatus(m),
+      });
+      recvCleanup.current = cleanup;
+    } catch {
+      setCollecting(false);
+      Alert.alert("Bluetooth", "Couldn't start Bluetooth. Try the QR scanner.");
+    }
+  };
 
   /** Mint a Hylaq token from the wallet password and register the device once. */
   const ensureToken = async (): Promise<string | null> => {
@@ -186,6 +239,8 @@ export default function Pulse() {
         createdAt: Date.now(), evidence,
       });
       setEscrowLocked(locked);
+      setHandoff(tapAvailable() ? "tap" : "qr");
+      setSent(false);
       setNote(n);
       setPassword("");
     } catch {
@@ -286,7 +341,7 @@ export default function Pulse() {
 
         <View style={styles.segment}>
           {(["send", "receive"] as const).map((m) => (
-            <TouchableOpacity key={m} style={[styles.segBtn, mode === m && styles.segBtnOn]} onPress={() => { setMode(m); setNote(null); }}>
+            <TouchableOpacity key={m} style={[styles.segBtn, mode === m && styles.segBtnOn]} onPress={() => { stopReceiving(); resetBeam(); setMode(m); }}>
               <Text style={[styles.segText, mode === m && styles.segTextOn]}>{m === "send" ? "Beam money" : "Collect"}</Text>
             </TouchableOpacity>
           ))}
@@ -336,18 +391,46 @@ export default function Pulse() {
         {mode === "send" ? (
           note ? (
             <View style={styles.noteWrap}>
-              <View style={styles.qrCard}>
-                <QRCode value={encodeNote(note)} size={236} backgroundColor="#FFFFFF" color="#0B0D12" />
-              </View>
-              <Text style={styles.noteAmount}>{money(note.amountUsd)} USDC</Text>
-              {note.to ? <Text style={styles.noteTo}>to @{note.to}</Text> : null}
-              <Text style={styles.noteSub}>
-                {escrowLocked ? "Locked in escrow · " : ""}Have them open Pulse → Collect and scan this. It settles when either of you is back online.
-              </Text>
-              {note.memo ? <Text style={styles.noteMemo}>“{note.memo}”</Text> : null}
-              <TouchableOpacity style={styles.secondaryCta} onPress={() => { setNote(null); setAmountText("20"); setMemo(""); }}>
-                <Text style={styles.secondaryText}>New Pulse</Text>
-              </TouchableOpacity>
+              {handoff === "tap" ? (
+                sent ? (
+                  <>
+                    <View style={styles.successCircle}><Text style={styles.successTick}>✓</Text></View>
+                    <Text style={styles.noteAmount}>Sent {money(note.amountUsd)}</Text>
+                    {note.to ? <Text style={styles.noteTo}>to @{note.to}</Text> : null}
+                    <Text style={styles.noteSub}>Delivered over Bluetooth. It settles into their wallet when either of you is back online.</Text>
+                    <TouchableOpacity style={styles.secondaryCta} onPress={resetBeam}><Text style={styles.secondaryText}>New Pulse</Text></TouchableOpacity>
+                  </>
+                ) : (
+                  <>
+                    <View style={styles.tapRing}><ActivityIndicator size="large" color={t.accent} /></View>
+                    <Text style={styles.noteAmount}>{money(note.amountUsd)} USDC</Text>
+                    {note.to ? <Text style={styles.noteTo}>to @{note.to}</Text> : null}
+                    {escrowLocked ? <View style={styles.lockPill}><Text style={styles.lockText}>🔒 Locked in escrow</Text></View> : null}
+                    <Text style={styles.tapStatus}>{tapStatus}</Text>
+                    <Text style={styles.noteSub}>Hold your phone against theirs. The money crosses over Bluetooth + Wi-Fi — no internet needed.</Text>
+                    <TouchableOpacity style={styles.secondaryCta} onPress={() => setHandoff("qr")}><Text style={styles.secondaryText}>Show QR instead</Text></TouchableOpacity>
+                    <TouchableOpacity onPress={resetBeam}><Text style={styles.back}>Cancel</Text></TouchableOpacity>
+                  </>
+                )
+              ) : (
+                <>
+                  <View style={styles.qrCard}>
+                    <QRCode value={encodeNote(note)} size={236} backgroundColor="#FFFFFF" color="#0B0D12" />
+                  </View>
+                  <Text style={styles.noteAmount}>{money(note.amountUsd)} USDC</Text>
+                  {note.to ? <Text style={styles.noteTo}>to @{note.to}</Text> : null}
+                  <Text style={styles.noteSub}>
+                    {escrowLocked ? "Locked in escrow · " : ""}Have them open Pulse → Collect and scan this.
+                  </Text>
+                  {note.memo ? <Text style={styles.noteMemo}>“{note.memo}”</Text> : null}
+                  {tapAvailable() ? (
+                    <TouchableOpacity style={styles.secondaryCta} onPress={() => { setSent(false); setHandoff("tap"); }}>
+                      <Text style={styles.secondaryText}>Tap over Bluetooth instead</Text>
+                    </TouchableOpacity>
+                  ) : null}
+                  <TouchableOpacity onPress={resetBeam}><Text style={styles.back}>New Pulse</Text></TouchableOpacity>
+                </>
+              )}
             </View>
           ) : (
             <>
@@ -431,18 +514,40 @@ export default function Pulse() {
                 <Text style={styles.collectedFrom}>{collected.from.handle ? `from @${collected.from.handle}` : "collected offline"}</Text>
                 {collected.memo ? <Text style={styles.noteMemo}>“{collected.memo}”</Text> : null}
                 <Text style={styles.noteSub}>Held as pending. It lands in your wallet on your next sync.</Text>
-                <TouchableOpacity style={styles.secondaryCta} onPress={openScanner}>
-                  <Text style={styles.secondaryText}>Scan another</Text>
+                <TouchableOpacity style={styles.secondaryCta} onPress={() => setCollected(null)}>
+                  <Text style={styles.secondaryText}>Collect another</Text>
                 </TouchableOpacity>
+              </View>
+            ) : collecting ? (
+              <View style={styles.collectHero}>
+                <View style={styles.tapRing}><ActivityIndicator size="large" color={t.accent} /></View>
+                <Text style={styles.collectTitle}>Ready to collect</Text>
+                <Text style={styles.tapStatus}>{recvStatus}</Text>
+                <Text style={styles.collectSub}>Hold your phone against the sender's. The money arrives over Bluetooth — no internet needed.</Text>
+                <TouchableOpacity style={styles.secondaryCta} onPress={() => { stopReceiving(); openScanner(); }}>
+                  <Text style={styles.secondaryText}>Scan a QR instead</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={stopReceiving}><Text style={styles.back}>Cancel</Text></TouchableOpacity>
               </View>
             ) : (
               <View style={styles.collectHero}>
                 <Text style={styles.collectEmoji}>📡</Text>
                 <Text style={styles.collectTitle}>Collect a Pulse</Text>
-                <Text style={styles.collectSub}>Scan the sender's code to receive money offline — no internet, no account needed to hold it.</Text>
-                <TouchableOpacity style={styles.cta} onPress={openScanner}>
-                  <Text style={styles.ctaText}>Open scanner →</Text>
-                </TouchableOpacity>
+                <Text style={styles.collectSub}>Get money from a phone right next to you — even with no internet.</Text>
+                {tapAvailable() ? (
+                  <>
+                    <TouchableOpacity style={styles.cta} onPress={startTapReceive}>
+                      <Text style={styles.ctaText}>Hold near the sender →</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.secondaryCta} onPress={openScanner}>
+                      <Text style={styles.secondaryText}>Scan a QR instead</Text>
+                    </TouchableOpacity>
+                  </>
+                ) : (
+                  <TouchableOpacity style={styles.cta} onPress={openScanner}>
+                    <Text style={styles.ctaText}>Open scanner →</Text>
+                  </TouchableOpacity>
+                )}
               </View>
             )}
           </>
@@ -534,6 +639,11 @@ const makeStyles = (t: Theme) =>
     secondaryText: { color: t.text, fontWeight: "700", fontSize: 14 },
     // beamed note
     noteWrap: { alignItems: "center", marginTop: 24 },
+    tapRing: { width: 130, height: 130, borderRadius: 65, borderWidth: 3, borderColor: t.accentTint, alignItems: "center", justifyContent: "center", marginBottom: 16 },
+    tapStatus: { color: t.accentText, fontSize: 14, fontWeight: "700", marginTop: 10, textAlign: "center" },
+    lockPill: { backgroundColor: t.accentSoft, borderColor: t.accentTint, borderWidth: 1, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 5, marginTop: 10 },
+    lockText: { color: t.accentText, fontSize: 11, fontWeight: "700" },
+    back: { color: t.faint, textAlign: "center", marginTop: 14, fontSize: 14 },
     qrCard: { backgroundColor: "#FFFFFF", borderRadius: 24, padding: 20 },
     noteAmount: { color: t.text, fontSize: 26, fontWeight: "800", marginTop: 20 },
     noteSub: { color: t.dim, fontSize: 13, textAlign: "center", lineHeight: 19, marginTop: 8, paddingHorizontal: 12 },

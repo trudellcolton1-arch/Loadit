@@ -1,6 +1,7 @@
 import { Platform } from "react-native";
 import type { PulseNote } from "./pulseClaim";
 import { encodeNote, decodeNote } from "./pulseClaim";
+import { tapAvailable } from "./pulseMultipeer";
 
 /**
  * PULSE TRANSPORT — how a signed note actually crosses from phone to phone.
@@ -45,13 +46,15 @@ export function transportCapabilities(): TransportCapability[] {
   return [
     {
       kind: "bluetooth",
-      // Receiver side is real via ble-plx (central). Sender side needs the
-      // peripheral/GATT module — flipped on once that native module lands.
-      canSend: false,
-      canReceive: true,
-      note: isIOS
-        ? "Bluetooth tap (iPhone↔iPhone) turns on with the peripheral module in the next native build."
-        : "Bluetooth tap turns on with the peripheral module in the next native build.",
+      // Real, full-duplex offline tap via MultipeerConnectivity (iOS). Android
+      // tap lands with the Nearby module; until then Android uses QR.
+      canSend: tapAvailable(),
+      canReceive: tapAvailable(),
+      note: tapAvailable()
+        ? "Hold two phones together — money crosses over Bluetooth + Wi-Fi, no internet."
+        : isIOS
+        ? "Bluetooth tap initializes on this device at runtime."
+        : "Android Bluetooth tap lands with the Nearby module; QR works now.",
     },
     {
       kind: "nfc",
