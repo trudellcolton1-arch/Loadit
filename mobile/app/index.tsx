@@ -63,7 +63,7 @@ export default function Home() {
           </TouchableOpacity>
 
           <Text style={styles.h1}>Just say it.</Text>
-          <Text style={styles.sub}>Tell AERO what you want to do with your money. HQ finds the cheapest real route.</Text>
+          <Text style={styles.sub}>Tell HQ what you want to do with your money. He finds the cheapest real route.</Text>
 
           <View style={styles.inputRow}>
             <TextInput
@@ -114,7 +114,7 @@ export default function Home() {
 
           {result && (
             <View style={styles.card}>
-              <Text style={styles.aero}>AERO</Text>
+              <Text style={styles.aero}>HQ</Text>
               <Text style={styles.explain}>{result.explanation}</Text>
               {result.hq && (
                 <Text style={styles.liveQuote}>

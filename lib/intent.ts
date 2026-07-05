@@ -28,7 +28,7 @@ export interface Intent {
 }
 
 export const PARSER_SYSTEM =
-  "You are AERO's intent parser for the Loadit money rail. Convert the user's " +
+  "You are HQ's intent parser for the Loadit money rail. Convert the user's " +
   "request into a single structured money-routing intent by calling route_money. " +
   "Infer sensible defaults: if no funding method is stated use Debit Card; if no " +
   "asset is stated use USDC; if no amount is stated use 100. Capture any " +
@@ -177,7 +177,7 @@ export function explainRoute(intent: Intent, r: ReturnType<typeof computeRoute>)
   const dest = intent.destination ? ` to ${intent.destination}` : "";
   return (
     `Got it — moving ${formatUSD(intent.amount_usd)} from your ${intent.payment_method.toLowerCase()} ` +
-    `into ${intent.asset}${dest}. AERO routes this over ${r.network.name} for about ` +
+    `into ${intent.asset}${dest}. HQ routes this over ${r.network.name} for about ` +
     `${formatUSD(r.loaditFee)} — versus ~${formatUSD(r.legacyFee)} the old way, ~${r.savingsPct}% cheaper — ` +
     `settling in ${r.eta}. It's non-custodial: Loadit converts and routes, it never holds your funds.`
   );

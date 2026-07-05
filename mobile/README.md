@@ -1,6 +1,6 @@
 # Loadit — Mobile App (iOS + Android)
 
-Native app for **cash/card → crypto, routed the cheapest way by AERO/HQ**.
+Native app for **cash/card → crypto, routed the cheapest way by HQ**.
 Built with **Expo (React Native)**. Ships to the App Store + Google Play, and is
 **Codemagic-buildable** (`../codemagic.yaml`).
 

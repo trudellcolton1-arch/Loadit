@@ -38,7 +38,7 @@ export default function Login() {
       <View style={styles.center}>
         <Image source={require("../assets/mark.png")} style={styles.mark} />
         <Text style={styles.logo}>Loadit</Text>
-        <Text style={styles.tag}>Cash & card to crypto — routed the cheapest way by AERO.</Text>
+        <Text style={styles.tag}>Cash & card to crypto — routed the cheapest way by HQ.</Text>
 
         <TouchableOpacity style={styles.primary} onPress={withHylaq} disabled={busy}>
           {busy ? <ActivityIndicator color={t.buttonText} /> : <Text style={styles.primaryText}>Login with Hylaq</Text>}

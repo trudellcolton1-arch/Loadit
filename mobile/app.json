@@ -18,7 +18,7 @@
       "bundleIdentifier": "net.loadit.app",
       "supportsTablet": true,
       "infoPlist": {
-        "NSMicrophoneUsageDescription": "Loadit uses the microphone so you can speak your money requests to AERO.",
+        "NSMicrophoneUsageDescription": "Loadit uses the microphone so you can speak your money requests to HQ.",
         "ITSAppUsesNonExemptEncryption": false
       }
     },
