@@ -28,6 +28,7 @@ export const NAV_LINKS = [
   { label: "Developers", href: "/developers" },
   { label: "Patents", href: "/#patents" },
   { label: "Investors", href: "/#investors" },
+  { label: "Deck", href: "/deck" },
 ] as const;
 
 // Curated subset for the desktop bar.
