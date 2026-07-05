@@ -23,7 +23,7 @@ import {
   type PulseNote,
 } from "@/lib/pulseClaim";
 import { scanNearby, bleReady, type NearbyPeer } from "@/lib/pulseNearby";
-import { tapAvailable, startPresence, armSend, receiveNote } from "@/lib/pulseMultipeer";
+import { tapAvailable, startPresence, armSend, receiveNote } from "@/lib/pulseBle";
 import { useTheme, type Theme } from "@/lib/theme";
 import { HandleAvatar } from "@/components/HandleAvatar";
 import * as SecureStore from "expo-secure-store";

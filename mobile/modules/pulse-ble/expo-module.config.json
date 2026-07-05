@@ -1,0 +1,9 @@
+{
+  "platforms": ["apple", "android"],
+  "apple": {
+    "modules": ["PulseBleModule"]
+  },
+  "android": {
+    "modules": ["expo.modules.pulseble.PulseBleModule"]
+  }
+}
