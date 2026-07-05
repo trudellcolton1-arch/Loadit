@@ -604,7 +604,7 @@ export default function Pulse() {
                 {busy ? <ActivityIndicator color={t.buttonText} /> : <Text style={styles.syncText}>Sync now</Text>}
               </TouchableOpacity>
             </View>
-            {online && !password && me && (
+            {online && me && (
               <TextInput
                 style={[styles.input, { marginTop: 12 }]}
                 placeholder="Wallet password to settle"
