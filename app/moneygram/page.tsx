@@ -190,6 +190,12 @@ function MgStyle() {
       @media (max-width:720px) {
         .mg-page { padding:32px 22px; }
         .mg-flow-grid, .mg-cols { grid-template-columns:1fr; }
+        .mg-head { flex-direction:column; align-items:flex-start; gap:10px; }
+        .mg-kicker { font-size:10px; }
+        .mg-word, .mg-mg { font-size:19px; }
+        .mg-h1 { font-size:30px; }
+        .mg-foot { flex-wrap:wrap; gap:8px 12px; }
+        .mg-foot-line { display:none; }
       }
       @media print {
         @page { size:1040px 1140px; margin:0; }
