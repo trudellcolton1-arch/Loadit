@@ -22,6 +22,7 @@ import {
   makePulseNote, verifyPulseNote, encodeNote, decodeNote, noteToClaimPacket,
   type PulseNote,
 } from "@/lib/pulseClaim";
+import { scanNearby, bleReady, type NearbyPeer } from "@/lib/pulseNearby";
 import { useTheme, type Theme } from "@/lib/theme";
 import { HandleAvatar } from "@/components/HandleAvatar";
 import * as SecureStore from "expo-secure-store";
@@ -38,6 +39,14 @@ import * as SecureStore from "expo-secure-store";
 const AMOUNTS = [5, 20, 50, 100] as const;
 const REGISTERED_KEY = "loadit_pulse_registered_v1";
 const money = (n: number) => `$${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+/** Rough proximity readout from BLE RSSI (closer = stronger = more bars). */
+function signalBars(rssi: number): string {
+  if (rssi >= -55) return "right here";
+  if (rssi >= -70) return "very close";
+  if (rssi >= -85) return "nearby";
+  return "in range";
+}
 
 /** Best-effort GPS for claim evidence — never blocks, never throws. */
 async function captureEvidence(): Promise<ProximityEvidence> {
@@ -80,7 +89,20 @@ export default function Pulse() {
   const [queue, setQueue] = useState<ClaimPacket[]>([]);
   const pendingSum = queue.reduce((s, p) => s + (p.amountUsd || 0), 0);
 
+  const [nearby, setNearby] = useState<NearbyPeer[]>([]);
+  const [bleState, setBleState] = useState<"idle" | "scanning" | "off">("idle");
+
   const refreshQueue = useCallback(async () => setQueue(await readQueue()), []);
+
+  const scanForPhones = useCallback(async () => {
+    if (bleState === "scanning") return;
+    const on = await bleReady();
+    if (!on) { setBleState("off"); setNearby([]); return; }
+    setBleState("scanning");
+    const peers = await scanNearby(4000);
+    setNearby(peers);
+    setBleState("idle");
+  }, [bleState]);
 
   useEffect(() => {
     if (!ready || !session) return;
@@ -99,6 +121,12 @@ export default function Pulse() {
       }
     })();
   }, [ready, session, refreshQueue]);
+
+  // Look for nearby phones whenever the Beam screen is in front.
+  useEffect(() => {
+    if (mode === "send" && !note) scanForPhones();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, note]);
 
   if (ready && !session) return <Redirect href="/login" />;
 
@@ -140,6 +168,7 @@ export default function Pulse() {
         locked = Boolean(drop?.locked);
       }
       const evidence = await captureEvidence();
+      if (nearby[0]) { evidence.bleRssi = nearby[0].rssi ?? undefined; evidence.bleDeviceId = nearby[0].id; }
       const n = await makePulseNote({
         fromHandle: me?.handle, fromHandleId: me?.id,
         amountUsd: amount, asset: "USDC", memo: memo.trim() || undefined,
@@ -251,6 +280,29 @@ export default function Pulse() {
             </TouchableOpacity>
           ))}
         </View>
+
+        {mode === "send" && !note && (
+          <TouchableOpacity style={styles.blePill} onPress={scanForPhones} activeOpacity={0.8}>
+            <View style={[styles.bleDot, {
+              backgroundColor: bleState === "scanning" ? t.warn : nearby.length ? t.accent : t.faint,
+            }]} />
+            {bleState === "scanning" ? (
+              <>
+                <ActivityIndicator size="small" color={t.dim} style={{ marginRight: 2 }} />
+                <Text style={styles.bleText}>Scanning for phones…</Text>
+              </>
+            ) : bleState === "off" ? (
+              <Text style={styles.bleText}>Bluetooth off · tap to retry</Text>
+            ) : nearby.length ? (
+              <Text style={[styles.bleText, { color: t.accentText }]}>
+                {nearby.length} phone{nearby.length === 1 ? "" : "s"} nearby
+                {nearby[0]?.rssi != null ? ` · ${signalBars(nearby[0].rssi)}` : ""}
+              </Text>
+            ) : (
+              <Text style={styles.bleText}>No phones nearby · tap to rescan</Text>
+            )}
+          </TouchableOpacity>
+        )}
 
         {mode === "send" ? (
           note ? (
@@ -409,6 +461,9 @@ const makeStyles = (t: Theme) =>
     segBtnOn: { backgroundColor: t.button },
     segText: { color: t.dim, fontWeight: "700", fontSize: 14 },
     segTextOn: { color: t.buttonText },
+    blePill: { flexDirection: "row", alignItems: "center", gap: 8, alignSelf: "flex-start", backgroundColor: t.surface, borderColor: t.border, borderWidth: 1, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 9, marginTop: 14 },
+    bleDot: { width: 8, height: 8, borderRadius: 4 },
+    bleText: { color: t.dim, fontSize: 12, fontWeight: "600" },
     meRow: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 20 },
     meHandle: { color: t.text, fontSize: 15, fontWeight: "700" },
     label: { color: t.faint, fontSize: 11, letterSpacing: 1, textTransform: "uppercase", marginTop: 20 },
