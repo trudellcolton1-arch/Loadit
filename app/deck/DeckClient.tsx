@@ -11,7 +11,7 @@ import { useEffect, useState, type ReactNode } from "react";
  */
 
 const RAISE = {
-  amount: "$2.5M",
+  amount: "$5M",
   stage: "Pre-Seed (SAFE)",
   contact: "trudellcolton@gmail.com",
 };
@@ -422,9 +422,10 @@ const SLIDES: ReactNode[] = [
       <div className="deck-ask-use">
         <div className="deck-ask-sub font-mono">Use of funds</div>
         {[
-          { l: "Product & engineering", w: 45 },
-          { l: "Partnerships & compliance", w: 30 },
-          { l: "Growth & acquisition", w: 25 },
+          { l: "Product & engineering", w: 40 },
+          { l: "Growth & user acquisition", w: 25 },
+          { l: "Partnerships & compliance", w: 20 },
+          { l: "Team & operations", w: 15 },
         ].map((u) => (
           <div key={u.l} className="deck-ask-row">
             <div className="deck-ask-bar"><div className="deck-ask-fill" style={{ width: `${u.w}%` }} /></div>
@@ -435,9 +436,10 @@ const SLIDES: ReactNode[] = [
       <div className="deck-ask-milestones glass">
         <div className="deck-ask-sub font-mono">What it funds</div>
         <ul className="deck-list deck-list-compact">
-          <li>First 100K active users and provable retention.</li>
-          <li>Deeper partner rebate deals — lifting the take rate.</li>
-          <li>App Store launch + the register cash-network partnership.</li>
+          <li>Public App Store + Play launch and first 250K active users.</li>
+          <li>Direct partner rebate &amp; licensing deals that lift the take rate.</li>
+          <li>Native register cash-network integration (QR at the point of sale).</li>
+          <li>Core hires across engineering, growth, and compliance.</li>
         </ul>
       </div>
     </div>
