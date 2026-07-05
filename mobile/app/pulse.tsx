@@ -102,6 +102,7 @@ export default function Pulse() {
   const [nearby, setNearby] = useState<NearbyPeer[]>([]);
   const [nearbyUsers, setNearbyUsers] = useState<Array<{ profile: HandleProfile; rssi: number | null }>>([]);
   const [nearbyCount, setNearbyCount] = useState(0);
+  const [androidLocOff, setAndroidLocOff] = useState(false);
   const nearbyRef = useRef<Set<string>>(new Set());
   const [toUser, setToUser] = useState<HandleProfile | null>(null);
   const [bleState, setBleState] = useState<"idle" | "scanning" | "off">("idle");
@@ -175,6 +176,11 @@ export default function Pulse() {
       let cancelled = false;
       let cleanup: (() => void) | null = null;
       setNearbyUsers([]); setNearbyCount(0); nearbyRef.current = new Set();
+      // Android returns ZERO BLE scan results if system Location is off, even
+      // with permission granted — surface that so it's not a silent mystery.
+      if (Platform.OS === "android") {
+        Location.hasServicesEnabledAsync().then((on) => setAndroidLocOff(!on)).catch(() => {});
+      }
       startScanning(me?.handle || "loadit", { onPeer: addFace, onLost: removeFace })
         .then((c) => { if (cancelled) c(); else cleanup = c; });
       return () => { cancelled = true; cleanup?.(); };
@@ -391,6 +397,19 @@ export default function Pulse() {
     }
   };
 
+  /** Clear locally-queued Pulses that Hylaq keeps rejecting (e.g. created before
+   * the escrow was actually locked, so there's nothing to settle). Local only. */
+  const clearStuck = () => {
+    Alert.alert(
+      "Clear pending?",
+      "Remove pending Pulses that Hylaq won't settle — usually ones created before the funds were locked in escrow. This only clears them from this phone; no money is affected.",
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Clear", style: "destructive", onPress: async () => { await clearSettled(queue.map((p) => p.nonce)); await refreshQueue(); } },
+      ]
+    );
+  };
+
   /* -------------------------------------------------------------- scanner */
   if (scanning) {
     return (
@@ -434,6 +453,12 @@ export default function Pulse() {
             </TouchableOpacity>
           ))}
         </View>
+
+        {androidLocOff && tapAvailable() && (
+          <TouchableOpacity style={styles.locBanner} onPress={() => Location.enableNetworkProviderAsync().then(() => setAndroidLocOff(false)).catch(() => {})}>
+            <Text style={styles.locText}>⚠︎ Turn on Location so Bluetooth can find phones. Android requires it for scanning — it works offline, no internet. Tap to enable.</Text>
+          </TouchableOpacity>
+        )}
 
         {mode === "send" && !note && tapAvailable() && (
           <View style={[styles.blePill, { borderColor: t.accentTint, backgroundColor: t.accentSoft }]}>
@@ -673,6 +698,7 @@ export default function Pulse() {
               </View>
             ))}
             <Text style={styles.legal}>Non-custodial: Pulses settle straight into your Hylaq wallet. Loadit never holds funds.</Text>
+            <TouchableOpacity onPress={clearStuck}><Text style={styles.clearLink}>Clear pending that won't settle</Text></TouchableOpacity>
           </View>
         )}
       </ScrollView>
@@ -698,6 +724,8 @@ const makeStyles = (t: Theme) =>
     blePill: { flexDirection: "row", alignItems: "center", gap: 8, alignSelf: "flex-start", backgroundColor: t.surface, borderColor: t.border, borderWidth: 1, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 9, marginTop: 14 },
     bleDot: { width: 8, height: 8, borderRadius: 4 },
     bleText: { color: t.dim, fontSize: 12, fontWeight: "600" },
+    locBanner: { backgroundColor: t.accentSoft, borderColor: t.warn, borderWidth: 1, borderRadius: 14, padding: 12, marginTop: 14 },
+    locText: { color: t.text, fontSize: 12.5, lineHeight: 18, fontWeight: "600" },
     facesWrap: { marginTop: 16 },
     facesLabel: { color: t.faint, fontSize: 10.5, letterSpacing: 0.8, textTransform: "uppercase", marginBottom: 10 },
     facesRow: { gap: 14, paddingRight: 8 },
@@ -766,4 +794,5 @@ const makeStyles = (t: Theme) =>
     pendingRowAmt: { color: t.text, fontSize: 15, fontWeight: "700" },
     pendingRowMeta: { color: t.faint, fontSize: 12 },
     legal: { color: t.faint, fontSize: 11, lineHeight: 16, marginTop: 14, textAlign: "center" },
+    clearLink: { color: t.faint, fontSize: 12, textAlign: "center", marginTop: 12, textDecorationLine: "underline" },
   });
