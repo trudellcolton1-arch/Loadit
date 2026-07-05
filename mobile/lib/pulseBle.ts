@@ -1,4 +1,4 @@
-import { Platform } from "react-native";
+import { Platform, PermissionsAndroid } from "react-native";
 import {
   isBleNativeAvailable, startPeripheral, stopPeripheral,
   onNoteReceived, onBleError,
@@ -9,22 +9,27 @@ import {
  *
  * The native module (pulse-ble) is the PERIPHERAL: it advertises a shared
  * Loadit service + your @handle and runs a GATT server that receives notes.
- * This file is the CENTRAL, built on react-native-ble-plx: it scans for that
- * service to discover nearby Loadit users, and connects + writes a signed note
- * to pay one. Every phone runs both roles, so anyone can find and pay anyone —
- * no shared OS, no internet.
+ * This file is the CENTRAL, on react-native-ble-plx: it scans for that service
+ * to discover nearby Loadit users, and connects + writes a signed note to pay
+ * one. Every phone runs both roles, so anyone can find and pay anyone.
  *
- * API mirrors lib/pulseMultipeer so the Pulse screen swaps transports with a
- * one-line import change. A discovered peer is tracked by @handle → deviceId so
- * the screen keeps addressing sends by @handle.
+ * Robustness (learned the hard way on real hardware):
+ *  - wait for the adapter to be PoweredOn before scanning, and (re)start the
+ *    scan on every power-on;
+ *  - request Android 12+ runtime BLE permissions;
+ *  - a queued send waits for its peer to appear and retries on each discovery
+ *    instead of giving up the instant Create Pulse is tapped;
+ *  - scan with no service filter and match locally (iOS peripherals often put
+ *    the service UUID where a filtered scan misses it).
  */
 
 const SERVICE = "F0AD1E00-1985-4C5A-9B11-9E7A10ADD17E";
+const SERVICE_KEY = "F0AD1E00";
 const NOTE_CHAR = "F0AD1E02-1985-4C5A-9B11-9E7A10ADD17E";
 const MTU = 185;
-const CHUNK = 150; // raw bytes per write, safely under MTU-3
+const CHUNK = 150;
 
-/* ---- ble-plx manager (lazy; never crashes import) ---- */
+/* ---- ble-plx manager (lazy) ---- */
 let manager: any = null;
 function mgr(): any {
   if (!manager) {
@@ -92,21 +97,102 @@ function utf8Decode(bytes: number[]): string {
   return out;
 }
 
-/* ---- discovered peers: @handle -> deviceId ---- */
-const peers = new Map<string, { deviceId: string; rssi: number | null }>();
+/* ---- android runtime permissions (12+) ---- */
+async function ensureAndroidPerms(): Promise<boolean> {
+  if (Platform.OS !== "android") return true;
+  try {
+    const P = PermissionsAndroid.PERMISSIONS as any;
+    const want = [P.BLUETOOTH_SCAN, P.BLUETOOTH_CONNECT, P.BLUETOOTH_ADVERTISE, P.ACCESS_FINE_LOCATION].filter(Boolean);
+    const res = await PermissionsAndroid.requestMultiple(want);
+    return Object.values(res).every((v) => v === PermissionsAndroid.RESULTS.GRANTED);
+  } catch {
+    return false;
+  }
+}
 
+/* ---- discovered peers + pending send (one shared session) ---- */
+const peers = new Map<string, { deviceId: string; rssi: number | null }>();
+let presenceOnPeer: ((handle: string) => void) | null = null;
+let pending: { target: string | null; payload: string; h: PayHandlers; sent: boolean; inFlight: boolean } | null = null;
+let scanning = false;
+let stateSub: { remove: () => void } | null = null;
+
+function isLoaditDevice(d: any): boolean {
+  const uuids: string[] = (d?.serviceUUIDs || []).map((u: string) => String(u).toUpperCase());
+  if (uuids.some((u) => u.replace(/-/g, "").includes(SERVICE_KEY))) return true;
+  const sd = d?.serviceData;
+  if (sd && typeof sd === "object") {
+    return Object.keys(sd).some((k) => k.toUpperCase().replace(/-/g, "").includes(SERVICE_KEY));
+  }
+  return false;
+}
 function handleFromDevice(d: any): string | null {
   const sd = d?.serviceData;
   if (sd && typeof sd === "object") {
     for (const k of Object.keys(sd)) {
-      if (k.toUpperCase().replace(/-/g, "").includes("F0AD1E00")) {
-        try { return base64ToStr(sd[k]).replace(/^@/, "").toLowerCase().trim() || null; } catch { /* fall through */ }
+      if (k.toUpperCase().replace(/-/g, "").includes(SERVICE_KEY)) {
+        try { const h = base64ToStr(sd[k]).replace(/^@/, "").toLowerCase().trim(); if (h) return h; } catch { /* fall through */ }
       }
     }
   }
-  if (d?.localName) return String(d.localName).replace(/^@/, "").toLowerCase().trim() || null;
+  if (d?.localName) { const h = String(d.localName).replace(/^@/, "").toLowerCase().trim(); if (h) return h; }
   return null;
 }
+
+function startScan(myHandle: string) {
+  const m = mgr();
+  if (!m || scanning) return;
+  scanning = true;
+  try {
+    m.startDeviceScan(null, { allowDuplicates: false }, (err: any, d: any) => {
+      if (err || !d) return;
+      if (!isLoaditDevice(d)) return;
+      const handle = handleFromDevice(d) || `peer-${d.id.slice(-4)}`;
+      if (handle === myHandle.toLowerCase()) return;
+      const known = peers.has(handle);
+      peers.set(handle, { deviceId: d.id, rssi: d.rssi ?? null });
+      if (!known && presenceOnPeer) presenceOnPeer(handle);
+      driveSend(handle, d.id);
+    });
+  } catch {
+    scanning = false;
+  }
+}
+function stopScan() {
+  const m = mgr();
+  try { m?.stopDeviceScan(); } catch { /* noop */ }
+  scanning = false;
+}
+
+/** When a peer we're waiting to pay appears, connect + write the note. */
+async function driveSend(handle: string, deviceId: string) {
+  if (!pending || pending.sent || pending.inFlight) return;
+  if (pending.target !== null && pending.target !== handle) return;
+  const m = mgr();
+  if (!m) return;
+  pending.inFlight = true;
+  const p = pending;
+  try {
+    stopScan();
+    p.h.onStatus("Connecting…");
+    let device = await m.connectToDevice(deviceId, { requestMTU: MTU });
+    device = await device.discoverAllServicesAndCharacteristics();
+    p.h.onStatus("Connected — sending…");
+    const raw = utf8Encode(p.payload + "\n");
+    for (let i = 0; i < raw.length; i += CHUNK) {
+      await device.writeCharacteristicWithResponseForService(SERVICE, NOTE_CHAR, bytesToBase64(raw.slice(i, i + CHUNK)));
+    }
+    p.sent = true;
+    p.h.onSent();
+    try { await m.cancelDeviceConnection(deviceId); } catch { /* noop */ }
+  } catch {
+    p.inFlight = false;
+    p.h.onStatus(p.target ? `Reconnecting to @${p.target}…` : "Move closer — retrying…");
+    if (!p.sent) startScan(handleForScan); // rediscover and retry
+  }
+}
+
+let handleForScan = "loadit";
 
 export function tapAvailable(): boolean {
   return isBleNativeAvailable() && !!mgr();
@@ -122,27 +208,28 @@ export interface PresenceHandlers {
 /** Advertise + serve (native) and scan (central) so nearby Loadit users appear. */
 export async function startPresence(myHandle: string, h: PresenceHandlers): Promise<() => void> {
   peers.clear();
+  presenceOnPeer = h.onPeer;
+  handleForScan = myHandle.toLowerCase();
   const subNote = onNoteReceived(({ payload }) => h.onNote(payload));
   const subErr = onBleError(({ message }) => h.onError?.(message));
-  try { await startPeripheral(myHandle); } catch { /* peripheral is best-effort */ }
+
+  await ensureAndroidPerms();
+  try { await startPeripheral(myHandle); } catch { /* peripheral best-effort */ }
 
   const m = mgr();
   if (m) {
-    try {
-      m.startDeviceScan([SERVICE], { allowDuplicates: false }, (err: any, d: any) => {
-        if (err || !d) return;
-        const handle = handleFromDevice(d);
-        if (!handle || handle === myHandle.toLowerCase()) return;
-        const known = peers.has(handle);
-        peers.set(handle, { deviceId: d.id, rssi: d.rssi ?? null });
-        if (!known) h.onPeer(handle);
-      });
-    } catch { /* scanning unavailable */ }
+    // Start scanning as soon as the adapter is powered on (and on every re-power).
+    stateSub = m.onStateChange((state: string) => {
+      if (state === "PoweredOn") startScan(myHandle);
+      else stopScan();
+    }, true);
   }
 
   return () => {
     subNote?.remove(); subErr?.remove();
-    try { m?.stopDeviceScan(); } catch { /* noop */ }
+    stateSub?.remove(); stateSub = null;
+    presenceOnPeer = null;
+    stopScan();
     stopPeripheral().catch(() => {});
     peers.clear();
   };
@@ -155,47 +242,24 @@ export interface PayHandlers {
 }
 
 /**
- * Pay a discovered peer by @handle (or the only one nearby if target is null):
- * connect as central and write the note to their GATT note characteristic.
+ * Queue a send to a discovered peer (@handle) or, with null, the first Loadit
+ * phone that appears. Waits for the peer via the live scan and retries on each
+ * sighting — so it doesn't give up if the phone isn't found the same instant.
  */
 export async function armSend(target: string | null, payload: string, h: PayHandlers): Promise<() => void> {
-  const m = mgr();
-  if (!m) { h.onError("Bluetooth isn't available on this phone."); return () => {}; }
-
+  if (!mgr()) { h.onError("Bluetooth isn't available on this phone."); return () => {}; }
   const key = target?.replace(/^@/, "").toLowerCase() ?? null;
-  const entry = key ? peers.get(key) : (peers.size === 1 ? [...peers.values()][0] : null);
-  if (!entry) {
-    h.onError(key ? `Couldn't find @${key} nearby. Ask them to open Pulse.` : "No phone nearby yet — hold them closer.");
-    return () => {};
+  pending = { target: key, payload, h, sent: false, inFlight: false };
+  h.onStatus(key ? `Looking for @${key}…` : "Holding for a nearby phone…");
+  // If the peer is already in range, go immediately; otherwise (re)start the scan.
+  if (key) {
+    const e = peers.get(key);
+    if (e) driveSend(key, e.deviceId); else startScan(handleForScan);
+  } else {
+    const first = [...peers.entries()][0];
+    if (first) driveSend(first[0], first[1].deviceId); else startScan(handleForScan);
   }
-
-  let cancelled = false;
-  (async () => {
-    try {
-      try { m.stopDeviceScan(); } catch { /* noop */ }
-      h.onStatus(target ? `Connecting to @${key}…` : "Connecting…");
-      let device = await m.connectToDevice(entry.deviceId, { requestMTU: MTU });
-      if (cancelled) return;
-      device = await device.discoverAllServicesAndCharacteristics();
-      h.onStatus("Connected — sending…");
-
-      const raw = utf8Encode(payload + "\n");
-      for (let i = 0; i < raw.length && !cancelled; i += CHUNK) {
-        const chunkB64 = bytesToBase64(raw.slice(i, i + CHUNK));
-        await device.writeCharacteristicWithResponseForService(SERVICE, NOTE_CHAR, chunkB64);
-      }
-      if (cancelled) return;
-      h.onSent();
-      try { await m.cancelDeviceConnection(entry.deviceId); } catch { /* noop */ }
-    } catch (e) {
-      if (!cancelled) h.onError("Couldn't hand it over — move closer and try again.");
-    }
-  })();
-
-  return () => {
-    cancelled = true;
-    try { m.cancelDeviceConnection(entry.deviceId); } catch { /* noop */ }
-  };
+  return () => { pending = null; };
 }
 
 export interface ReceiveHandlers {
@@ -204,10 +268,11 @@ export interface ReceiveHandlers {
   onError: (m: string) => void;
 }
 
-/** Collect: just be discoverable + serve so a nearby sender can push a note. */
+/** Collect: be discoverable + serve so a nearby sender can push a note. */
 export async function receiveNote(myHandle: string, h: ReceiveHandlers): Promise<() => void> {
   const subNote = onNoteReceived(({ payload }) => h.onNote(payload));
   const subErr = onBleError(({ message }) => h.onError(message));
+  await ensureAndroidPerms();
   try { await startPeripheral(myHandle); } catch { h.onError("Couldn't start Bluetooth."); }
   h.onStatus("Ready — hold near the sender…");
   return () => { subNote?.remove(); subErr?.remove(); stopPeripheral().catch(() => {}); };
