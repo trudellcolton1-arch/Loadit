@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   View, Text, TouchableOpacity, ActivityIndicator, ScrollView, StyleSheet,
 } from "react-native";
@@ -6,7 +6,7 @@ import { Redirect, useLocalSearchParams, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@/lib/authContext";
 import { getRoute, type HQRouteQuote } from "@/lib/api";
-import { BRAND } from "@/lib/config";
+import { useTheme, rgba, type Theme } from "@/lib/theme";
 
 /**
  * LIVE HQ QUOTE — "the money app that proves it got you the best price."
@@ -23,6 +23,8 @@ const money = (n: number) => `$${n.toLocaleString(undefined, { minimumFractionDi
 
 export default function Quote() {
   const { session, ready } = useAuth();
+  const { theme: t } = useTheme();
+  const styles = useMemo(() => makeStyles(t), [t]);
   const router = useRouter();
   const params = useLocalSearchParams<{ asset?: string; amount?: string; payMethod?: string }>();
   const asset = (params.asset || "BTC").toString().toUpperCase();
@@ -67,7 +69,7 @@ export default function Quote() {
 
         {!quote && !error && (
           <View style={styles.loading}>
-            <ActivityIndicator color={BRAND.railLight} />
+            <ActivityIndicator color={t.accentText} />
             <Text style={styles.loadingText}>Getting live quotes…</Text>
           </View>
         )}
@@ -91,9 +93,9 @@ export default function Quote() {
               <Text style={styles.provider}>{best.provider}</Text>
               <Text style={styles.assetOut}>You receive ~{best.assetOut} {asset}</Text>
               <View style={styles.statsRow}>
-                <Stat label="Fee" value={money(best.feeUsd)} />
-                <Stat label="Spread" value={`${best.spreadPct}%`} />
-                <Stat label="ETA" value={`~${best.etaMinutes} min`} />
+                <Stat styles={styles} label="Fee" value={money(best.feeUsd)} />
+                <Stat styles={styles} label="Spread" value={`${best.spreadPct}%`} />
+                <Stat styles={styles} label="ETA" value={`~${best.etaMinutes} min`} />
               </View>
               {typeof quote?.savingsUsd === "number" && quote.savingsUsd > 0 && (
                 <Text style={styles.savings}>Beats the next-best offer by {money(quote.savingsUsd)}</Text>
@@ -141,7 +143,7 @@ export default function Quote() {
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Stat({ styles, label, value }: { styles: ReturnType<typeof makeStyles>; label: string; value: string }) {
   return (
     <View style={styles.stat}>
       <Text style={styles.statLabel}>{label}</Text>
@@ -150,34 +152,35 @@ function Stat({ label, value }: { label: string; value: string }) {
   );
 }
 
-const styles = StyleSheet.create({
-  wrap: { flex: 1, backgroundColor: BRAND.bg },
-  scroll: { padding: 20, paddingBottom: 48 },
-  headRow: { flexDirection: "row", alignItems: "center", gap: 10 },
-  h1: { color: BRAND.text, fontSize: 26, fontWeight: "800", letterSpacing: -0.5 },
-  testBadge: { backgroundColor: "rgba(251,191,36,0.15)", borderColor: BRAND.amber, borderWidth: 1, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
-  testBadgeText: { color: BRAND.amber, fontSize: 10, fontWeight: "800", letterSpacing: 1 },
-  sub: { color: BRAND.dim, fontSize: 13, marginTop: 6, marginBottom: 16, lineHeight: 19 },
-  loading: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 24 },
-  loadingText: { color: BRAND.dim, fontSize: 14 },
-  card: { marginTop: 14, backgroundColor: BRAND.card, borderColor: BRAND.border, borderWidth: 1, borderRadius: 20, padding: 16 },
-  bestCard: { borderColor: "rgba(34,169,92,0.45)", backgroundColor: "rgba(34,169,92,0.05)" },
-  bestTag: { color: BRAND.railLight, fontSize: 10, fontWeight: "700", letterSpacing: 2 },
-  provider: { color: BRAND.text, fontSize: 20, fontWeight: "800", marginTop: 6 },
-  assetOut: { color: BRAND.text, fontSize: 15, marginTop: 4 },
-  statsRow: { flexDirection: "row", gap: 8, marginTop: 12 },
-  stat: { flex: 1, backgroundColor: "rgba(255,255,255,0.03)", borderColor: BRAND.border, borderWidth: 1, borderRadius: 14, padding: 10 },
-  statLabel: { color: BRAND.faint, fontSize: 9, letterSpacing: 1, textTransform: "uppercase" },
-  statValue: { color: BRAND.text, fontSize: 14, fontWeight: "700", marginTop: 3 },
-  savings: { color: BRAND.railLight, fontSize: 13, fontWeight: "700", marginTop: 12 },
-  buy: { backgroundColor: BRAND.rail, borderRadius: 999, paddingVertical: 14, alignItems: "center", marginTop: 14 },
-  buyText: { color: "#04060B", fontWeight: "700", fontSize: 15 },
-  sectionTag: { color: BRAND.faint, fontSize: 10, fontWeight: "700", letterSpacing: 2, marginBottom: 8 },
-  quoteRow: { paddingVertical: 8, borderTopColor: BRAND.border, borderTopWidth: StyleSheet.hairlineWidth },
-  quoteProvider: { color: BRAND.text, fontSize: 14, fontWeight: "600" },
-  quoteMeta: { color: BRAND.dim, fontSize: 12, marginTop: 2 },
-  explain: { color: BRAND.text, fontSize: 14, lineHeight: 20 },
-  receipt: { color: BRAND.dim, fontSize: 12, lineHeight: 18, fontFamily: "Courier" },
-  receiptMeta: { color: BRAND.faint, fontSize: 11, marginTop: 8 },
-  disclaimer: { color: BRAND.faint, fontSize: 11, lineHeight: 16, marginTop: 18, textAlign: "center" },
-});
+const makeStyles = (t: Theme) =>
+  StyleSheet.create({
+    wrap: { flex: 1, backgroundColor: t.bg },
+    scroll: { padding: 20, paddingBottom: 48 },
+    headRow: { flexDirection: "row", alignItems: "center", gap: 10 },
+    h1: { color: t.text, fontSize: 26, fontWeight: "800", letterSpacing: -0.5 },
+    testBadge: { backgroundColor: rgba(t.warn, 0.12), borderColor: t.warn, borderWidth: 1, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
+    testBadgeText: { color: t.warn, fontSize: 10, fontWeight: "800", letterSpacing: 1 },
+    sub: { color: t.dim, fontSize: 13, marginTop: 6, marginBottom: 16, lineHeight: 19 },
+    loading: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 24 },
+    loadingText: { color: t.dim, fontSize: 14 },
+    card: { marginTop: 14, backgroundColor: t.card, borderColor: t.border, borderWidth: 1, borderRadius: 20, padding: 16 },
+    bestCard: { borderColor: t.accentTint, backgroundColor: t.accentSoft },
+    bestTag: { color: t.accentText, fontSize: 10, fontWeight: "700", letterSpacing: 2 },
+    provider: { color: t.text, fontSize: 20, fontWeight: "800", marginTop: 6 },
+    assetOut: { color: t.text, fontSize: 15, marginTop: 4 },
+    statsRow: { flexDirection: "row", gap: 8, marginTop: 12 },
+    stat: { flex: 1, backgroundColor: t.surface, borderColor: t.border, borderWidth: 1, borderRadius: 14, padding: 10 },
+    statLabel: { color: t.faint, fontSize: 9, letterSpacing: 1, textTransform: "uppercase" },
+    statValue: { color: t.text, fontSize: 14, fontWeight: "700", marginTop: 3 },
+    savings: { color: t.accentText, fontSize: 13, fontWeight: "700", marginTop: 12 },
+    buy: { backgroundColor: t.button, borderRadius: 999, paddingVertical: 14, alignItems: "center", marginTop: 14 },
+    buyText: { color: t.buttonText, fontWeight: "700", fontSize: 15 },
+    sectionTag: { color: t.faint, fontSize: 10, fontWeight: "700", letterSpacing: 2, marginBottom: 8 },
+    quoteRow: { paddingVertical: 8, borderTopColor: t.border, borderTopWidth: StyleSheet.hairlineWidth },
+    quoteProvider: { color: t.text, fontSize: 14, fontWeight: "600" },
+    quoteMeta: { color: t.dim, fontSize: 12, marginTop: 2 },
+    explain: { color: t.text, fontSize: 14, lineHeight: 20 },
+    receipt: { color: t.dim, fontSize: 12, lineHeight: 18, fontFamily: "Courier" },
+    receiptMeta: { color: t.faint, fontSize: 11, marginTop: 8 },
+    disclaimer: { color: t.faint, fontSize: 11, lineHeight: 16, marginTop: 18, textAlign: "center" },
+  });

@@ -21,15 +21,5 @@ export const HYLAQ = {
   scopes: extra.hylaq?.scopes || ["read"],
 };
 
-export const BRAND = {
-  bg: "#04060B",
-  surface: "#0B0F1A",
-  card: "rgba(255,255,255,0.03)",
-  border: "rgba(255,255,255,0.10)",
-  rail: "#22A95C",
-  railLight: "#34D17A",
-  text: "#FFFFFF",
-  dim: "rgba(255,255,255,0.55)",
-  faint: "rgba(255,255,255,0.35)",
-  amber: "#FBBF24",
-};
+// Colors live in lib/theme.tsx now — the user picks mode + accent and every
+// screen derives its palette from useTheme().

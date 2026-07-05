@@ -4,7 +4,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { API_BASE } from "@/lib/config";
-import { BRAND } from "@/lib/config";
+import { useTheme, type Theme } from "@/lib/theme";
 
 const ASSETS = ["BTC", "ETH", "SOL", "USDC"] as const;
 const AMOUNTS = [20, 50, 100, 250] as const;
@@ -17,6 +17,8 @@ const AMOUNTS = [20, 50, 100, 250] as const;
  * delivered straight to YOUR wallet. Loadit never touches the money.
  */
 export default function Receive() {
+  const { theme: t } = useTheme();
+  const styles = useMemo(() => makeStyles(t), [t]);
   const [asset, setAsset] = useState<(typeof ASSETS)[number]>("BTC");
   const [amount, setAmount] = useState(50);
   const [wallet, setWallet] = useState("");
@@ -53,7 +55,7 @@ export default function Receive() {
               style={[styles.chip, asset === a && styles.chipOn]}
               onPress={() => setAsset(a)}
             >
-              <Text style={[styles.chipText, asset === a && { color: BRAND.text }]}>{a}</Text>
+              <Text style={[styles.chipText, asset === a && styles.chipTextOn]}>{a}</Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -66,7 +68,7 @@ export default function Receive() {
               style={[styles.chip, amount === v && styles.chipOn]}
               onPress={() => setAmount(v)}
             >
-              <Text style={[styles.chipText, amount === v && { color: BRAND.text }]}>${v}</Text>
+              <Text style={[styles.chipText, amount === v && styles.chipTextOn]}>${v}</Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -75,7 +77,7 @@ export default function Receive() {
         <TextInput
           style={styles.input}
           placeholder="Paste the address you control"
-          placeholderTextColor={BRAND.faint}
+          placeholderTextColor={t.faint}
           value={wallet}
           onChangeText={setWallet}
           autoCapitalize="none"
@@ -116,23 +118,25 @@ export default function Receive() {
   );
 }
 
-const styles = StyleSheet.create({
-  wrap: { flex: 1, backgroundColor: BRAND.bg },
-  scroll: { padding: 20, paddingBottom: 48 },
-  h1: { color: BRAND.text, fontSize: 28, fontWeight: "800", letterSpacing: -0.5 },
-  sub: { color: BRAND.dim, fontSize: 14, lineHeight: 20, marginTop: 6 },
-  label: { color: BRAND.faint, fontSize: 11, letterSpacing: 1, textTransform: "uppercase", marginTop: 18 },
-  row: { flexDirection: "row", gap: 8, marginTop: 8, flexWrap: "wrap" },
-  chip: { borderColor: BRAND.border, borderWidth: 1, borderRadius: 999, paddingHorizontal: 16, paddingVertical: 10 },
-  chipOn: { borderColor: BRAND.rail, backgroundColor: "rgba(34,169,92,0.08)" },
-  chipText: { color: BRAND.dim, fontWeight: "600" },
-  input: { backgroundColor: BRAND.card, borderColor: BRAND.border, borderWidth: 1, borderRadius: 16, paddingHorizontal: 16, paddingVertical: 14, color: BRAND.text, fontSize: 14, marginTop: 8 },
-  qrCard: { marginTop: 22, backgroundColor: BRAND.card, borderColor: BRAND.border, borderWidth: 1, borderRadius: 24, padding: 20, alignItems: "center" },
-  qrBox: { backgroundColor: "#FFFFFF", borderRadius: 20, padding: 12 },
-  qr: { width: 240, height: 240, borderRadius: 8 },
-  qrCaption: { color: BRAND.text, fontWeight: "700", fontSize: 15, marginTop: 12 },
-  share: { marginTop: 8 },
-  shareText: { color: BRAND.railLight, fontSize: 13, fontWeight: "600" },
-  qrHint: { color: BRAND.faint, fontSize: 13, textAlign: "center", lineHeight: 19, paddingVertical: 30 },
-  legal: { color: BRAND.faint, fontSize: 11, lineHeight: 16, marginTop: 18, textAlign: "center" },
-});
+const makeStyles = (t: Theme) =>
+  StyleSheet.create({
+    wrap: { flex: 1, backgroundColor: t.bg },
+    scroll: { padding: 20, paddingBottom: 48 },
+    h1: { color: t.text, fontSize: 28, fontWeight: "800", letterSpacing: -0.5 },
+    sub: { color: t.dim, fontSize: 14, lineHeight: 20, marginTop: 6 },
+    label: { color: t.faint, fontSize: 11, letterSpacing: 1, textTransform: "uppercase", marginTop: 18 },
+    row: { flexDirection: "row", gap: 8, marginTop: 8, flexWrap: "wrap" },
+    chip: { borderColor: t.border, borderWidth: 1, borderRadius: 999, paddingHorizontal: 16, paddingVertical: 10 },
+    chipOn: { borderColor: t.accent, backgroundColor: t.accentSoft },
+    chipText: { color: t.dim, fontWeight: "600" },
+    chipTextOn: { color: t.text },
+    input: { backgroundColor: t.surface, borderColor: t.border, borderWidth: 1, borderRadius: 16, paddingHorizontal: 16, paddingVertical: 14, color: t.text, fontSize: 14, marginTop: 8 },
+    qrCard: { marginTop: 22, backgroundColor: t.card, borderColor: t.border, borderWidth: 1, borderRadius: 24, padding: 20, alignItems: "center" },
+    qrBox: { backgroundColor: "#FFFFFF", borderRadius: 20, padding: 12, borderColor: t.border, borderWidth: t.mode === "light" ? 1 : 0 },
+    qr: { width: 240, height: 240, borderRadius: 8 },
+    qrCaption: { color: t.text, fontWeight: "700", fontSize: 15, marginTop: 12 },
+    share: { marginTop: 8 },
+    shareText: { color: t.accentText, fontSize: 13, fontWeight: "600" },
+    qrHint: { color: t.faint, fontSize: 13, textAlign: "center", lineHeight: 19, paddingVertical: 30 },
+    legal: { color: t.faint, fontSize: 11, lineHeight: 16, marginTop: 18, textAlign: "center" },
+  });

@@ -1,14 +1,16 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet, Alert, Image } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { signInWithHylaq, signInGuest, hylaqConfigured } from "@/lib/auth";
 import { useAuth } from "@/lib/authContext";
-import { BRAND } from "@/lib/config";
+import { useTheme, type Theme } from "@/lib/theme";
 
 export default function Login() {
   const router = useRouter();
   const { setSession } = useAuth();
+  const { theme: t } = useTheme();
+  const styles = useMemo(() => makeStyles(t), [t]);
   const [busy, setBusy] = useState(false);
 
   const withHylaq = async () => {
@@ -39,7 +41,7 @@ export default function Login() {
         <Text style={styles.tag}>Cash & card to crypto — routed the cheapest way by AERO.</Text>
 
         <TouchableOpacity style={styles.primary} onPress={withHylaq} disabled={busy}>
-          {busy ? <ActivityIndicator color="#04060B" /> : <Text style={styles.primaryText}>Login with Hylaq</Text>}
+          {busy ? <ActivityIndicator color={t.buttonText} /> : <Text style={styles.primaryText}>Login with Hylaq</Text>}
         </TouchableOpacity>
         {!hylaqConfigured() && (
           <Text style={styles.note}>Hylaq SSO isn&apos;t wired yet — you can continue as guest for now.</Text>
@@ -56,16 +58,17 @@ export default function Login() {
   );
 }
 
-const styles = StyleSheet.create({
-  wrap: { flex: 1, backgroundColor: BRAND.bg, padding: 24, justifyContent: "space-between" },
-  center: { flex: 1, justifyContent: "center", gap: 14 },
-  mark: { width: 72, height: 72, borderRadius: 18, marginBottom: 6 },
-  logo: { color: BRAND.text, fontSize: 40, fontWeight: "800", letterSpacing: -1 },
-  tag: { color: BRAND.dim, fontSize: 15, marginBottom: 24, lineHeight: 22 },
-  primary: { backgroundColor: BRAND.rail, borderRadius: 999, paddingVertical: 16, alignItems: "center" },
-  primaryText: { color: "#04060B", fontWeight: "700", fontSize: 16 },
-  note: { color: BRAND.faint, fontSize: 12, textAlign: "center" },
-  ghost: { borderColor: BRAND.border, borderWidth: 1, borderRadius: 999, paddingVertical: 16, alignItems: "center" },
-  ghostText: { color: BRAND.text, fontWeight: "600", fontSize: 15 },
-  legal: { color: BRAND.faint, fontSize: 11, lineHeight: 16, textAlign: "center" },
-});
+const makeStyles = (t: Theme) =>
+  StyleSheet.create({
+    wrap: { flex: 1, backgroundColor: t.bg, padding: 24, justifyContent: "space-between" },
+    center: { flex: 1, justifyContent: "center", gap: 14 },
+    mark: { width: 88, height: 88, marginBottom: 2 },
+    logo: { color: t.text, fontSize: 40, fontWeight: "800", letterSpacing: -1 },
+    tag: { color: t.dim, fontSize: 15, marginBottom: 24, lineHeight: 22 },
+    primary: { backgroundColor: t.button, borderRadius: 999, paddingVertical: 16, alignItems: "center" },
+    primaryText: { color: t.buttonText, fontWeight: "700", fontSize: 16 },
+    note: { color: t.faint, fontSize: 12, textAlign: "center" },
+    ghost: { borderColor: t.border, borderWidth: 1, borderRadius: 999, paddingVertical: 16, alignItems: "center" },
+    ghostText: { color: t.text, fontWeight: "600", fontSize: 15 },
+    legal: { color: t.faint, fontSize: 11, lineHeight: 16, textAlign: "center" },
+  });

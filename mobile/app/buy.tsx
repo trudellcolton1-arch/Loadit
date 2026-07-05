@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   View, Text, TextInput, TouchableOpacity, ActivityIndicator, StyleSheet, Alert,
 } from "react-native";
@@ -6,11 +6,13 @@ import { WebView } from "react-native-webview";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { getOnramp, preferredProvider, type OnrampProvider } from "@/lib/api";
-import { BRAND } from "@/lib/config";
+import { useTheme, type Theme } from "@/lib/theme";
 
 export default function Buy() {
   const { asset = "USDC", amount = "100" } = useLocalSearchParams<{ asset: string; amount: string }>();
   const router = useRouter();
+  const { theme: t } = useTheme();
+  const styles = useMemo(() => makeStyles(t), [t]);
   const [wallet, setWallet] = useState("");
   const [provider, setProvider] = useState<OnrampProvider>(preferredProvider(String(asset)));
   const [loading, setLoading] = useState(false);
@@ -46,7 +48,7 @@ export default function Buy() {
           <Text style={styles.webTitle}>{provider === "coinbase" ? "Coinbase" : "Stripe"} · secure checkout</Text>
           <TouchableOpacity onPress={() => setUrl(null)}><Text style={styles.close}>Close</Text></TouchableOpacity>
         </View>
-        <WebView source={{ uri: url }} style={{ flex: 1, backgroundColor: BRAND.bg }} />
+        <WebView source={{ uri: url }} style={{ flex: 1, backgroundColor: t.bg }} />
       </SafeAreaView>
     );
   }
@@ -60,7 +62,7 @@ export default function Buy() {
         <TextInput
           style={styles.input}
           placeholder="Paste the address you control"
-          placeholderTextColor={BRAND.faint}
+          placeholderTextColor={t.faint}
           value={wallet}
           onChangeText={setWallet}
           autoCapitalize="none"
@@ -76,7 +78,7 @@ export default function Buy() {
               style={[styles.provider, provider === p && styles.providerOn]}
               onPress={() => setProvider(p)}
             >
-              <Text style={[styles.providerText, provider === p && { color: BRAND.text }]}>
+              <Text style={[styles.providerText, provider === p && styles.providerTextOn]}>
                 {p === "coinbase" ? "Coinbase" : "Stripe"}
               </Text>
             </TouchableOpacity>
@@ -84,7 +86,7 @@ export default function Buy() {
         </View>
 
         <TouchableOpacity style={styles.cta} onPress={cont} disabled={loading}>
-          {loading ? <ActivityIndicator color="#04060B" /> : <Text style={styles.ctaText}>Continue to secure checkout →</Text>}
+          {loading ? <ActivityIndicator color={t.buttonText} /> : <Text style={styles.ctaText}>Continue to secure checkout →</Text>}
         </TouchableOpacity>
         <TouchableOpacity onPress={() => router.back()}>
           <Text style={styles.back}>Back</Text>
@@ -98,23 +100,25 @@ export default function Buy() {
   );
 }
 
-const styles = StyleSheet.create({
-  wrap: { flex: 1, backgroundColor: BRAND.bg },
-  body: { padding: 20, gap: 8 },
-  summary: { color: BRAND.text, fontSize: 22, fontWeight: "700", marginBottom: 8 },
-  hl: { color: BRAND.railLight },
-  label: { color: BRAND.faint, fontSize: 11, letterSpacing: 1, textTransform: "uppercase", marginTop: 12 },
-  input: { backgroundColor: BRAND.card, borderColor: BRAND.border, borderWidth: 1, borderRadius: 16, paddingHorizontal: 16, paddingVertical: 14, color: BRAND.text, fontSize: 14, marginTop: 6 },
-  hint: { color: BRAND.faint, fontSize: 12, marginTop: 6, lineHeight: 17 },
-  providerRow: { flexDirection: "row", gap: 10, marginTop: 6 },
-  provider: { flex: 1, borderColor: BRAND.border, borderWidth: 1, borderRadius: 16, paddingVertical: 14, alignItems: "center" },
-  providerOn: { borderColor: BRAND.rail, backgroundColor: "rgba(34,169,92,0.08)" },
-  providerText: { color: BRAND.dim, fontWeight: "600" },
-  cta: { backgroundColor: BRAND.rail, borderRadius: 999, paddingVertical: 16, alignItems: "center", marginTop: 20 },
-  ctaText: { color: "#04060B", fontWeight: "700", fontSize: 16 },
-  back: { color: BRAND.faint, textAlign: "center", marginTop: 14, fontSize: 14 },
-  legal: { color: BRAND.faint, fontSize: 11, lineHeight: 16, marginTop: 18, textAlign: "center" },
-  webHead: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: 14, borderBottomColor: BRAND.border, borderBottomWidth: 1 },
-  webTitle: { color: BRAND.text, fontWeight: "600" },
-  close: { color: BRAND.railLight, fontWeight: "600" },
-});
+const makeStyles = (t: Theme) =>
+  StyleSheet.create({
+    wrap: { flex: 1, backgroundColor: t.bg },
+    body: { padding: 20, gap: 8 },
+    summary: { color: t.text, fontSize: 22, fontWeight: "700", marginBottom: 8 },
+    hl: { color: t.accentText },
+    label: { color: t.faint, fontSize: 11, letterSpacing: 1, textTransform: "uppercase", marginTop: 12 },
+    input: { backgroundColor: t.surface, borderColor: t.border, borderWidth: 1, borderRadius: 16, paddingHorizontal: 16, paddingVertical: 14, color: t.text, fontSize: 14, marginTop: 6 },
+    hint: { color: t.faint, fontSize: 12, marginTop: 6, lineHeight: 17 },
+    providerRow: { flexDirection: "row", gap: 10, marginTop: 6 },
+    provider: { flex: 1, borderColor: t.border, borderWidth: 1, borderRadius: 16, paddingVertical: 14, alignItems: "center" },
+    providerOn: { borderColor: t.accent, backgroundColor: t.accentSoft },
+    providerText: { color: t.dim, fontWeight: "600" },
+    providerTextOn: { color: t.text },
+    cta: { backgroundColor: t.button, borderRadius: 999, paddingVertical: 16, alignItems: "center", marginTop: 20 },
+    ctaText: { color: t.buttonText, fontWeight: "700", fontSize: 16 },
+    back: { color: t.faint, textAlign: "center", marginTop: 14, fontSize: 14 },
+    legal: { color: t.faint, fontSize: 11, lineHeight: 16, marginTop: 18, textAlign: "center" },
+    webHead: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: 14, borderBottomColor: t.border, borderBottomWidth: 1 },
+    webTitle: { color: t.text, fontWeight: "600" },
+    close: { color: t.accentText, fontWeight: "600" },
+  });

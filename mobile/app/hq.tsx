@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   View, Text, TextInput, TouchableOpacity, ActivityIndicator,
   ScrollView, StyleSheet, KeyboardAvoidingView, Platform,
@@ -7,7 +7,7 @@ import { Redirect, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@/lib/authContext";
 import { askHQ, type HQMessage, type HQResult } from "@/lib/api";
-import { BRAND } from "@/lib/config";
+import { useTheme, type Theme } from "@/lib/theme";
 
 /**
  * HQ — your AI. A personal money copilot living inside the app: chat about
@@ -37,6 +37,8 @@ const money = (n: number) => `$${n.toLocaleString(undefined, { minimumFractionDi
 
 export default function HQ() {
   const { session, ready } = useAuth();
+  const { theme: t } = useTheme();
+  const styles = useMemo(() => makeStyles(t), [t]);
   const router = useRouter();
   const [messages, setMessages] = useState<Bubble[]>([GREETING]);
   const [input, setInput] = useState("");
@@ -86,7 +88,7 @@ export default function HQ() {
             <View key={i} style={[styles.row, m.role === "user" ? styles.rowUser : styles.rowAI]}>
               <View style={[styles.bubble, m.role === "user" ? styles.bubbleUser : styles.bubbleAI]}>
                 {m.role === "assistant" && <Text style={styles.tag}>HQ</Text>}
-                <Text style={styles.msg}>{m.content}</Text>
+                <Text style={m.role === "user" ? styles.msgUser : styles.msg}>{m.content}</Text>
                 {m.route && (
                   <View style={styles.routeCard}>
                     {m.hq && (
@@ -95,12 +97,12 @@ export default function HQ() {
                       </Text>
                     )}
                     <View style={styles.statsRow}>
-                      <Stat label="Route" value={m.route.network_name} />
-                      <Stat label="Settles" value={m.route.eta} />
+                      <Stat styles={styles} label="Route" value={m.route.network_name} />
+                      <Stat styles={styles} label="Settles" value={m.route.eta} />
                     </View>
                     <View style={styles.statsRow}>
-                      <Stat label="Cost" value={money(m.route.loadit_fee_usd)} />
-                      <Stat label="You save" value={money(m.route.savings_usd)} sub={`${m.route.savings_pct}% cheaper`} accent />
+                      <Stat styles={styles} label="Cost" value={money(m.route.loadit_fee_usd)} />
+                      <Stat styles={styles} label="You save" value={money(m.route.savings_usd)} sub={`${m.route.savings_pct}% cheaper`} accent />
                     </View>
                     <TouchableOpacity
                       style={styles.buy}
@@ -132,7 +134,7 @@ export default function HQ() {
           {loading && (
             <View style={[styles.row, styles.rowAI]}>
               <View style={[styles.bubble, styles.bubbleAI, styles.thinking]}>
-                <ActivityIndicator size="small" color={BRAND.railLight} />
+                <ActivityIndicator size="small" color={t.accentText} />
                 <Text style={styles.thinkingText}>HQ is thinking…</Text>
               </View>
             </View>
@@ -153,7 +155,7 @@ export default function HQ() {
           <TextInput
             style={styles.input}
             placeholder="Message HQ…"
-            placeholderTextColor={BRAND.faint}
+            placeholderTextColor={t.faint}
             value={input}
             onChangeText={setInput}
             onSubmitEditing={() => send(input)}
@@ -172,46 +174,51 @@ export default function HQ() {
   );
 }
 
-function Stat({ label, value, sub, accent }: { label: string; value: string; sub?: string; accent?: boolean }) {
+function Stat({ styles, label, value, sub, accent }: {
+  styles: ReturnType<typeof makeStyles>; label: string; value: string; sub?: string; accent?: boolean;
+}) {
   return (
     <View style={styles.stat}>
       <Text style={styles.statLabel}>{label}</Text>
-      <Text style={[styles.statValue, accent && { color: BRAND.railLight }]}>{value}</Text>
+      <Text style={[styles.statValue, accent && styles.statAccent]}>{value}</Text>
       {sub ? <Text style={styles.statSub}>{sub}</Text> : null}
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  wrap: { flex: 1, backgroundColor: BRAND.bg },
-  scroll: { padding: 16, paddingBottom: 12, gap: 10 },
-  row: { flexDirection: "row" },
-  rowUser: { justifyContent: "flex-end" },
-  rowAI: { justifyContent: "flex-start" },
-  bubble: { maxWidth: "86%", borderRadius: 20, paddingHorizontal: 14, paddingVertical: 11 },
-  bubbleUser: { backgroundColor: BRAND.rail, borderBottomRightRadius: 6 },
-  bubbleAI: { backgroundColor: BRAND.card, borderColor: BRAND.border, borderWidth: 1, borderBottomLeftRadius: 6 },
-  tag: { color: BRAND.railLight, fontSize: 9, fontWeight: "700", letterSpacing: 2, marginBottom: 4 },
-  msg: { color: BRAND.text, fontSize: 15, lineHeight: 21 },
-  thinking: { flexDirection: "row", alignItems: "center", gap: 8 },
-  thinkingText: { color: BRAND.dim, fontSize: 13 },
-  routeCard: { marginTop: 10 },
-  liveQuote: { color: BRAND.amber, fontSize: 12, fontWeight: "600", marginTop: 2 },
-  quoteLink: { color: BRAND.railLight, fontSize: 13, fontWeight: "600", textAlign: "center", marginTop: 12 },
-  statsRow: { flexDirection: "row", gap: 8, marginTop: 8 },
-  stat: { flex: 1, backgroundColor: "rgba(255,255,255,0.03)", borderColor: BRAND.border, borderWidth: 1, borderRadius: 14, padding: 10 },
-  statLabel: { color: BRAND.faint, fontSize: 9, letterSpacing: 1, textTransform: "uppercase" },
-  statValue: { color: BRAND.text, fontSize: 14, fontWeight: "700", marginTop: 3 },
-  statSub: { color: BRAND.faint, fontSize: 10, marginTop: 2 },
-  buy: { backgroundColor: BRAND.rail, borderRadius: 999, paddingVertical: 12, alignItems: "center", marginTop: 12 },
-  buyText: { color: "#04060B", fontWeight: "700", fontSize: 14 },
-  chips: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 8 },
-  chip: { borderColor: BRAND.border, borderWidth: 1, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 8 },
-  chipText: { color: BRAND.dim, fontSize: 12 },
-  inputRow: { flexDirection: "row", gap: 8, alignItems: "flex-end", paddingHorizontal: 16, paddingTop: 8 },
-  input: { flex: 1, backgroundColor: BRAND.card, borderColor: BRAND.border, borderWidth: 1, borderRadius: 20, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12, color: BRAND.text, fontSize: 15, maxHeight: 110 },
-  send: { backgroundColor: BRAND.rail, borderRadius: 999, width: 44, height: 44, alignItems: "center", justifyContent: "center" },
-  sendDisabled: { opacity: 0.4 },
-  sendText: { color: "#04060B", fontWeight: "800", fontSize: 18 },
-  disclaimer: { color: BRAND.faint, fontSize: 10, textAlign: "center", paddingHorizontal: 24, paddingTop: 6, paddingBottom: 4 },
-});
+const makeStyles = (t: Theme) =>
+  StyleSheet.create({
+    wrap: { flex: 1, backgroundColor: t.bg },
+    scroll: { padding: 16, paddingBottom: 12, gap: 10 },
+    row: { flexDirection: "row" },
+    rowUser: { justifyContent: "flex-end" },
+    rowAI: { justifyContent: "flex-start" },
+    bubble: { maxWidth: "86%", borderRadius: 20, paddingHorizontal: 14, paddingVertical: 11 },
+    bubbleUser: { backgroundColor: t.accent, borderBottomRightRadius: 6 },
+    bubbleAI: { backgroundColor: t.card, borderColor: t.border, borderWidth: 1, borderBottomLeftRadius: 6 },
+    tag: { color: t.accentText, fontSize: 9, fontWeight: "700", letterSpacing: 2, marginBottom: 4 },
+    msg: { color: t.text, fontSize: 15, lineHeight: 21 },
+    msgUser: { color: t.onAccent, fontSize: 15, lineHeight: 21 },
+    thinking: { flexDirection: "row", alignItems: "center", gap: 8 },
+    thinkingText: { color: t.dim, fontSize: 13 },
+    routeCard: { marginTop: 10 },
+    liveQuote: { color: t.warn, fontSize: 12, fontWeight: "600", marginTop: 2 },
+    statsRow: { flexDirection: "row", gap: 8, marginTop: 8 },
+    stat: { flex: 1, backgroundColor: t.surface, borderColor: t.border, borderWidth: 1, borderRadius: 14, padding: 10 },
+    statLabel: { color: t.faint, fontSize: 9, letterSpacing: 1, textTransform: "uppercase" },
+    statValue: { color: t.text, fontSize: 14, fontWeight: "700", marginTop: 3 },
+    statAccent: { color: t.accentText },
+    statSub: { color: t.faint, fontSize: 10, marginTop: 2 },
+    buy: { backgroundColor: t.button, borderRadius: 999, paddingVertical: 12, alignItems: "center", marginTop: 12 },
+    buyText: { color: t.buttonText, fontWeight: "700", fontSize: 14 },
+    quoteLink: { color: t.accentText, fontSize: 13, fontWeight: "600", textAlign: "center", marginTop: 12 },
+    chips: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 8 },
+    chip: { borderColor: t.border, borderWidth: 1, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 8 },
+    chipText: { color: t.dim, fontSize: 12 },
+    inputRow: { flexDirection: "row", gap: 8, alignItems: "flex-end", paddingHorizontal: 16, paddingTop: 8 },
+    input: { flex: 1, backgroundColor: t.surface, borderColor: t.border, borderWidth: 1, borderRadius: 20, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12, color: t.text, fontSize: 15, maxHeight: 110 },
+    send: { backgroundColor: t.button, borderRadius: 999, width: 44, height: 44, alignItems: "center", justifyContent: "center" },
+    sendDisabled: { opacity: 0.4 },
+    sendText: { color: t.buttonText, fontWeight: "800", fontSize: 18 },
+    disclaimer: { color: t.faint, fontSize: 10, textAlign: "center", paddingHorizontal: 24, paddingTop: 6, paddingBottom: 4 },
+  });
