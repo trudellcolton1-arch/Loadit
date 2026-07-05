@@ -25,6 +25,7 @@ import {
 
 const SERVICE = "F0AD1E00-1985-4C5A-9B11-9E7A10ADD17E";
 const SERVICE_KEY = "F0AD1E00";
+const HANDLE_CHAR = "F0AD1E01-1985-4C5A-9B11-9E7A10ADD17E";
 const NOTE_CHAR = "F0AD1E02-1985-4C5A-9B11-9E7A10ADD17E";
 const MTU = 185;
 const CHUNK = 150;
@@ -139,6 +140,36 @@ function handleFromDevice(d: any): string | null {
   return null;
 }
 
+const handleReadDone = new Set<string>(); // deviceIds we've read the @handle from
+
+/**
+ * BLE adverts are 31 bytes, so the @handle often doesn't fit. When we only have
+ * a fallback id for a peer, connect briefly and READ the handle characteristic —
+ * reliable on both platforms — then upgrade the peer to its real @handle so the
+ * profile + face can resolve.
+ */
+async function readPeerHandle(deviceId: string, fallbackHandle: string) {
+  const m = mgr();
+  if (!m || handleReadDone.has(deviceId) || pending) return;
+  handleReadDone.add(deviceId);
+  try {
+    let d = await m.connectToDevice(deviceId, { timeout: 8000 });
+    d = await d.discoverAllServicesAndCharacteristics();
+    const ch = await d.readCharacteristicForService(SERVICE, HANDLE_CHAR);
+    try { await m.cancelDeviceConnection(deviceId); } catch { /* noop */ }
+    const real = ch?.value ? base64ToStr(ch.value).replace(/^@/, "").toLowerCase().trim() : "";
+    if (real && real !== fallbackHandle) {
+      const entry = peers.get(fallbackHandle);
+      peers.delete(fallbackHandle);
+      peers.set(real, entry || { deviceId, rssi: null });
+      presenceOnPeer?.(real);
+    }
+  } catch {
+    handleReadDone.delete(deviceId); // let a later sighting retry
+    try { await m.cancelDeviceConnection(deviceId); } catch { /* noop */ }
+  }
+}
+
 function startScan(myHandle: string) {
   const m = mgr();
   if (!m || scanning) return;
@@ -155,6 +186,8 @@ function startScan(myHandle: string) {
       const known = peers.has(handle);
       peers.set(handle, { deviceId: d.id, rssi: d.rssi ?? null });
       if (!known && presenceOnPeer) presenceOnPeer(handle);
+      // If we only got a fallback id, read the real @handle over GATT (once).
+      if (handle.startsWith("peer-")) readPeerHandle(d.id, handle);
       driveSend(handle, d.id);
     });
   } catch {
@@ -231,6 +264,7 @@ export interface ScanHandlers {
 /** SCAN (Beam screen): discover nearby advertising Loadit phones by @handle. */
 export async function startScanning(myHandle: string, h: ScanHandlers): Promise<() => void> {
   peers.clear();
+  handleReadDone.clear();
   presenceOnPeer = h.onPeer;
   handleForScan = myHandle.toLowerCase();
   await ensureAndroidPerms();
