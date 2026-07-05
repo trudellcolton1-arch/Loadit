@@ -136,6 +136,46 @@ export async function getRoute(
   return res.json();
 }
 
+export interface SwapPlan {
+  fromAsset: string;
+  fromChain: string;
+  toAsset: string;
+  toChain: string;
+  steps: { kind: string; detail: string }[];
+  estCostPct: number;
+  provider: string | null;
+  note: string;
+}
+export interface MoneyGramPlan {
+  ok: boolean;
+  reason?: string;
+  amountUsd: number;
+  asset: string;
+  wallet: string;
+  loaditFeeUsd: number;
+  feePct: number;
+  swap: SwapPlan;
+  steps: { n: number; title: string; detail: string }[];
+  configured: boolean;
+}
+
+/**
+ * Plan a MoneyGram cash → USDC(Stellar) → chosen-asset route. Talks only to
+ * loadit.net; the swap executor and live anchor are configured server-side.
+ */
+export async function getMoneyGramPlan(
+  amountUsd: number,
+  asset: string,
+  wallet: string
+): Promise<MoneyGramPlan> {
+  const res = await fetch(`${API_BASE}/api/onramp/moneygram`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ amountUsd, asset, wallet }),
+  });
+  return res.json();
+}
+
 export type OnrampProvider = "coinbase" | "stripe";
 
 export interface OnrampResult {

@@ -6,7 +6,7 @@ SIGNING_KEY = "GCKCZHXEC5TKZNGRQIFZMC2AZAFRUG7IWZAKWBKGCA5B2MVQIF7M6FGX"
 [DOCUMENTATION]
 ORG_NAME = "Loadit"
 ORG_URL = "https://loadit.net"
-ORG_DESCRIPTION = "Loadit is a non-custodial, AI-routed cash/card-to-crypto application. Its AERO engine routes each transfer across the cheapest network and licensed on-ramp; Loadit never holds customer funds."
+ORG_DESCRIPTION = "Loadit is a non-custodial, AI-routed cash/card-to-crypto application. HQ, its AI, routes each transfer across the cheapest network and licensed on-ramp (cash via MoneyGram Ramps → USDC on Stellar → the user's chosen asset); Loadit never holds customer funds."
 ORG_LOGO = "https://loadit.net/icon-512.png"
 ORG_OFFICIAL_EMAIL = "trudellcolton@gmail.com"
 

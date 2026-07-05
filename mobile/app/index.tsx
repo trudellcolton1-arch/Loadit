@@ -101,12 +101,12 @@ export default function Home() {
             <Text style={styles.featureArrow}>→</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.featureCard} onPress={() => router.push("/register")}>
+          <TouchableOpacity style={styles.featureCard} onPress={() => router.push("/moneygram")}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.featureTitle}>🏪 Cash at any register</Text>
+              <Text style={styles.featureTitle}>💵 Cash → crypto at MoneyGram</Text>
               <Text style={styles.featureSub}>
-                Deposit paper cash at 90k+ stores, then buy crypto through
-                Coinbase or Stripe — straight to your wallet.
+                Pay cash at 350k+ MoneyGram locations. HQ turns it into any
+                crypto — Bitcoin, Solana, ETH — straight to your wallet.
               </Text>
             </View>
             <Text style={styles.featureArrow}>→</Text>
