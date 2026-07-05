@@ -177,6 +177,7 @@ export async function getMoneyGramPlan(
 }
 
 export interface HandleProfile {
+  id: string;
   handle: string;
   accountType: string | null;
   profileTheme: string | null;

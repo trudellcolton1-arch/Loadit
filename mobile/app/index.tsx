@@ -95,10 +95,10 @@ export default function Home() {
 
           <TouchableOpacity style={styles.featureCard} onPress={() => router.push("/send")}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.featureTitle}>➡️ Send to a @handle</Text>
+              <Text style={styles.featureTitle}>➡️ Send crypto</Text>
               <Text style={styles.featureSub}>
-                Pay anyone by their Hylaq name. Type @colt, pick an amount —
-                the crypto lands straight in their wallet.
+                Pay a @handle or any wallet address — from your own crypto, or
+                buy it on the spot. Lands straight in their wallet.
               </Text>
             </View>
             <Text style={styles.featureArrow}>→</Text>

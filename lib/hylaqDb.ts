@@ -50,6 +50,8 @@ export async function hylaqQuery<T = NeonRow>(query: string, params: unknown[] =
 
 /** Public-safe shape of a Hylaq handle profile. */
 export interface HandleProfile {
+  /** Handle DB id — used as fromHandleId when sending from this wallet. */
+  id: string;
   handle: string;
   accountType: string | null;
   profileTheme: string | null;
@@ -63,12 +65,13 @@ export interface HandleProfile {
 }
 
 const PROFILE_SELECT = `
-  select handle, "accountType", "profileTheme", "preferredReceiveAsset",
+  select id, handle, "accountType", "profileTheme", "preferredReceiveAsset",
          "solanaAddress", "evmAddress", "bitcoinAddress", "externalUSDCAddress"
   from "Handle"`;
 
 function toProfile(r: Record<string, unknown>): HandleProfile {
   return {
+    id: String(r.id),
     handle: String(r.handle),
     accountType: (r.accountType as string) ?? null,
     profileTheme: (r.profileTheme as string) ?? null,
