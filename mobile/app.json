@@ -3,7 +3,7 @@
     "name": "Loadit",
     "slug": "loadit",
     "scheme": "loadit",
-    "version": "1.5.0",
+    "version": "1.5.1",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "backgroundColor": "#FFFFFF",
@@ -25,7 +25,6 @@
         "NSBluetoothAlwaysUsageDescription": "Loadit uses Bluetooth so you can send and receive money with people near you — even with no internet.",
         "NSBluetoothPeripheralUsageDescription": "Loadit advertises over Bluetooth so nearby phones can pay you offline.",
         "NSLocationWhenInUseUsageDescription": "Loadit uses your location to find people nearby to pay and to verify offline Pulse claims.",
-        "NFCReaderUsageDescription": "Loadit uses NFC to tap-to-pay money to a nearby phone.",
         "ITSAppUsesNonExemptEncryption": false,
         "UIBackgroundModes": [
           "bluetooth-central",
@@ -65,14 +64,6 @@
           "isBackgroundEnabled": true,
           "modes": ["central", "peripheral"],
           "bluetoothAlwaysPermission": "Loadit uses Bluetooth to send and receive money with people near you — even offline."
-        }
-      ],
-      [
-        "react-native-nfc-manager",
-        {
-          "nfcPermission": "Loadit uses NFC to tap-to-pay money to a nearby phone.",
-          "selectIdentifiers": [],
-          "includeNdefEntitlement": false
         }
       ],
       [
