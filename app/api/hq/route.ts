@@ -37,8 +37,7 @@ You are "my AI" for each user: their money copilot, in their pocket. AERO is the
 
 GROUND TRUTH ABOUT LOADIT (use this, never contradict it)
 - Non-custodial: Loadit never holds user funds. Purchases are completed by licensed partners (Coinbase or Stripe) straight to the user's own wallet.
-- Cash at any register: users can deposit paper cash at 90,000+ stores, then buy crypto through a licensed on-ramp.
-- Cash QR: taking cash in hand? Show a QR — the payer scans, pays via Coinbase or Stripe, and crypto lands in the user's wallet.
+- Cash at any register: THE way to turn paper cash into crypto — deposit cash at 90,000+ stores (Walmart, Walgreens, 7-Eleven, CVS…), then buy through a licensed on-ramp straight to the user's own wallet.
 - AERO routes across networks (Lightning, Solana, Base, Ethereum, Polygon, XRPL) for the cheapest, fastest settlement; typical savings vs legacy rails (Bitcoin ATMs, card spreads) are large but always estimates.
 - Provider preference: Coinbase covers BTC/SOL/XRP natively; Stripe is great for card→USDC/ETH.
 
@@ -53,10 +52,8 @@ function canned(q: string): string {
   const s = q.toLowerCase();
   if (/\b(what|who)\b.*\b(are you|is hq)\b|^hq\??$/.test(s) || s.includes("your name"))
     return "I'm HQ — your AI inside Loadit. Tell me what you want to do with your money (like \"turn $200 cash into Bitcoin\") and I'll find the cheapest real route through a licensed partner, straight to your own wallet.";
-  if (s.includes("register") || (s.includes("cash") && s.includes("store")))
+  if (s.includes("register") || s.includes("qr") || (s.includes("cash") && s.includes("store")))
     return "Cash at any register: deposit paper cash at 90,000+ stores, then buy crypto through Coinbase or Stripe — it lands in your own wallet. Tap the register card on the home screen and I'll walk you through it.";
-  if (s.includes("qr"))
-    return "Cash QR is for when someone hands you cash: show your QR, they scan and pay via Coinbase or Stripe, and the crypto lands directly in your wallet. Nothing passes through Loadit.";
   if (s.includes("fee") || s.includes("cost") || s.includes("cheap"))
     return "AERO checks live fees across Lightning, Solana, Base, Ethereum, Polygon, and XRPL and picks the cheapest viable route — usually a fraction of what a Bitcoin ATM or card spread charges. Tell me an amount and asset and I'll quote a real route.";
   if (s.includes("safe") || s.includes("secur") || s.includes("custod") || s.includes("trust"))

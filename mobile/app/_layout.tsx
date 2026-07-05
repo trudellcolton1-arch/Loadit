@@ -23,7 +23,6 @@ function ThemedStack() {
         <Stack.Screen name="login" options={{ headerShown: false }} />
         <Stack.Screen name="buy" options={{ title: "Buy" }} />
         <Stack.Screen name="quote" options={{ title: "Live quote" }} />
-        <Stack.Screen name="receive" options={{ title: "Cash QR" }} />
         <Stack.Screen name="register" options={{ title: "Cash at any register" }} />
         <Stack.Screen name="appearance" options={{ title: "Appearance" }} />
       </Stack>

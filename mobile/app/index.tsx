@@ -112,17 +112,6 @@ export default function Home() {
             <Text style={styles.featureArrow}>→</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.featureCard} onPress={() => router.push("/receive")}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.featureTitle}>💵 Cash QR</Text>
-              <Text style={styles.featureSub}>
-                Taking cash in hand? Show a QR — they scan, pay via Coinbase or
-                Stripe, and the crypto lands in your wallet.
-              </Text>
-            </View>
-            <Text style={styles.featureArrow}>→</Text>
-          </TouchableOpacity>
-
           {result && (
             <View style={styles.card}>
               <Text style={styles.aero}>AERO</Text>
