@@ -35,7 +35,10 @@ export default function MoneyGramBrief() {
 
       <div className="mg-bar">
         <a href="/" className="mg-home">← loadit.net</a>
-        <a href="/moneygram.pdf" download className="mg-dl">↓ Download PDF</a>
+        <div className="mg-bar-actions">
+          <a href="/moneygram/demo" className="mg-demo">▶ See the demo flow</a>
+          <a href="/moneygram.pdf" download className="mg-dl">↓ Download PDF</a>
+        </div>
       </div>
 
       <article className="mg-page grain">
@@ -134,6 +137,8 @@ function MgStyle() {
         justify-content:space-between; padding:0 18px; background:rgba(5,7,13,0.8); border-bottom:1px solid rgba(255,255,255,0.08); }
       .mg-home { color:rgba(255,255,255,0.6); text-decoration:none; font-size:13px; }
       .mg-dl { background:#22A95C; color:#04060B; text-decoration:none; font-weight:700; font-size:13px; padding:8px 14px; border-radius:999px; }
+      .mg-bar-actions { display:flex; align-items:center; gap:10px; }
+      .mg-demo { color:#5EEAD4; text-decoration:none; font-weight:700; font-size:13px; padding:8px 14px; border-radius:999px; border:1px solid rgba(94,234,212,0.35); }
 
       .mg-page { position:relative; max-width:1040px; margin:52px auto 0; padding:44px 52px 34px; overflow:hidden;
         background:
