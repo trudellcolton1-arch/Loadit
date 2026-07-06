@@ -41,6 +41,16 @@ const PRICING_EXAMPLES = [
   { cash: "$500", mg: "$7.00", loadit: "$3.75", allIn: "2.2%" },
 ];
 
+// Volume scenarios: users × 2 loads/mo × avg load, priced with MoneyGram's
+// tiers and Loadit's flat 0.75% — so the brief shows what the partnership is
+// worth to BOTH sides at each stage.
+const PROJECTIONS = [
+  { stage: "Pilot", users: "1,000", volume: "$300K / mo", mg: "$7K / mo", loadit: "$2.3K / mo" },
+  { stage: "Growth", users: "10,000", volume: "$3M / mo", mg: "$70K / mo", loadit: "$22.5K / mo" },
+  { stage: "Scale", users: "100,000", volume: "$40M / mo", mg: "$800K / mo", loadit: "$300K / mo" },
+  { stage: "Year at scale", users: "—", volume: "$480M / yr", mg: "$9.6M / yr", loadit: "$3.6M / yr" },
+];
+
 export default function MoneyGramBrief() {
   return (
     <main className="mg-root">
@@ -162,6 +172,25 @@ export default function MoneyGramBrief() {
           </div>
         </section>
 
+        <section className="mg-proj">
+          <div className="mg-sec font-mono">Projected volume — what it&apos;s worth to both of us</div>
+          <div className="mg-proj-table">
+            <div className="mg-proj-row mg-proj-head">
+              <span>Stage</span><span>Active users</span><span>Cash volume</span><span className="mg-mg-col">MoneyGram earns</span><b>Loadit earns (0.75%)</b>
+            </div>
+            {PROJECTIONS.map((p) => (
+              <div key={p.stage} className="mg-proj-row">
+                <span>{p.stage}</span><span>{p.users}</span><span>{p.volume}</span><span className="mg-mg-col">{p.mg}</span><b>{p.loadit}</b>
+              </div>
+            ))}
+          </div>
+          <div className="mg-proj-note">
+            Assumes 2 loads per active user per month at a $150–200 average, priced on the Ramps tiers above.
+            Every dollar of Loadit volume pays MoneyGram roughly 3× what it pays Loadit — our growth is your revenue.
+            Cash-out (off-ramp, 174 countries) and larger corridors are upside on top.
+          </div>
+        </section>
+
         <footer className="mg-foot font-mono">
           <span>LOADIT × MONEYGRAM</span>
           <span className="mg-foot-line" aria-hidden />
@@ -245,6 +274,17 @@ function MgStyle() {
       .mg-price-head { font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:rgba(255,255,255,0.4); }
       .mg-price-head b { color:rgba(255,255,255,0.4); }
       .mg-price-note { font-size:11px; color:rgba(255,255,255,0.5); line-height:1.5; margin-top:10px; }
+      .mg-proj { margin-top:30px; }
+      .mg-proj-table { border:1px solid rgba(255,255,255,0.08); background:rgba(17,21,31,0.5); border-radius:16px; padding:8px 18px; }
+      .mg-proj-row { display:flex; gap:10px; padding:9px 0; font-size:12.5px; color:rgba(255,255,255,0.75);
+        border-bottom:1px solid rgba(255,255,255,0.05); align-items:baseline; }
+      .mg-proj-row:last-child { border-bottom:none; }
+      .mg-proj-row span { flex:1; }
+      .mg-proj-row b { flex:1.1; text-align:right; color:#34D17A; font-weight:700; }
+      .mg-proj-row .mg-mg-col { color:#E0553B; font-weight:600; text-align:right; }
+      .mg-proj-head { font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:rgba(255,255,255,0.4) !important; }
+      .mg-proj-head span, .mg-proj-head b, .mg-proj-head .mg-mg-col { color:rgba(255,255,255,0.4); }
+      .mg-proj-note { font-size:11px; color:rgba(255,255,255,0.5); line-height:1.55; margin-top:10px; max-width:88ch; }
       .mg-foot { display:flex; align-items:center; gap:14px; margin-top:32px; padding-top:16px;
         border-top:1px solid rgba(255,255,255,0.08); font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:rgba(255,255,255,0.4); }
       .mg-foot-line { flex:1; height:1px; background:linear-gradient(90deg,rgba(255,255,255,0.12),transparent); }
