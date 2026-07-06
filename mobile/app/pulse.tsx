@@ -23,7 +23,7 @@ import {
   type PulseNote,
 } from "@/lib/pulseClaim";
 import { scanNearby, bleReady, type NearbyPeer } from "@/lib/pulseNearby";
-import { tapAvailable, startScanning, armSend } from "@/lib/pulseBle";
+import { tapAvailable, startScanning, armSend, nearestPeerDeviceId, readHandleForDevice } from "@/lib/pulseBle";
 import { onPulseReceived } from "@/lib/pulsePresence";
 import { ingestPayload } from "@/lib/pulseInbox";
 import { useTheme, type Theme } from "@/lib/theme";
@@ -289,11 +289,33 @@ export default function Pulse() {
       } catch { /* handled below */ }
       if (!coords) { Alert.alert("Location needed", "Turn on location so Loadit can lock the funds in escrow for the person nearby."); return; }
 
+      // Figure out WHO the phone beside us is, so the escrow locks to them (not
+      // a public drop anyone in range could grab). If we already picked a face,
+      // use it; otherwise read the nearest phone's @handle over Bluetooth now.
+      let recipientHandle = toUser?.handle;
+      if (!recipientHandle && tapAvailable()) {
+        const devId = nearestPeerDeviceId();
+        if (devId) recipientHandle = (await readHandleForDevice(devId)) ?? undefined;
+      }
+      if (!recipientHandle) {
+        const proceed = await new Promise<boolean>((resolve) => {
+          Alert.alert(
+            "Couldn't identify the phone",
+            "I couldn't read who the nearby phone belongs to, so this would be a public drop — anyone in range could claim it. Send it as public anyway?",
+            [
+              { text: "Cancel", style: "cancel", onPress: () => resolve(false) },
+              { text: "Send public", style: "destructive", onPress: () => resolve(true) },
+            ]
+          );
+        });
+        if (!proceed) { setBusy(false); return; }
+      }
+
       const deviceId = await getDeviceId();
       const drop = await dropPulse(token, {
         handleId: me.id, password,
         lat: coords.lat, lng: coords.lng,
-        recipientHandle: toUser?.handle, // omitted → public drop
+        recipientHandle, // resolved recipient → targeted; undefined → public
         amountUsd: amount, currency: "USDC",
         message: memo.trim() || undefined,
         offlinePolicy: "proximity_offline_settle_online",
@@ -321,7 +343,7 @@ export default function Pulse() {
       const evidence = await captureEvidence();
       if (nearby[0]) { evidence.bleRssi = nearby[0].rssi ?? undefined; evidence.bleDeviceId = nearby[0].id; }
       const n = await makePulseNote({
-        fromHandle: me.handle, fromHandleId: me.id, to: toUser?.handle,
+        fromHandle: me.handle, fromHandleId: me.id, to: recipientHandle,
         amountUsd: amount, asset: "USDC", memo: memo.trim() || undefined,
         createdAt: Date.now(), pulseId: lockedId, manifest: manifest ?? undefined, evidence,
       });

@@ -239,6 +239,40 @@ export function tapAvailable(): boolean {
   return isBleNativeAvailable() && !!mgr();
 }
 
+/** The strongest-signal nearby peer's deviceId (the closest phone). */
+export function nearestPeerDeviceId(): string | null {
+  let best: { deviceId: string; rssi: number | null } | null = null;
+  for (const p of peers.values()) {
+    if (!best || (p.rssi ?? -999) > (best.rssi ?? -999)) best = p;
+  }
+  return best?.deviceId ?? null;
+}
+
+/**
+ * Deliberate, one-shot handle read for a specific device — used at SEND time to
+ * learn who the phone beside you is, so the escrow can be locked to their
+ * @handle. Pauses the scan for a clean connect and resumes after.
+ */
+export async function readHandleForDevice(deviceId: string): Promise<string | null> {
+  const m = mgr();
+  if (!m) return null;
+  const resume = scanning;
+  try {
+    if (resume) stopScan();
+    let d = await m.connectToDevice(deviceId, { timeout: 8000 });
+    d = await d.discoverAllServicesAndCharacteristics();
+    const ch = await d.readCharacteristicForService(SERVICE, HANDLE_CHAR);
+    try { await m.cancelDeviceConnection(deviceId); } catch { /* noop */ }
+    const real = ch?.value ? base64ToStr(ch.value).replace(/^@/, "").toLowerCase().trim() : "";
+    return real && real !== "loadit" ? real : null;
+  } catch {
+    try { await m.cancelDeviceConnection(deviceId); } catch { /* noop */ }
+    return null;
+  } finally {
+    if (resume) startScan(handleForScan);
+  }
+}
+
 export interface AdvertiseHandlers {
   onNote: (payload: string) => void;
   onError?: (m: string) => void;
