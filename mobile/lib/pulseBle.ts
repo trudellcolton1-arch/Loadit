@@ -140,33 +140,38 @@ function handleFromDevice(d: any): string | null {
   return null;
 }
 
-const handleReadDone = new Set<string>(); // deviceIds we've read the @handle from
+const handleReadAttempts = new Map<string, number>(); // deviceId -> tries (capped)
 
 /**
  * BLE adverts are 31 bytes, so the @handle often doesn't fit. When we only have
- * a fallback id for a peer, connect briefly and READ the handle characteristic —
- * reliable on both platforms — then upgrade the peer to its real @handle so the
- * profile + face can resolve.
+ * a fallback id for a peer, connect briefly and READ the handle characteristic,
+ * then upgrade the peer to its real @handle so its profile + face resolve. Capped
+ * at 2 tries per device (no forever-retry churn), and we pause the scan during
+ * the read so the connect doesn't fight the scanner (esp. on Android).
  */
 async function readPeerHandle(deviceId: string, fallbackHandle: string) {
   const m = mgr();
-  if (!m || handleReadDone.has(deviceId) || pending) return;
-  handleReadDone.add(deviceId);
+  const tries = handleReadAttempts.get(deviceId) || 0;
+  if (!m || tries >= 2 || pending) return;
+  handleReadAttempts.set(deviceId, tries + 1);
+  const resumeScan = scanning;
   try {
+    if (resumeScan) stopScan();
     let d = await m.connectToDevice(deviceId, { timeout: 8000 });
     d = await d.discoverAllServicesAndCharacteristics();
     const ch = await d.readCharacteristicForService(SERVICE, HANDLE_CHAR);
     try { await m.cancelDeviceConnection(deviceId); } catch { /* noop */ }
     const real = ch?.value ? base64ToStr(ch.value).replace(/^@/, "").toLowerCase().trim() : "";
-    if (real && real !== fallbackHandle) {
+    if (real && real !== fallbackHandle && real !== "loadit") {
       const entry = peers.get(fallbackHandle);
       peers.delete(fallbackHandle);
       peers.set(real, entry || { deviceId, rssi: null });
       presenceOnPeer?.(real);
     }
   } catch {
-    handleReadDone.delete(deviceId); // let a later sighting retry
     try { await m.cancelDeviceConnection(deviceId); } catch { /* noop */ }
+  } finally {
+    if (resumeScan) startScan(handleForScan);
   }
 }
 
@@ -264,7 +269,7 @@ export interface ScanHandlers {
 /** SCAN (Beam screen): discover nearby advertising Loadit phones by @handle. */
 export async function startScanning(myHandle: string, h: ScanHandlers): Promise<() => void> {
   peers.clear();
-  handleReadDone.clear();
+  handleReadAttempts.clear();
   presenceOnPeer = h.onPeer;
   handleForScan = myHandle.toLowerCase();
   await ensureAndroidPerms();

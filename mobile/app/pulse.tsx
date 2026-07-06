@@ -496,6 +496,21 @@ export default function Pulse() {
           </TouchableOpacity>
         )}
 
+        {/* A phone was found but its @handle didn't resolve to a profile — still
+            show it so it's visible and sendable (public drop to the phone next
+            to you). */}
+        {mode === "send" && !note && tapAvailable() && nearbyCount > nearbyUsers.length && (
+          <View style={styles.nearbyGeneric}>
+            <Text style={styles.nearbyGenericEmoji}>📱</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.nearbyGenericTitle}>
+                {nearbyCount - nearbyUsers.length} phone{nearbyCount - nearbyUsers.length === 1 ? "" : "s"} right next to you
+              </Text>
+              <Text style={styles.nearbyGenericSub}>Enter your password and Create Pulse — it sends to the phone beside you.</Text>
+            </View>
+          </View>
+        )}
+
         {mode === "send" && !note && nearbyUsers.length > 0 && (
           <View style={styles.facesWrap}>
             <Text style={styles.facesLabel}>Loadit users near you — tap to send</Text>
@@ -730,6 +745,10 @@ const makeStyles = (t: Theme) =>
     bleText: { color: t.dim, fontSize: 12, fontWeight: "600" },
     locBanner: { backgroundColor: t.accentSoft, borderColor: t.warn, borderWidth: 1, borderRadius: 14, padding: 12, marginTop: 14 },
     locText: { color: t.text, fontSize: 12.5, lineHeight: 18, fontWeight: "600" },
+    nearbyGeneric: { flexDirection: "row", alignItems: "center", gap: 11, marginTop: 14, backgroundColor: t.accentSoft, borderColor: t.accentTint, borderWidth: 1, borderRadius: 16, padding: 13 },
+    nearbyGenericEmoji: { fontSize: 24 },
+    nearbyGenericTitle: { color: t.text, fontSize: 14.5, fontWeight: "800" },
+    nearbyGenericSub: { color: t.dim, fontSize: 12, lineHeight: 16, marginTop: 2 },
     facesWrap: { marginTop: 16 },
     facesLabel: { color: t.faint, fontSize: 10.5, letterSpacing: 0.8, textTransform: "uppercase", marginBottom: 10 },
     facesRow: { gap: 14, paddingRight: 8 },
