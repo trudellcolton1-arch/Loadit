@@ -13,7 +13,7 @@ import { useEffect, useState, type ReactNode } from "react";
 const RAISE = {
   amount: "$5M",
   stage: "Pre-Seed (SAFE)",
-  contact: "trudellcolton@gmail.com",
+  contact: "colt@loadit.net",
 };
 
 export function DeckClient() {
