@@ -125,7 +125,7 @@ export default function MoneyGramBrief() {
         <footer className="mg-foot font-mono">
           <span>LOADIT × MONEYGRAM</span>
           <span className="mg-foot-line" aria-hidden />
-          <a href="mailto:trudellcolton@gmail.com">trudellcolton@gmail.com</a>
+          <a href="mailto:colt@loadit.net">colt@loadit.net</a>
           <span>loadit.net</span>
         </footer>
       </article>

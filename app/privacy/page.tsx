@@ -52,7 +52,7 @@ const SECTIONS: { h: string; p: string[] }[] = [
   {
     h: "Retention & your rights",
     p: [
-      "We keep personal data only as long as needed for the purposes above. You can ask us to access, correct, or delete your data at any time — email trudellcolton@gmail.com and we'll handle it.",
+      "We keep personal data only as long as needed for the purposes above. You can ask us to access, correct, or delete your data at any time — email colt@loadit.net and we'll handle it.",
     ],
   },
   {
