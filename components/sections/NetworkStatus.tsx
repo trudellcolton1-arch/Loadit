@@ -5,7 +5,7 @@ import { motion, useInView } from "framer-motion";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 
 const SYSTEMS = [
-  "AERO Routing Engine",
+  "HQ Routing Engine",
   "Settlement Layer",
   "Identity & Compliance",
   "Liquidity Aggregator",

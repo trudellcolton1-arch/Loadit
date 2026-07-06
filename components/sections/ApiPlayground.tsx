@@ -32,7 +32,7 @@ export function ApiPlayground() {
         confidence: r.confidence / 100,
         settlement: "non_custodial",
       },
-      meta: { engine: "AERO", version: "v1" },
+      meta: { engine: "HQ", version: "v1" },
     };
   };
 
@@ -69,7 +69,7 @@ export function ApiPlayground() {
           align="center"
           eyebrow="Developers"
           title="Routing-as-an-API."
-          description="The same AERO engine, one HTTP call. Build Loadit into any product — checkout, payroll, treasury, remittance."
+          description="The same HQ engine, one HTTP call. Build Loadit into any product — checkout, payroll, treasury, remittance."
         />
 
         <div className="mx-auto mt-12 grid max-w-4xl gap-4 lg:grid-cols-2">
@@ -149,7 +149,7 @@ export function ApiPlayground() {
                   </motion.pre>
                 ) : (
                   <p key="empty" className="font-mono text-xs text-white/35">
-                    {loading ? "AERO scoring routes…" : "// run a request to see the route"}
+                    {loading ? "HQ scoring routes…" : "// run a request to see the route"}
                   </p>
                 )}
               </AnimatePresence>

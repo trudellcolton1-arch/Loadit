@@ -4,7 +4,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
- * AERO ↔ OpenAI bridge. Generates the routing explanation + reasoning from the
+ * HQ ↔ OpenAI bridge. Generates the routing explanation + reasoning from the
  * computed route. The API key lives only on the server (OPENAI_API_KEY).
  * If the key is missing or OpenAI errors, we return ok:false and the client
  * gracefully falls back to the deterministic local explanation.
@@ -33,7 +33,7 @@ export async function POST(req: Request) {
   } = body as Record<string, string | number>;
 
   const system =
-    "You are AERO (Adaptive Economic Routing Oracle), the AI-orchestrated " +
+    "You are HQ, Loadit's AI — the AI-orchestrated " +
     "settlement router of the patented, non-custodial Loadit Unified Financial " +
     "Rail. You select the cheapest, fastest, safest path across blockchains, " +
     "liquidity pools, and payment networks, evaluating live fees, liquidity, " +
@@ -49,7 +49,7 @@ export async function POST(req: Request) {
     `Route chosen: ${paymentMethod} → ${asset} settling on ${network}. ` +
     `Amount $${amount}. Loadit fee $${loaditFee} vs legacy $${legacyFee} ` +
     `(${savingsPct}% savings). Settlement ${eta}. Risk score ${risk}. ` +
-    `Explain why AERO picked ${network} over alternatives like Ethereum.`;
+    `Explain why HQ picked ${network} over alternatives like Ethereum.`;
 
   try {
     const controller = new AbortController();

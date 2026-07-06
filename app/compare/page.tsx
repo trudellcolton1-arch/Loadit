@@ -6,7 +6,7 @@ import { AffiliateRouter } from "@/components/sections/AffiliateRouter";
 export const metadata: Metadata = {
   title: "Cheapest Way to Move Money & Buy Crypto",
   description:
-    "Compare the real cost of moving money. AERO scores every network and on-ramp in real time, shows your exact savings, and routes you to the best provider to finish the job.",
+    "Compare the real cost of moving money. HQ scores every network and on-ramp in real time, shows your exact savings, and routes you to the best provider to finish the job.",
   alternates: { canonical: "/compare" },
 };
 

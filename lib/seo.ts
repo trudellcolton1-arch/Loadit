@@ -4,15 +4,15 @@ import { SITE } from "./constants";
 export const FAQS = [
   {
     q: "What is Loadit?",
-    a: "Loadit is an AI-powered financial rail that converts cash, cards, and fiat into stablecoins and crypto in seconds. Its patent-pending Unified Financial Rail uses AI Enhanced Routing Optimization (AERO) to route every payment across the cheapest, fastest network available.",
+    a: "Loadit is an AI-powered financial rail that converts cash, cards, and fiat into stablecoins and crypto in seconds. Its patent-pending Unified Financial Rail uses its AI, HQ, to route every payment across the cheapest, fastest network available.",
   },
   {
     q: "How does Loadit turn cash into crypto?",
-    a: "A shopper pays with cash or card at a merchant on the Loadit network. The transaction is tokenized, identity-verified, and routed by AERO across L1s, L2s, Lightning, or banks — settling on-chain in seconds while the merchant still receives familiar fiat.",
+    a: "A shopper pays with cash or card at a merchant on the Loadit network. The transaction is tokenized, identity-verified, and routed by HQ across L1s, L2s, Lightning, or banks — settling on-chain in seconds while the merchant still receives familiar fiat.",
   },
   {
-    q: "What is AERO?",
-    a: "AERO (AI Enhanced Routing Optimization) is Loadit's routing engine. It scores routes across legacy processors, blockchains, and liquidity pools in real time, choosing the optimal settlement path on every transaction — cutting fees by up to 86%.",
+    q: "How does HQ route payments?",
+    a: "HQ is Loadit's AI routing engine. It scores routes across legacy processors, blockchains, and liquidity pools in real time, choosing the optimal settlement path on every transaction — cutting fees by up to 86%.",
   },
   {
     q: "Which networks does Loadit support?",
@@ -24,7 +24,7 @@ export const FAQS = [
   },
   {
     q: "What does Loadit charge?",
-    a: "Loadit charges a flat 0.75% convenience fee — built to compete with banks, not to extract from users. Its AERO engine routes the underlying network fees to the cheapest available path.",
+    a: "Loadit charges a flat 0.75% convenience fee — built to compete with banks, not to extract from users. Its HQ engine routes the underlying network fees to the cheapest available path.",
   },
   {
     q: "Is Loadit custodial?",
@@ -32,7 +32,7 @@ export const FAQS = [
   },
   {
     q: "What is HQ?",
-    a: "HQ is Loadit's in-app AI money assistant. Tell it what you want to do with your money in plain language and it finds the cheapest real route and executes it.",
+    a: "HQ is Loadit's AI. In the app, you tell it what you want to do with your money in plain language; on the rail, the same intelligence scores every network and executes the cheapest real route.",
   },
   {
     q: "What is Pulse?",
@@ -67,7 +67,7 @@ export function buildJsonLd() {
         name: `${SITE.name} — Unified Financial Rail`,
         brand: { "@id": `${SITE.url}/#organization` },
         description:
-          "AI-powered financial rail connecting cash, cards, crypto, stablecoins, and the future of money with real-time AERO routing.",
+          "AI-powered financial rail connecting cash, cards, crypto, stablecoins, and the future of money with real-time HQ routing.",
         category: "Financial Infrastructure",
       },
       {

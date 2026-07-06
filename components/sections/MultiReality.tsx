@@ -102,7 +102,7 @@ export function MultiReality() {
                   animate={{ opacity: 1, y: 0 }}
                   className="mt-5 flex items-center gap-2 rounded-full border border-signal/30 bg-signal/10 px-4 py-2 font-mono text-xs text-signal"
                 >
-                  ✓ cryptographically signed · {hash} · routed by AERO
+                  ✓ cryptographically signed · {hash} · routed by HQ
                 </motion.div>
               )}
             </AnimatePresence>

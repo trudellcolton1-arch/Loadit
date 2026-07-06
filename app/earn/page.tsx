@@ -6,7 +6,7 @@ import { RebateEngine } from "@/components/sections/RebateEngine";
 export const metadata: Metadata = {
   title: "Get Paid to Move Money",
   description:
-    "Loadit Rewards — AERO routes every transfer the cheapest way and pays a share of the savings back to you. The first payment rail that earns you money.",
+    "Loadit Rewards — HQ routes every transfer the cheapest way and pays a share of the savings back to you. The first payment rail that earns you money.",
   alternates: { canonical: "/earn" },
 };
 

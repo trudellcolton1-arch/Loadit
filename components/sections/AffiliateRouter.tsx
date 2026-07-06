@@ -67,7 +67,7 @@ export function AffiliateRouter() {
           align="center"
           eyebrow="Loadit Router · Free"
           title="The cheapest way to move your money."
-          description="Tell us what you're moving. AERO scores every network and on-ramp in real time, shows you exactly how much you'd save versus the old way, and routes you to the best provider to finish the job."
+          description="Tell us what you're moving. HQ scores every network and on-ramp in real time, shows you exactly how much you'd save versus the old way, and routes you to the best provider to finish the job."
         />
 
         <div className="mt-10 grid gap-5 lg:grid-cols-[0.85fr_1.15fr]">

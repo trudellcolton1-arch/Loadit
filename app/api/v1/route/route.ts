@@ -15,9 +15,9 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
- * PUBLIC AERO ROUTING API — POST/GET /api/v1/route
+ * PUBLIC HQ ROUTING API — POST/GET /api/v1/route
  *
- * The patented AERO engine as a metered HTTP endpoint. Returns the cheapest,
+ * The patented HQ engine as a metered HTTP endpoint. Returns the cheapest,
  * fastest non-custodial settlement route for a given funding method + asset.
  *
  * Auth: send an API key via `x-api-key` header or `?key=`.
@@ -155,7 +155,7 @@ async function handle(req: Request, params: Record<string, unknown>) {
       explanation: r.explanation,
     },
     meta: {
-      engine: "AERO",
+      engine: "HQ",
       version: "v1",
       plan,
       networks_scanned: r.metrics.networksScanned,

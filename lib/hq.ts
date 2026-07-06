@@ -4,7 +4,7 @@
  * HQ_LOADIT_KEY lives here and ONLY here: calls go Loadit backend →
  * hylaqo.com, and the key is never sent to the phone or the browser.
  * Every helper degrades to null on any failure so callers can fall back
- * to the local AERO engine.
+ * to the local HQ engine.
  */
 
 const HQ_URL = "https://www.hylaqo.com/api/route";

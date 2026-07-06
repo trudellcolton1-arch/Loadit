@@ -109,7 +109,7 @@ export const RAIL_LAYERS = [
   },
   {
     id: "routing",
-    name: "AERO — AI Routing",
+    name: "HQ — AI Routing",
     desc: "Real-time scoring across processors, L1s, L2s, and liquidity pools.",
   },
   {
@@ -134,7 +134,7 @@ export const HOW_STEPS = [
   { n: 1, title: "Walk into a store", desc: "Any merchant on the Loadit network." },
   { n: 2, title: "Scan the QR", desc: "Your wallet meets the rail in one tap." },
   { n: 3, title: "Pay with cash or card", desc: "The merchant still settles in familiar fiat." },
-  { n: 4, title: "AI routes the transaction", desc: "AERO finds the cheapest, fastest path." },
+  { n: 4, title: "AI routes the transaction", desc: "HQ finds the cheapest, fastest path." },
   { n: 5, title: "Crypto arrives", desc: "On-chain value lands in seconds." },
   { n: 6, title: "Done", desc: "No bank account. No friction. No borders." },
 ] as const;
@@ -144,10 +144,10 @@ export const FUTURE_CARDS = [
   {
     id: "ai-settlement",
     title: "AI Settlement",
-    tag: "AERO",
+    tag: "HQ",
     blurb: "Every payment scored and routed in real time for cost and speed.",
     detail:
-      "AI Enhanced Routing Optimization ingests cash, card, and QR-triggered payments, tokenizes them, and runs continuous scoring across legacy processors, L1s, L2s, and liquidity pools — choosing the optimal path on every single transaction.",
+      "HQ ingests cash, card, and QR-triggered payments, tokenizes them, and runs continuous scoring across legacy processors, L1s, L2s, and liquidity pools — choosing the optimal path on every single transaction.",
   },
   {
     id: "offline",
@@ -171,7 +171,7 @@ export const FUTURE_CARDS = [
     tag: "QFR",
     blurb: "Explore millions of routing paths in parallel.",
     detail:
-      "The Quantum Financial Router explores millions of candidate paths simultaneously when quantum hardware is available — with classical AERO as the always-on fallback. The rail gets smarter as the hardware arrives.",
+      "The Quantum Financial Router explores millions of candidate paths simultaneously when quantum hardware is available — with classical HQ as the always-on fallback. The rail gets smarter as the hardware arrives.",
   },
   {
     id: "temporal",

@@ -1,5 +1,5 @@
 /**
- * LOADIT AERO™ — AI Settlement Router engine.
+ * LOADIT HQ™ — AI Settlement Router engine.
  * Deterministic, realistic route simulation so the investor demo "feels real"
  * without any backend. All numbers are derived from the inputs.
  */
@@ -99,7 +99,7 @@ export const NETWORKS: Record<NetworkId, NetworkMeta> = {
 
 /** Optional preferred-network choices for the input. */
 export const PREFERRED_NETWORKS: { id: "auto" | NetworkId; label: string }[] = [
-  { id: "auto", label: "Auto (AERO decides)" },
+  { id: "auto", label: "Auto (HQ decides)" },
   { id: "solana", label: "Solana" },
   { id: "base", label: "Base" },
   { id: "ethereum", label: "Ethereum" },
@@ -245,7 +245,7 @@ export function computeRoute(input: RouteInput): RouteResult {
   // Visual route chain.
   const path: RouteResult["path"] = [
     { label: "User", kind: "origin" },
-    { label: "Loadit AERO", kind: "engine" },
+    { label: "Loadit HQ", kind: "engine" },
   ];
   if (!assetMeta.stable) {
     path.push({ label: "USDC", kind: "asset" });
@@ -261,8 +261,8 @@ export function computeRoute(input: RouteInput): RouteResult {
   const pctVsEth = clamp(Math.round((1 - networkFee / baseFeeOf("ethereum")) * 100), 1, 99);
   const explanation =
     netId === "ethereum"
-      ? `AERO selected Ethereum for its ${eth.liquidityWord} liquidity and settlement assurances on a ${formatUSD(amount)} transfer, accepting higher fees where finality matters most.`
-      : `AERO selected ${network.name} because current network fees are ${pctVsEth}% lower than Ethereum while maintaining ${network.speedWord} settlement and ${network.liquidityWord} liquidity.`;
+      ? `HQ selected Ethereum for its ${eth.liquidityWord} liquidity and settlement assurances on a ${formatUSD(amount)} transfer, accepting higher fees where finality matters most.`
+      : `HQ selected ${network.name} because current network fees are ${pctVsEth}% lower than Ethereum while maintaining ${network.speedWord} settlement and ${network.liquidityWord} liquidity.`;
 
   // Live metrics.
   const poolsChecked = 24 + (amount.toString().length + input.asset.length) * 2;
@@ -301,7 +301,7 @@ export function computeRoute(input: RouteInput): RouteResult {
     ],
     settlementAnalysis: `Median settlement on ${network.name} is ${eta} with ${network.liquidityWord} liquidity at this ticket size. Non-custodial release fires on on-chain confirmation; no intermediary holds funds.`,
     feeComparison,
-    aiReasoning: `Across 14 networks and ${poolsChecked} liquidity pools, AERO scored each candidate path on real-time fee, expected settlement time, slippage, and liquidity depth. ${network.name} maximized value retained (${savingsPct}% vs. the legacy ${input.paymentMethod.toLowerCase()} rail) without sacrificing settlement assurance.`,
+    aiReasoning: `Across 14 networks and ${poolsChecked} liquidity pools, HQ scored each candidate path on real-time fee, expected settlement time, slippage, and liquidity depth. ${network.name} maximized value retained (${savingsPct}% vs. the legacy ${input.paymentMethod.toLowerCase()} rail) without sacrificing settlement assurance.`,
     networkDecisions: [
       ...railOrder
         .filter((id) => id !== netId)

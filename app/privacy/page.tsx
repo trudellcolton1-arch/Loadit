@@ -46,7 +46,7 @@ const SECTIONS: { h: string; p: string[] }[] = [
   {
     h: "AI features",
     p: [
-      "Questions you ask AERO and plain-language routing requests are processed by our AI providers to generate answers and parse intents. Don't include sensitive personal information in prompts.",
+      "Questions you ask HQ and plain-language routing requests are processed by our AI providers to generate answers and parse intents. Don't include sensitive personal information in prompts.",
     ],
   },
   {

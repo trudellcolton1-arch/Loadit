@@ -6,7 +6,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
- * Stripe webhook → mint + deliver an AERO API key.
+ * Stripe webhook → mint + deliver an HQ API key.
  *
  * On `checkout.session.completed` we generate a stateless signed key (see
  * lib/apiKeys) bound to the customer, and forward it to KEY_DELIVERY_WEBHOOK_URL

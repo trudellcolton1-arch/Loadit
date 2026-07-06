@@ -1,4 +1,4 @@
-/** Geography for the AERO globe — origin + selectable destinations. */
+/** Geography for the HQ globe — origin + selectable destinations. */
 
 export interface Place {
   city: string;

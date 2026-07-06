@@ -3,7 +3,7 @@
  *
  * Turns a plain-language money request ("send my mom $200 in Manila the
  * cheapest way") into a structured, validated transaction intent, then runs it
- * through the real AERO engine so every number is grounded, never
+ * through the real HQ engine so every number is grounded, never
  * hallucinated. Used by both the /api/intent router and the /api/hq assistant.
  * AI parsing uses OpenAI tool-calling when configured; the deterministic
  * heuristic parser keeps everything working without a key.
@@ -141,7 +141,7 @@ export interface RoutedIntent {
   };
 }
 
-/** Run a validated intent through the real AERO engine with live fees. */
+/** Run a validated intent through the real HQ engine with live fees. */
 export async function routeIntent(intent: Intent): Promise<RoutedIntent> {
   const live = await getMergedFees();
   const r = computeRoute({
