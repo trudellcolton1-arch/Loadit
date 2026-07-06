@@ -110,6 +110,11 @@ export default function MoneyGramBrief() {
                 </div>
               </div>
             ))}
+            <div className="mg-oneliner">
+              “We connect over the standards you already run — SEP-10 for auth, SEP-24 interactive
+              deposit so your webview owns KYC and compliance end to end. Our stellar.toml is live;
+              we need wallet-partner onboarding and sandbox access, and we can demo the flow today.”
+            </div>
             <div className="mg-ask">
               <div className="mg-ask-t">The ask</div>
               <div className="mg-ask-d">Production anchor access + wallet-partner onboarding, and a pilot cash corridor to prove the flow end to end.</div>
@@ -183,6 +188,8 @@ function MgStyle() {
       .mg-ready-k { font-size:10px; letter-spacing:0.1em; color:rgba(94,234,212,0.8); width:58px; flex:none; padding-top:2px; text-transform:uppercase; }
       .mg-ready-v { font-size:13px; font-weight:700; }
       .mg-ready-d { font-size:11px; color:rgba(255,255,255,0.5); margin-top:2px; }
+      .mg-oneliner { margin-top:14px; padding:12px 14px; border-left:2px solid #22A95C; background:rgba(34,169,92,0.06);
+        border-radius:0 10px 10px 0; font-size:12.5px; line-height:1.55; color:rgba(255,255,255,0.8); font-style:italic; }
       .mg-ask { margin-top:14px; padding-top:12px; }
       .mg-ask-t { font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:#34D17A; }
       .mg-ask-d { font-size:12.5px; color:rgba(255,255,255,0.72); line-height:1.5; margin-top:6px; }
