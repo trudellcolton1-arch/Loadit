@@ -19,10 +19,15 @@ import expo.modules.kotlin.modules.ModuleDefinition
 import java.util.UUID
 
 /**
- * PulseBle (Android peripheral) — advertise the Loadit service + @handle (in
- * scan-response service data) and run a GATT server whose note characteristic
- * receives signed Pulse notes written by a central (ble-plx, iOS or Android).
- * Notes are accumulated until a newline terminator, then emitted.
+ * PulseBle (Android peripheral) — advertise the Loadit service + @handle and run
+ * a GATT server whose note characteristic receives signed Pulse notes written by
+ * a central (ble-plx, iOS or Android), and whose handle characteristic lets a
+ * central read who this phone belongs to.
+ *
+ * IMPORTANT: addService() is asynchronous. We start advertising only AFTER
+ * onServiceAdded fires — otherwise a central (esp. iOS) can connect before the
+ * service exists and every read/write fails. We also implement the connection
+ * and MTU callbacks iOS negotiation expects.
  */
 
 private val SERVICE_UUID: UUID = UUID.fromString("F0AD1E00-1985-4C5A-9B11-9E7A10ADD17E")
@@ -38,6 +43,56 @@ class PulseBleModule : Module() {
 
   private val context: Context
     get() = requireNotNull(appContext.reactContext)
+
+  private val serverCallback = object : BluetoothGattServerCallback() {
+    override fun onServiceAdded(status: Int, service: BluetoothGattService?) {
+      // Service is live now — safe to advertise so centrals that connect find it.
+      startAdvertisingInternal()
+    }
+
+    override fun onConnectionStateChange(device: BluetoothDevice?, status: Int, newState: Int) {
+      // No-op, but implementing it keeps the server stable across iOS connects.
+    }
+
+    override fun onMtuChanged(device: BluetoothDevice?, mtu: Int) {
+      // Accept whatever MTU the central negotiates (iOS bumps this on connect).
+    }
+
+    @SuppressLint("MissingPermission")
+    override fun onCharacteristicWriteRequest(
+      device: BluetoothDevice, requestId: Int, characteristic: BluetoothGattCharacteristic,
+      preparedWrite: Boolean, responseNeeded: Boolean, offset: Int, value: ByteArray
+    ) {
+      if (characteristic.uuid == NOTE_UUID) {
+        val chunk = String(value, Charsets.UTF_8)
+        val nl = chunk.indexOf('\n')
+        if (nl >= 0) {
+          buffer.append(chunk.substring(0, nl))
+          val payload = buffer.toString()
+          buffer.setLength(0)
+          if (payload.isNotEmpty()) sendEvent("onNoteReceived", mapOf("payload" to payload))
+        } else {
+          buffer.append(chunk)
+        }
+      }
+      if (responseNeeded) {
+        gattServer?.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, offset, null)
+      }
+    }
+
+    @SuppressLint("MissingPermission")
+    override fun onCharacteristicReadRequest(
+      device: BluetoothDevice, requestId: Int, offset: Int, characteristic: BluetoothGattCharacteristic
+    ) {
+      if (characteristic.uuid == HANDLE_UUID) {
+        val bytes = handle.toByteArray(Charsets.UTF_8)
+        val slice = if (offset >= bytes.size) ByteArray(0) else bytes.copyOfRange(offset, bytes.size)
+        gattServer?.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, offset, slice)
+      } else {
+        gattServer?.sendResponse(device, requestId, BluetoothGatt.GATT_FAILURE, offset, null)
+      }
+    }
+  }
 
   override fun definition() = ModuleDefinition {
     Name("PulseBle")
@@ -57,6 +112,8 @@ class PulseBleModule : Module() {
   private fun startPeripheral(h: String) {
     handle = h
     buffer.setLength(0)
+    stopPeripheral()
+
     val mgr = context.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
     val adapter = mgr?.adapter
     if (adapter == null || !adapter.isEnabled) {
@@ -64,41 +121,12 @@ class PulseBleModule : Module() {
       return
     }
 
-    val server = mgr.openGattServer(context, object : BluetoothGattServerCallback() {
-      override fun onCharacteristicWriteRequest(
-        device: BluetoothDevice, requestId: Int, characteristic: BluetoothGattCharacteristic,
-        preparedWrite: Boolean, responseNeeded: Boolean, offset: Int, value: ByteArray
-      ) {
-        if (characteristic.uuid == NOTE_UUID) {
-          val chunk = String(value, Charsets.UTF_8)
-          val nl = chunk.indexOf('\n')
-          if (nl >= 0) {
-            buffer.append(chunk.substring(0, nl))
-            val payload = buffer.toString()
-            buffer.setLength(0)
-            if (payload.isNotEmpty()) sendEvent("onNoteReceived", mapOf("payload" to payload))
-          } else {
-            buffer.append(chunk)
-          }
-        }
-        if (responseNeeded) {
-          gattServer?.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, offset, null)
-        }
-      }
-
-      override fun onCharacteristicReadRequest(
-        device: BluetoothDevice, requestId: Int, offset: Int, characteristic: BluetoothGattCharacteristic
-      ) {
-        if (characteristic.uuid == HANDLE_UUID) {
-          gattServer?.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, offset, handle.toByteArray(Charsets.UTF_8))
-        } else {
-          gattServer?.sendResponse(device, requestId, BluetoothGatt.GATT_FAILURE, offset, null)
-        }
-      }
-    }) ?: run {
+    val server = mgr.openGattServer(context, serverCallback)
+    if (server == null) {
       sendEvent("onError", mapOf("message" to "Couldn't start GATT server"))
       return
     }
+    gattServer = server
 
     val service = BluetoothGattService(SERVICE_UUID, BluetoothGattService.SERVICE_TYPE_PRIMARY)
     service.addCharacteristic(
@@ -111,9 +139,14 @@ class PulseBleModule : Module() {
         BluetoothGattCharacteristic.PERMISSION_WRITE
       )
     )
+    // Advertising starts in onServiceAdded once this completes.
     server.addService(service)
-    gattServer = server
+  }
 
+  @SuppressLint("MissingPermission")
+  private fun startAdvertisingInternal() {
+    val mgr = context.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
+    val adapter = mgr?.adapter ?: return
     val adv = adapter.bluetoothLeAdvertiser
     if (adv == null) {
       sendEvent("onError", mapOf("message" to "BLE advertising not supported on this phone"))

@@ -490,7 +490,7 @@ export default function Pulse() {
           <View style={[styles.blePill, { borderColor: t.accentTint, backgroundColor: t.accentSoft }]}>
             <View style={[styles.bleDot, { backgroundColor: t.accent }]} />
             <Text style={[styles.bleText, { color: t.accentText }]}>
-              {nearbyCount ? `${nearbyCount} phone${nearbyCount === 1 ? "" : "s"} nearby — ready to send` : "Bluetooth on · looking for people near you"}
+              {nearbyCount ? "Loadit phone nearby — ready to send" : "Bluetooth on · looking for people near you"}
             </Text>
           </View>
         )}
@@ -525,10 +525,8 @@ export default function Pulse() {
           <View style={styles.nearbyGeneric}>
             <Text style={styles.nearbyGenericEmoji}>📱</Text>
             <View style={{ flex: 1 }}>
-              <Text style={styles.nearbyGenericTitle}>
-                {nearbyCount - nearbyUsers.length} phone{nearbyCount - nearbyUsers.length === 1 ? "" : "s"} right next to you
-              </Text>
-              <Text style={styles.nearbyGenericSub}>Enter your password and Create Pulse — it sends to the phone beside you.</Text>
+              <Text style={styles.nearbyGenericTitle}>A Loadit phone is right next to you</Text>
+              <Text style={styles.nearbyGenericSub}>Enter your password and Create Pulse — it reads who they are over Bluetooth and sends to them.</Text>
             </View>
           </View>
         )}

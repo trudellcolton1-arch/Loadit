@@ -259,7 +259,12 @@ export async function readHandleForDevice(deviceId: string): Promise<string | nu
   const resume = scanning;
   try {
     if (resume) stopScan();
-    let d = await m.connectToDevice(deviceId, { timeout: 8000 });
+    let d: any = null;
+    for (let i = 0; i < 3 && !d; i++) {
+      try { d = await m.connectToDevice(deviceId, { timeout: 6000 }); }
+      catch { if (i === 2) return null; }
+    }
+    if (!d) return null;
     d = await d.discoverAllServicesAndCharacteristics();
     const ch = await d.readCharacteristicForService(SERVICE, HANDLE_CHAR);
     try { await m.cancelDeviceConnection(deviceId); } catch { /* noop */ }
