@@ -24,7 +24,7 @@ import {
 } from "@/lib/pulseClaim";
 import { scanNearby, bleReady, type NearbyPeer } from "@/lib/pulseNearby";
 import { tapAvailable, startScanning, armSend, nearestPeerDeviceId, readHandleForDevice } from "@/lib/pulseBle";
-import { onPulseReceived } from "@/lib/pulsePresence";
+import { onPulseReceived, onPeerAnnounced } from "@/lib/pulsePresence";
 import { ingestPayload } from "@/lib/pulseInbox";
 import { useTheme, type Theme } from "@/lib/theme";
 import { HandleAvatar } from "@/components/HandleAvatar";
@@ -199,6 +199,13 @@ export default function Pulse() {
     return off;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // A nearby phone announced its @handle to us over Bluetooth (reverse-announce).
+  // This is how the iPhone learns the Android's handle + face, and vice-versa.
+  useEffect(() => {
+    const off = onPeerAnnounced((handle) => { addFace(handle); });
+    return off;
+  }, [addFace]);
 
   // Beam over Bluetooth: send the signed note across the live presence session
   // — directly to the picked person, or to whoever taps if none is chosen.

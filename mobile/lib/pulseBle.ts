@@ -30,6 +30,12 @@ const NOTE_CHAR = "F0AD1E02-1985-4C5A-9B11-9E7A10ADD17E";
 const MTU = 185;
 const CHUNK = 150;
 
+// Reverse-announce marker. A phone WRITES "LOADIT-HELLO:<handle>\n" to peers it
+// discovers, telling them who it is. This is the reliable direction on real
+// hardware (Android→iOS writes land; iOS→Android reads do not) — it's how the
+// iPhone finally learns the Android's @handle instead of a nameless peer id.
+export const HELLO_PREFIX = "LOADIT-HELLO:";
+
 /* ---- ble-plx manager (lazy) ---- */
 let manager: any = null;
 function mgr(): any {
@@ -140,37 +146,58 @@ function handleFromDevice(d: any): string | null {
   return null;
 }
 
-const handleReadAttempts = new Map<string, number>(); // deviceId -> tries (capped)
-let resolving = false;
-let resolverTimer: ReturnType<typeof setInterval> | null = null;
+const announceAttempts = new Map<string, number>(); // deviceId -> announce tries
+let announcing = false;
+let announceTimer: ReturnType<typeof setInterval> | null = null;
 
 /**
- * Background resolver: pick one nearby phone we only have a fallback id for,
- * read its @handle over GATT (scan paused for a clean connect), and upgrade it
- * to the real @handle so its profile + face resolve in the browse list — so you
- * see WHO is nearby continuously, not just at send time. Runs on a timer, one at
- * a time, capped per device, and yields to any in-flight send.
+ * Background announcer: pick one discovered phone and WRITE our @handle to it,
+ * so IT can show who WE are. This flips the failing direction — instead of the
+ * iPhone trying (and failing) to read the Android's handle over GATT, the
+ * Android writes its handle to the iPhone, which is the reliable path. Every
+ * phone announces to every peer, so both sides fill in each other's faces.
+ * Runs on a timer, one at a time, capped per device, yields to an in-flight send.
  */
-async function resolveOneUnnamedPeer() {
-  if (!mgr() || pending || resolving) return;
-  let fallback: string | null = null;
+async function announceOneToPeer() {
+  if (!mgr() || pending || announcing) return;
   let deviceId: string | null = null;
-  for (const [h, e] of peers) {
-    if (h.startsWith("peer-") && (handleReadAttempts.get(e.deviceId) || 0) < 3) { fallback = h; deviceId = e.deviceId; break; }
+  for (const e of peers.values()) {
+    if ((announceAttempts.get(e.deviceId) || 0) < 3) { deviceId = e.deviceId; break; }
   }
-  if (!fallback || !deviceId) return;
-  resolving = true;
-  handleReadAttempts.set(deviceId, (handleReadAttempts.get(deviceId) || 0) + 1);
+  if (!deviceId) return;
+  announcing = true;
+  announceAttempts.set(deviceId, (announceAttempts.get(deviceId) || 0) + 1);
   try {
-    const real = await readHandleForDevice(deviceId);
-    if (real && real !== fallback) {
-      const entry = peers.get(fallback);
-      peers.delete(fallback);
-      peers.set(real, entry || { deviceId, rssi: null });
-      presenceOnPeer?.(real);
-    }
+    await announceToPeer(deviceId);
   } finally {
-    resolving = false;
+    announcing = false;
+  }
+}
+
+/** Connect to a peer and write our @handle to its note characteristic. */
+async function announceToPeer(deviceId: string): Promise<void> {
+  const m = mgr();
+  if (!m) return;
+  const resume = scanning;
+  try {
+    if (resume) stopScan();
+    let d: any = null;
+    for (let i = 0; i < 2 && !d; i++) {
+      try { d = await m.connectToDevice(deviceId, { requestMTU: MTU, timeout: 6000 }); }
+      catch { if (i === 1) return; }
+    }
+    if (!d) return;
+    d = await d.discoverAllServicesAndCharacteristics();
+    const raw = utf8Encode(HELLO_PREFIX + handleForScan + "\n");
+    for (let i = 0; i < raw.length; i += CHUNK) {
+      await d.writeCharacteristicWithResponseForService(SERVICE, NOTE_CHAR, bytesToBase64(raw.slice(i, i + CHUNK)));
+    }
+    announceAttempts.set(deviceId, 99); // delivered — stop hammering this device
+    try { await m.cancelDeviceConnection(deviceId); } catch { /* noop */ }
+  } catch {
+    try { await m.cancelDeviceConnection(deviceId); } catch { /* noop */ }
+  } finally {
+    if (resume) startScan(handleForScan);
   }
 }
 
@@ -305,7 +332,7 @@ export interface ScanHandlers {
 /** SCAN (Beam screen): discover nearby advertising Loadit phones by @handle. */
 export async function startScanning(myHandle: string, h: ScanHandlers): Promise<() => void> {
   peers.clear();
-  handleReadAttempts.clear();
+  announceAttempts.clear();
   presenceOnPeer = h.onPeer;
   handleForScan = myHandle.toLowerCase();
   await ensureAndroidPerms();
@@ -316,11 +343,12 @@ export async function startScanning(myHandle: string, h: ScanHandlers): Promise<
       else stopScan();
     }, true);
   }
-  // Continuously resolve nearby phones' @handles so faces fill in over a few sec.
-  resolverTimer = setInterval(() => { resolveOneUnnamedPeer(); }, 3500);
+  // Continuously announce our @handle to nearby phones so THEY can show our face
+  // (the iPhone learns the Android this way, and vice-versa).
+  announceTimer = setInterval(() => { announceOneToPeer(); }, 3500);
   return () => {
     stateSub?.remove(); stateSub = null;
-    if (resolverTimer) { clearInterval(resolverTimer); resolverTimer = null; }
+    if (announceTimer) { clearInterval(announceTimer); announceTimer = null; }
     presenceOnPeer = null;
     stopScan();
     peers.clear();
