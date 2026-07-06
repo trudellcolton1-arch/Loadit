@@ -141,37 +141,36 @@ function handleFromDevice(d: any): string | null {
 }
 
 const handleReadAttempts = new Map<string, number>(); // deviceId -> tries (capped)
+let resolving = false;
+let resolverTimer: ReturnType<typeof setInterval> | null = null;
 
 /**
- * BLE adverts are 31 bytes, so the @handle often doesn't fit. When we only have
- * a fallback id for a peer, connect briefly and READ the handle characteristic,
- * then upgrade the peer to its real @handle so its profile + face resolve. Capped
- * at 2 tries per device (no forever-retry churn), and we pause the scan during
- * the read so the connect doesn't fight the scanner (esp. on Android).
+ * Background resolver: pick one nearby phone we only have a fallback id for,
+ * read its @handle over GATT (scan paused for a clean connect), and upgrade it
+ * to the real @handle so its profile + face resolve in the browse list — so you
+ * see WHO is nearby continuously, not just at send time. Runs on a timer, one at
+ * a time, capped per device, and yields to any in-flight send.
  */
-async function readPeerHandle(deviceId: string, fallbackHandle: string) {
-  const m = mgr();
-  const tries = handleReadAttempts.get(deviceId) || 0;
-  if (!m || tries >= 2 || pending) return;
-  handleReadAttempts.set(deviceId, tries + 1);
-  const resumeScan = scanning;
+async function resolveOneUnnamedPeer() {
+  if (!mgr() || pending || resolving) return;
+  let fallback: string | null = null;
+  let deviceId: string | null = null;
+  for (const [h, e] of peers) {
+    if (h.startsWith("peer-") && (handleReadAttempts.get(e.deviceId) || 0) < 3) { fallback = h; deviceId = e.deviceId; break; }
+  }
+  if (!fallback || !deviceId) return;
+  resolving = true;
+  handleReadAttempts.set(deviceId, (handleReadAttempts.get(deviceId) || 0) + 1);
   try {
-    if (resumeScan) stopScan();
-    let d = await m.connectToDevice(deviceId, { timeout: 8000 });
-    d = await d.discoverAllServicesAndCharacteristics();
-    const ch = await d.readCharacteristicForService(SERVICE, HANDLE_CHAR);
-    try { await m.cancelDeviceConnection(deviceId); } catch { /* noop */ }
-    const real = ch?.value ? base64ToStr(ch.value).replace(/^@/, "").toLowerCase().trim() : "";
-    if (real && real !== fallbackHandle && real !== "loadit") {
-      const entry = peers.get(fallbackHandle);
-      peers.delete(fallbackHandle);
+    const real = await readHandleForDevice(deviceId);
+    if (real && real !== fallback) {
+      const entry = peers.get(fallback);
+      peers.delete(fallback);
       peers.set(real, entry || { deviceId, rssi: null });
       presenceOnPeer?.(real);
     }
-  } catch {
-    try { await m.cancelDeviceConnection(deviceId); } catch { /* noop */ }
   } finally {
-    if (resumeScan) startScan(handleForScan);
+    resolving = false;
   }
 }
 
@@ -191,8 +190,6 @@ function startScan(myHandle: string) {
       const known = peers.has(handle);
       peers.set(handle, { deviceId: d.id, rssi: d.rssi ?? null });
       if (!known && presenceOnPeer) presenceOnPeer(handle);
-      // If we only got a fallback id, read the real @handle over GATT (once).
-      if (handle.startsWith("peer-")) readPeerHandle(d.id, handle);
       driveSend(handle, d.id);
     });
   } catch {
@@ -319,8 +316,11 @@ export async function startScanning(myHandle: string, h: ScanHandlers): Promise<
       else stopScan();
     }, true);
   }
+  // Continuously resolve nearby phones' @handles so faces fill in over a few sec.
+  resolverTimer = setInterval(() => { resolveOneUnnamedPeer(); }, 3500);
   return () => {
     stateSub?.remove(); stateSub = null;
+    if (resolverTimer) { clearInterval(resolverTimer); resolverTimer = null; }
     presenceOnPeer = null;
     stopScan();
     peers.clear();
