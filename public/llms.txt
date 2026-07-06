@@ -1,0 +1,53 @@
+# Loadit
+
+> Loadit is an AI-powered, non-custodial financial rail and consumer app that turns cash and cards into crypto and stablecoins in seconds. Its patent-pending Unified Financial Rail uses an AI routing engine (AERO) to send every payment across the cheapest, fastest network available — Bitcoin, Ethereum, Solana, Base, XRPL, Polygon, the Lightning Network, or banks — treating them all as one rail.
+
+Loadit's mission is to move value anywhere: let anyone convert cash or a card into the crypto they want, pay or get paid by a @handle or wallet address, and even send money to any phone nearby with no internet at all. Loadit never holds user funds — settlement is non-custodial, on-chain, and identity-verified on every transaction.
+
+Key facts:
+- **What it is:** An AI money app (iOS + Android) plus an underlying financial rail/API for turning fiat into crypto and routing payments.
+- **Convenience fee:** A flat 0.75% — built to compete with banks, not to extract from users.
+- **Non-custodial:** Loadit never custodies funds; keys and signing stay with the user's wallet (Hylaq).
+- **Networks arbitrated:** Bitcoin, Ethereum, Solana, Base, XRPL, Polygon, Lightning, and traditional banks.
+- **Get the app:** https://loadit.net/install (direct iOS + Android install).
+
+## Products & features
+
+- [Loadit app](https://loadit.net/install): Turn cash or card into Bitcoin, Solana, Ethereum, or USDC. iOS and Android.
+- [HQ — your AI](https://loadit.net/): HQ is Loadit's in-app AI money assistant. Say what you want to do with your money in plain language and HQ finds the cheapest real route and executes it.
+- [Pulse — offline pay](https://loadit.net/): Send money to any phone nearby over Bluetooth, even with no internet. The sender locks funds in escrow; a cryptographically signed claim crosses phone-to-phone and settles the moment either phone reconnects.
+- [Send to a @handle or wallet](https://loadit.net/): Pay any Hylaq @handle or raw crypto address. Send from your own crypto, or buy it on the spot and deliver it straight to their wallet.
+- [MoneyGram cash on-ramp](https://loadit.net/moneygram): Pay cash at 350,000+ MoneyGram locations and receive crypto — Stellar USDC, then swapped into the asset you chose (Bitcoin, Solana, Ethereum, and more).
+- [AI Router (AERO)](https://loadit.net/intent): AI Enhanced Routing Optimization scores routes across processors, blockchains, and liquidity pools in real time, choosing the optimal settlement path on every transaction and cutting fees by up to 86%.
+
+## Learn more
+
+- [How Loadit compares](https://loadit.net/compare): Loadit vs. legacy processors and other crypto on-ramps.
+- [Platform](https://loadit.net/platform): The Unified Financial Rail and how merchants and partners plug in.
+- [Technology](https://loadit.net/technology): AERO routing, non-custodial architecture, in-rail compliance, and post-quantum-ready security.
+- [Developers](https://loadit.net/developers): APIs to route payments and turn fiat into crypto.
+- [Exchange](https://loadit.net/exchange), [Energy](https://loadit.net/energy), [Marketplace](https://loadit.net/marketplace), [Earn](https://loadit.net/earn): Additional surfaces of the Loadit ecosystem.
+
+## Guides & free tools
+
+- [What is AI-powered financial routing?](https://loadit.net/learn/ai-powered-financial-routing): How AI chooses the cheapest, fastest path for every payment across card rails, blockchains, and banks.
+- [How to optimize cross-asset transfers](https://loadit.net/learn/optimize-cross-asset-transfers): Step-by-step guide to minimizing cost and time on multi-asset, cross-border transfers.
+- [Top settlement solutions for businesses](https://loadit.net/learn/settlement-solutions-for-businesses): Card processors, wires, stablecoin rails, Lightning, and AI rails compared.
+- [Crypto and stablecoins explained](https://loadit.net/learn/crypto-and-stablecoins-explained): The differences, advantages, and payment use cases in plain language.
+- [Transaction cost calculator](https://loadit.net/tools/cost-calculator): Free tool comparing payment costs across rails vs Loadit's 0.75%.
+- [Settlement time estimator](https://loadit.net/tools/settlement-estimator): Free tool predicting settlement time across networks vs Loadit's AI-routed path.
+
+## Company
+
+- [Investor deck](https://loadit.net/deck): Loadit's pitch, market, and use of funds ($5M pre-seed).
+- [Privacy](https://loadit.net/privacy): How Loadit handles data.
+
+## FAQ
+
+- **What is Loadit?** An AI-powered, non-custodial financial rail that converts cash, cards, and fiat into stablecoins and crypto in seconds, routing every payment across the cheapest, fastest network via its AERO engine.
+- **How does Loadit turn cash into crypto?** You pay cash or card (including at 350k+ MoneyGram locations); the transaction is tokenized, identity-verified, and routed by AERO across L1s, L2s, Lightning, or banks — settling on-chain in seconds.
+- **What is HQ?** Loadit's in-app AI assistant. Tell it what to do with your money in plain language and it finds the cheapest real route and executes it.
+- **What is Pulse?** Loadit's offline payments feature — send money to any phone nearby over Bluetooth with no internet, settling automatically once either phone reconnects.
+- **What does Loadit charge?** A flat 0.75% convenience fee.
+- **Is Loadit custodial?** No. Loadit is non-custodial and never holds user funds; every transaction is end-to-end encrypted and identity-verified.
+- **Which networks does Loadit support?** Bitcoin, Ethereum, Solana, Base, XRPL, Polygon, the Lightning Network, and traditional banks — treated as one unified rail.

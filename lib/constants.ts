@@ -8,7 +8,7 @@ export const SITE = {
   domain: "loadit.net",
   tagline: "Move Value. Anywhere.",
   description:
-    "The AI-powered financial rail connecting cash, cards, crypto, stablecoins, and the future of money.",
+    "Loadit turns cash and cards into crypto and stablecoins in seconds — an AI-powered, non-custodial rail routing every payment over the cheapest, fastest network.",
   url: "https://loadit.net",
 } as const;
 
@@ -25,6 +25,7 @@ export const NAV_LINKS = [
   { label: "Energy", href: "/energy" },
   { label: "Marketplace", href: "/marketplace" },
   { label: "Earn", href: "/earn" },
+  { label: "Learn", href: "/learn" },
   { label: "Developers", href: "/developers" },
   { label: "Patents", href: "/#patents" },
   { label: "Investors", href: "/#investors" },
