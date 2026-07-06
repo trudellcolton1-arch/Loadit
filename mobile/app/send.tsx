@@ -81,7 +81,7 @@ export default function Send() {
   if (ready && !session) return <Redirect href="/login" />;
 
   const targetLabel = recipient ? `@${recipient.handle}` : externalAddr ? shortAddr(externalAddr) : "";
-  const fee = Math.round(amount * 0.0075 * 100) / 100;
+  const fee = Math.round(Math.max(1, amount * 0.0075) * 100) / 100;
 
   const lookup = async () => {
     const v = query.trim();
@@ -342,7 +342,7 @@ export default function Send() {
                     <>
                       <View style={styles.feeCard}>
                         <View style={styles.feeRow}><Text style={styles.feeLabel}>Amount</Text><Text style={styles.feeVal}>{money(amount)}</Text></View>
-                        <View style={styles.feeRow}><Text style={styles.feeLabel}>Loadit fee (0.75%)</Text><Text style={styles.feeVal}>{money(fee)}</Text></View>
+                        <View style={styles.feeRow}><Text style={styles.feeLabel}>Loadit fee (0.75%, $1 min)</Text><Text style={styles.feeVal}>{money(fee)}</Text></View>
                         <View style={[styles.feeRow, styles.feeTotal]}><Text style={styles.feeTotalLabel}>You pay</Text><Text style={styles.feeTotalVal}>{money(amount + fee)}</Text></View>
                       </View>
                       <TouchableOpacity style={styles.cta} onPress={buyAndSend} disabled={busy}>

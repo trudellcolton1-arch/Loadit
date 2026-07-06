@@ -51,7 +51,7 @@ export default function Load() {
   if (ready && !session) return <Redirect href="/login" />;
 
   const amt = Math.max(1, parseFloat(amount) || 0);
-  const fee = Math.round(amt * 0.0075 * 100) / 100;
+  const fee = Math.round(Math.max(1, amt * 0.0075) * 100) / 100;
 
   const startCheckout = async () => {
     if (!wallet.trim()) {
@@ -188,7 +188,7 @@ export default function Load() {
               />
               <View style={styles.feeCard}>
                 <View style={styles.feeRow}><Text style={styles.feeLabel}>Amount</Text><Text style={styles.feeVal}>${amt.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Text></View>
-                <View style={styles.feeRow}><Text style={styles.feeLabel}>Loadit fee (0.75%)</Text><Text style={styles.feeVal}>${fee.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Text></View>
+                <View style={styles.feeRow}><Text style={styles.feeLabel}>Loadit fee (0.75%, $1 min)</Text><Text style={styles.feeVal}>${fee.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Text></View>
                 <View style={[styles.feeRow, styles.feeTotal]}><Text style={styles.feeTotalLabel}>You pay</Text><Text style={styles.feeTotalVal}>${(amt + fee).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Text></View>
               </View>
               <View style={styles.qrHero}>

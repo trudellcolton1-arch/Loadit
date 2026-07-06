@@ -153,7 +153,7 @@ export default function Home() {
                 <Stat styles={styles} label="Settles" value={result.route.eta} />
               </View>
               <View style={styles.statsRow}>
-                <Stat styles={styles} label="Loadit fee (0.75%)" value={money(result.route.loadit_fee_usd)} />
+                <Stat styles={styles} label="Loadit fee (0.75%, $1 min)" value={money(result.route.loadit_fee_usd)} />
                 <Stat
                   styles={styles}
                   label="You pay"

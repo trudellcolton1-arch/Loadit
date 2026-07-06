@@ -12,8 +12,8 @@
  * plans the route today; MONEYGRAM_ANCHOR_URL wires the live anchor once the
  * partnership is signed.
  */
-import { planSwap, type SwapAsset, type SwapPlan } from "./swap";
-import { LOADIT_FEE_PCT } from "./aero";
+import { planSwap, HQ_SWAP_FEE_PCT, type SwapAsset, type SwapPlan } from "./swap";
+import { LOADIT_FEE_PCT, calcLoaditFee } from "./aero";
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
@@ -30,8 +30,10 @@ export interface MoneyGramPlan {
   amountUsd: number;
   asset: SwapAsset;
   wallet: string;
-  /** Loadit's flat convenience fee (0.75%). */
+  /** Loadit's flat convenience fee (0.75%, $1 minimum). */
   loaditFeeUsd: number;
+  /** Loadit's visible 0.25% fee on the HQ swap leg. */
+  swapFeeUsd: number;
   feePct: number;
   swap: SwapPlan;
   steps: MoneyGramStep[];
@@ -47,7 +49,8 @@ export function moneygramConfigured(): boolean {
 
 export function planMoneyGram(amountUsd: number, asset: SwapAsset, wallet: string): MoneyGramPlan {
   const swap = planSwap(asset);
-  const loaditFeeUsd = round2(amountUsd * LOADIT_FEE_PCT);
+  const loaditFeeUsd = calcLoaditFee(amountUsd);
+  const swapFeeUsd = round2(amountUsd * HQ_SWAP_FEE_PCT);
 
   const swapLine = swap.steps
     .filter((s) => s.kind !== "deliver")
@@ -84,6 +87,7 @@ export function planMoneyGram(amountUsd: number, asset: SwapAsset, wallet: strin
     asset,
     wallet,
     loaditFeeUsd,
+    swapFeeUsd,
     feePct: LOADIT_FEE_PCT,
     swap,
     steps,

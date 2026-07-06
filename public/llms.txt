@@ -6,7 +6,7 @@ Loadit's mission is to move value anywhere: let anyone convert cash or a card in
 
 Key facts:
 - **What it is:** An AI money app (iOS + Android) plus an underlying financial rail/API for turning fiat into crypto and routing payments.
-- **Convenience fee:** A flat 0.75% — built to compete with banks, not to extract from users.
+- **Convenience fee:** A flat 0.75% ($1 minimum), plus a visible 0.25% on HQ asset swaps — built to compete with banks, not to extract from users.
 - **Non-custodial:** Loadit never custodies funds; keys and signing stay with the user's wallet (Hylaq).
 - **Networks arbitrated:** Bitcoin, Ethereum, Solana, Base, XRPL, Polygon, Lightning, and traditional banks.
 - **Get the app:** https://loadit.net/install (direct iOS + Android install).
@@ -48,6 +48,6 @@ Key facts:
 - **How does Loadit turn cash into crypto?** You pay cash or card (including at 350k+ MoneyGram locations); the transaction is tokenized, identity-verified, and routed by HQ across L1s, L2s, Lightning, or banks — settling on-chain in seconds.
 - **What is HQ?** Loadit's in-app AI assistant. Tell it what to do with your money in plain language and it finds the cheapest real route and executes it.
 - **What is Pulse?** Loadit's offline payments feature — send money to any phone nearby over Bluetooth with no internet, settling automatically once either phone reconnects.
-- **What does Loadit charge?** A flat 0.75% convenience fee.
+- **What does Loadit charge?** A flat 0.75% convenience fee ($1 minimum), plus a visible 0.25% when HQ swaps into another asset.
 - **Is Loadit custodial?** No. Loadit is non-custodial and never holds user funds; every transaction is end-to-end encrypted and identity-verified.
 - **Which networks does Loadit support?** Bitcoin, Ethereum, Solana, Base, XRPL, Polygon, the Lightning Network, and traditional banks — treated as one unified rail.

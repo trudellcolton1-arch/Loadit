@@ -9,7 +9,8 @@ const METHODS = [
   { id: "intl", label: "International card", pct: 0.039, flat: 0.3, note: "≈3.9% + $0.30 with FX markup" },
 ] as const;
 
-const LOADIT_PCT = 0.0075; // 0.75% flat
+const LOADIT_PCT = 0.0075; // 0.75% flat, $1 minimum
+const LOADIT_MIN = 1;
 
 const money = (n: number) => `$${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
@@ -20,7 +21,7 @@ export function CostCalculator() {
 
   const a = Math.max(0, amount || 0);
   const legacy = a * method.pct + method.flat;
-  const loadit = a * LOADIT_PCT;
+  const loadit = Math.max(LOADIT_MIN, a * LOADIT_PCT);
   const savings = Math.max(0, legacy - loadit);
   const savingsPct = legacy > 0 ? Math.round((savings / legacy) * 100) : 0;
 
@@ -83,7 +84,7 @@ export function CostCalculator() {
 
       <p className="mt-4 text-xs leading-relaxed text-white/35">
         Illustrative estimate. Legacy rates are typical published fees; actual costs vary by provider, region, and card
-        type. Loadit charges a flat 0.75% and its HQ engine routes underlying network fees to the cheapest available
+        type. Loadit charges a flat 0.75% ($1 minimum) and its HQ engine routes underlying network fees to the cheapest available
         path.
       </p>
     </div>

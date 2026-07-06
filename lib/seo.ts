@@ -24,7 +24,7 @@ export const FAQS = [
   },
   {
     q: "What does Loadit charge?",
-    a: "Loadit charges a flat 0.75% convenience fee — built to compete with banks, not to extract from users. Its HQ engine routes the underlying network fees to the cheapest available path.",
+    a: "Loadit charges a flat 0.75% convenience fee ($1 minimum), plus a visible 0.25% when HQ swaps into another asset — built to compete with banks, not to extract from users. Its HQ engine routes the underlying network fees to the cheapest available path.",
   },
   {
     q: "Is Loadit custodial?",

@@ -155,6 +155,7 @@ export interface MoneyGramPlan {
   loaditFeeUsd: number;
   feePct: number;
   swap: SwapPlan;
+  swapFeeUsd?: number;
   steps: { n: number; title: string; detail: string }[];
   configured: boolean;
 }
