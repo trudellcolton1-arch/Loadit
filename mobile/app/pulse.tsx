@@ -301,8 +301,12 @@ export default function Pulse() {
         verificationMode: "gps",
         radiusMeters: 100,
       });
-      if (!drop || drop.error || !drop.id) {
-        const d = drop as Record<string, unknown> | null;
+      // Read the drop id robustly — Hylaq's success shape may key it as id /
+      // dropId / pulseId. A LOCKED status without an explicit error also counts.
+      const d = drop as Record<string, unknown> | null;
+      const lockedId = (d?.id || d?.dropId || d?.pulseId || (d?.drop as Record<string, unknown>)?.id) as string | undefined;
+      const looksLocked = Boolean(lockedId) || String(d?.status || "").toUpperCase() === "LOCKED";
+      if (!drop || drop.error || !looksLocked || !lockedId) {
         const detail = (d?.error as string) || (d?.message as string) || (d?.detail as string) || (d?.reason as string) || "Hylaq didn't confirm the escrow.";
         Alert.alert(
           "Couldn't lock funds",
@@ -312,17 +316,17 @@ export default function Pulse() {
       }
 
       // Fetch the signed manifest to beam alongside the note (offline claiming).
-      const manifest = await fetchManifest(token, { pulseId: drop.id, handleId: me.id, deviceId });
+      const manifest = await fetchManifest(token, { pulseId: lockedId, handleId: me.id, deviceId });
 
       const evidence = await captureEvidence();
       if (nearby[0]) { evidence.bleRssi = nearby[0].rssi ?? undefined; evidence.bleDeviceId = nearby[0].id; }
       const n = await makePulseNote({
         fromHandle: me.handle, fromHandleId: me.id, to: toUser?.handle,
         amountUsd: amount, asset: "USDC", memo: memo.trim() || undefined,
-        createdAt: Date.now(), pulseId: drop.id, manifest: manifest ?? undefined, evidence,
+        createdAt: Date.now(), pulseId: lockedId, manifest: manifest ?? undefined, evidence,
       });
-      setDropId(drop.id);
-      setEscrowLocked(drop.status === "LOCKED" || Boolean(drop.id));
+      setDropId(lockedId);
+      setEscrowLocked(true);
       setHandoff(tapAvailable() ? "tap" : "qr");
       setSent(false);
       setNote(n);
