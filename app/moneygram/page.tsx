@@ -28,6 +28,19 @@ const READY = [
   { k: "Swap layer", v: "Provider-agnostic", d: "USDC→asset executor plugs in on your signal." },
 ];
 
+// MoneyGram Ramps USDC pricing tiers + Loadit's flat 0.75%, worked through at
+// typical load sizes so the all-in cost is visible at a glance.
+const PRICING_TIERS = [
+  { range: "$15 – $99", fee: "$2" },
+  { range: "$100 – $999", fee: "$2 + 1%" },
+  { range: "$1,000 – $2,500", fee: "$10 + 0.5%" },
+];
+const PRICING_EXAMPLES = [
+  { cash: "$100", mg: "$3.00", loadit: "$0.75", allIn: "3.8%" },
+  { cash: "$250", mg: "$4.50", loadit: "$1.88", allIn: "2.6%" },
+  { cash: "$500", mg: "$7.00", loadit: "$3.75", allIn: "2.2%" },
+];
+
 export default function MoneyGramBrief() {
   return (
     <main className="mg-root">
@@ -122,6 +135,33 @@ export default function MoneyGramBrief() {
           </aside>
         </div>
 
+        <section className="mg-pricing">
+          <div className="mg-sec font-mono">Pricing — transparent, end to end</div>
+          <div className="mg-price-grid">
+            <div className="mg-price-card">
+              <div className="mg-price-t">MoneyGram Ramps fee (USDC)</div>
+              {PRICING_TIERS.map((t) => (
+                <div key={t.range} className="mg-price-row">
+                  <span>{t.range}</span><b>{t.fee}</b>
+                </div>
+              ))}
+              <div className="mg-price-note">Plus Loadit&apos;s flat 0.75% — the only fee we add. No spread, no markup on the asset.</div>
+            </div>
+            <div className="mg-price-card">
+              <div className="mg-price-t">What the user pays, all-in</div>
+              <div className="mg-price-row mg-price-head">
+                <span>Cash in</span><span>MoneyGram</span><span>Loadit</span><b>All-in</b>
+              </div>
+              {PRICING_EXAMPLES.map((e) => (
+                <div key={e.cash} className="mg-price-row">
+                  <span>{e.cash}</span><span>{e.mg}</span><span>{e.loadit}</span><b>{e.allIn}</b>
+                </div>
+              ))}
+              <div className="mg-price-note">2–4% all-in vs 10–20% at crypto ATMs and ~4.5%+ on card on-ramps — the cheapest way to turn cash into crypto.</div>
+            </div>
+          </div>
+        </section>
+
         <footer className="mg-foot font-mono">
           <span>LOADIT × MONEYGRAM</span>
           <span className="mg-foot-line" aria-hidden />
@@ -194,6 +234,17 @@ function MgStyle() {
       .mg-ask-t { font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:#34D17A; }
       .mg-ask-d { font-size:12.5px; color:rgba(255,255,255,0.72); line-height:1.5; margin-top:6px; }
 
+      .mg-pricing { margin-top:30px; }
+      .mg-price-grid { display:grid; grid-template-columns:1fr 1.2fr; gap:14px; }
+      .mg-price-card { border:1px solid rgba(255,255,255,0.08); background:rgba(17,21,31,0.5); border-radius:16px; padding:16px 18px; }
+      .mg-price-t { font-weight:700; font-size:13px; margin-bottom:10px; }
+      .mg-price-row { display:flex; justify-content:space-between; gap:8px; padding:6px 0; font-size:12.5px;
+        color:rgba(255,255,255,0.7); border-bottom:1px solid rgba(255,255,255,0.05); }
+      .mg-price-row span { flex:1; }
+      .mg-price-row b { flex:1; text-align:right; color:#34D17A; font-weight:700; }
+      .mg-price-head { font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:rgba(255,255,255,0.4); }
+      .mg-price-head b { color:rgba(255,255,255,0.4); }
+      .mg-price-note { font-size:11px; color:rgba(255,255,255,0.5); line-height:1.5; margin-top:10px; }
       .mg-foot { display:flex; align-items:center; gap:14px; margin-top:32px; padding-top:16px;
         border-top:1px solid rgba(255,255,255,0.08); font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:rgba(255,255,255,0.4); }
       .mg-foot-line { flex:1; height:1px; background:linear-gradient(90deg,rgba(255,255,255,0.12),transparent); }
@@ -201,7 +252,7 @@ function MgStyle() {
 
       @media (max-width:720px) {
         .mg-page { padding:32px 22px; }
-        .mg-flow-grid, .mg-cols { grid-template-columns:1fr; }
+        .mg-flow-grid, .mg-cols, .mg-price-grid { grid-template-columns:1fr; }
         .mg-head { flex-direction:column; align-items:flex-start; gap:10px; }
         .mg-kicker { font-size:10px; }
         .mg-word, .mg-mg { font-size:19px; }
