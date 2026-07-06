@@ -5,6 +5,7 @@ import { AffiliateRouter } from "@/components/sections/AffiliateRouter";
 import { Patents } from "@/components/sections/Patents";
 import { Investors } from "@/components/sections/Investors";
 import { Access } from "@/components/sections/Access";
+import { HomeFaq } from "@/components/sections/HomeFaq";
 import { Footer } from "@/components/Footer";
 
 // Lean homepage: the live demo, the savings router, the moat, and the raise.
@@ -20,6 +21,7 @@ export default function Home() {
         <Patents />
         <Investors />
         <Access />
+        <HomeFaq />
       </main>
       <Footer />
     </>
