@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import QR from "qrcode";
 
 /**
  * LOADIT × MONEYGRAM — CLICK-THROUGH DEMO.
@@ -305,17 +306,44 @@ function ScreenRoute() {
   );
 }
 
+/**
+ * A real, scannable QR carrying the MoneyGram reference — with the Loadit mark
+ * knocked out of the center. High error correction (H) tolerates the logo
+ * cut-out, so it still scans; the reference code stays printed beneath for
+ * counters that type it instead.
+ */
+function LoaditQr({ text }: { text: string }) {
+  const qr = QR.create(text, { errorCorrectionLevel: "H" });
+  const n = qr.modules.size;
+  const hole = Math.ceil(n * 0.3); // center knockout for the logo
+  const h0 = Math.floor((n - hole) / 2);
+  const cells: JSX.Element[] = [];
+  for (let y = 0; y < n; y++) {
+    for (let x = 0; x < n; x++) {
+      const inHole = x >= h0 && x < h0 + hole && y >= h0 && y < h0 + hole;
+      if (!inHole && qr.modules.get(x, y)) {
+        cells.push(<rect key={`${x}-${y}`} x={x} y={y} width={1.05} height={1.05} rx={0.22} />);
+      }
+    }
+  }
+  return (
+    <div className="ap-qr">
+      <svg viewBox={`0 0 ${n} ${n}`} className="ap-qr-svg" shapeRendering="geometricPrecision">
+        <g fill="#0B0D12">{cells}</g>
+      </svg>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/loadit-mark.png" alt="" className="ap-qr-mark" />
+    </div>
+  );
+}
+
 function ScreenCode() {
   return (
     <div className="ap ap-center">
       <AppHeader title="Pay at MoneyGram" />
       <div className="ap-code-card">
         <div className="ap-code-label">Show this at the counter</div>
-        <div className="ap-barcode" aria-hidden>
-          {Array.from({ length: 28 }, (_, i) => (
-            <span key={i} style={{ width: (i * 7) % 3 === 0 ? 3 : 1.5 }} />
-          ))}
-        </div>
+        <LoaditQr text={`LOADIT:${REF_CODE}:${AMOUNT}.00`} />
         <div className="ap-code font-mono">{REF_CODE}</div>
         <div className="ap-code-amt">${AMOUNT}.00 cash</div>
       </div>
@@ -449,8 +477,9 @@ function DemoStyle() {
       /* code */
       .ap-code-card { background:#fff; color:#0B0D12; border-radius:18px; padding:18px 16px; width:100%; text-align:center; margin-top:8px; }
       .ap-code-label { font-size:9px; letter-spacing:0.14em; text-transform:uppercase; color:rgba(11,13,18,0.55); }
-      .ap-barcode { display:flex; justify-content:center; gap:2px; height:44px; margin:12px 0 10px; }
-      .ap-barcode span { background:#0B0D12; height:100%; display:inline-block; }
+      .ap-qr { position:relative; width:148px; height:148px; margin:12px auto 10px; }
+      .ap-qr-svg { width:100%; height:100%; display:block; }
+      .ap-qr-mark { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:34px; height:34px; border-radius:8px; }
       .ap-code { font-size:17px; font-weight:800; letter-spacing:0.08em; }
       .ap-code-amt { font-size:12px; color:rgba(11,13,18,0.6); margin-top:4px; font-weight:600; }
       .ap-loc { display:flex; gap:9px; align-items:center; border:1px solid rgba(255,255,255,0.09); background:rgba(255,255,255,0.02);
