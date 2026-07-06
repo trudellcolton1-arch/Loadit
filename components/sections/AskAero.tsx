@@ -22,7 +22,7 @@ export function AskAero() {
     {
       role: "assistant",
       content:
-        "I'm AERO — Loadit's routing brain. Ask how value moves: fees, corridors, offline payments, energy settlement, or how a specific transfer would route.",
+        "I'm HQ — Loadit's routing brain. Ask how value moves: fees, corridors, offline payments, energy settlement, or how a specific transfer would route.",
     },
   ]);
   const [input, setInput] = useState("");
@@ -66,9 +66,9 @@ export function AskAero() {
       <div className="container-px mx-auto max-w-3xl">
         <SectionHeading
           align="center"
-          eyebrow="Ask AERO"
+          eyebrow="Ask HQ"
           title="Talk to the rail."
-          description="A live concierge powered by AERO. Ask anything about moving money — it'll explain, and route."
+          description="A live concierge powered by HQ. Ask anything about moving money — it'll explain, and route."
         />
 
         <div className="glass mt-12 flex h-[30rem] flex-col rounded-4xl p-4 sm:p-6">
@@ -90,7 +90,7 @@ export function AskAero() {
                 >
                   {m.role === "assistant" && (
                     <span className="mb-1 block font-mono text-[0.55rem] uppercase tracking-widest text-rail-400">
-                      AERO
+                      HQ
                     </span>
                   )}
                   {m.content}
@@ -137,7 +137,7 @@ export function AskAero() {
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask AERO anything about moving money…"
+              placeholder="Ask HQ anything about moving money…"
               className="flex-1 rounded-full border border-white/10 bg-white/[0.03] px-5 py-3 text-sm text-white outline-none placeholder:text-white/30 focus:border-rail-400/50"
             />
             <button

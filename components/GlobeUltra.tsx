@@ -39,7 +39,7 @@ const AMBIENT: V3 = [0.13, 0.6, 0.7];
 const CITY: V3 = [0.16, 0.5, 0.55];
 const AMBER: V3 = [0.98, 0.72, 0.16];
 
-// AERO-forecast corridors (predicted demand spikes): [fromLat, fromLon, toLat, toLon].
+// HQ-forecast corridors (predicted demand spikes): [fromLat, fromLon, toLat, toLon].
 const FORECASTS: [number, number, number, number][] = [
   [25.2, 55.27, 19.08, 72.88], // Dubai → Mumbai
   [34.05, -118.24, 19.43, -99.13], // LA → Mexico City
@@ -130,7 +130,7 @@ export function GlobeUltra({
       const pulse = 0.07 + 0.02 * Math.sin(t * 0.004);
       markers.push({ location: [o.lat, o.lon], size: 0.06, color: CYAN });
       markers.push({ location: [d.lat, d.lon], size: pulse, color: GREEN });
-      // Forecast hotspots — pulsing amber where AERO predicts demand.
+      // Forecast hotspots — pulsing amber where HQ predicts demand.
       FORECASTS.forEach(([fa, fo, ta, to], i) => {
         const p = 0.016 + 0.014 * Math.abs(Math.sin(t * 0.003 + i));
         markers.push({ location: [fa, fo], size: p, color: AMBER });

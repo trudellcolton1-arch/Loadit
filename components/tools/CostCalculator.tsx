@@ -83,7 +83,7 @@ export function CostCalculator() {
 
       <p className="mt-4 text-xs leading-relaxed text-white/35">
         Illustrative estimate. Legacy rates are typical published fees; actual costs vary by provider, region, and card
-        type. Loadit charges a flat 0.75% and its AERO engine routes underlying network fees to the cheapest available
+        type. Loadit charges a flat 0.75% and its HQ engine routes underlying network fees to the cheapest available
         path.
       </p>
     </div>

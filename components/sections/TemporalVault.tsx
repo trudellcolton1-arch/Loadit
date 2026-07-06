@@ -292,7 +292,7 @@ function GasWindow({ log }: { log: (s: string) => void }) {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-      <Heading sub="AERO forecasts network gas across the next 24 hours and schedules settlement for the cheapest window.">
+      <Heading sub="HQ forecasts network gas across the next 24 hours and schedules settlement for the cheapest window.">
         Gas Window · next 24h
       </Heading>
 

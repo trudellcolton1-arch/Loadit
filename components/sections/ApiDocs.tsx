@@ -71,9 +71,9 @@ export function ApiDocs() {
       <div className="container-px mx-auto max-w-6xl">
         <SectionHeading
           align="center"
-          eyebrow="AERO API · v1"
+          eyebrow="HQ API · v1"
           title="Routing intelligence, one HTTP call."
-          description="The patented AERO engine as a metered API. Send a funding method and a target asset; get the cheapest, fastest non-custodial route back as JSON. No SDK required."
+          description="The patented HQ engine as a metered API. Send a funding method and a target asset; get the cheapest, fastest non-custodial route back as JSON. No SDK required."
         />
 
         {/* quickstart */}
@@ -104,7 +104,7 @@ export function ApiDocs() {
     "settlement": "non_custodial",
     "confidence": 0.95
   },
-  "meta": { "engine": "AERO", "version": "v1" }
+  "meta": { "engine": "HQ", "version": "v1" }
 }`}</pre>
           </div>
         </div>

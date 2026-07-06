@@ -15,7 +15,7 @@ const faqs = [
   },
   {
     q: "How does it reduce fees?",
-    a: "Legacy payments take a fixed path with fixed fees. A routing engine scores live conditions — network congestion, gas prices, liquidity depth, FX spreads, and processor fees — and moves value over whichever rail is cheapest at that moment. Loadit's AERO engine cuts fees by up to 86% this way.",
+    a: "Legacy payments take a fixed path with fixed fees. A routing engine scores live conditions — network congestion, gas prices, liquidity depth, FX spreads, and processor fees — and moves value over whichever rail is cheapest at that moment. Loadit's HQ engine cuts fees by up to 86% this way.",
   },
   {
     q: "Is AI routing safe for money movement?",
@@ -74,23 +74,23 @@ export default function Page() {
         and records a cryptographic audit trail.
       </p>
 
-      <h2>How Loadit does it: AERO</h2>
+      <h2>How Loadit does it: HQ</h2>
       <p>
-        Loadit&apos;s routing engine is called <strong>AERO</strong> (AI Enhanced Routing Optimization). AERO arbitrates
+        Loadit&apos;s routing engine is called <strong>HQ</strong> — the same AI you talk to in the Loadit app. HQ arbitrates
         across Bitcoin, Ethereum, Solana, Base, XRPL, Polygon, the Lightning Network, and traditional banks — treating
         them as a single unified rail. On every transaction it scores routes across legacy processors, blockchains, and
         liquidity pools and chooses the optimal settlement path, cutting fees by up to <strong>86%</strong> versus a
         fixed rail while settling on-chain in seconds.
       </p>
       <p>
-        Because AERO is non-custodial, it only decides the path — it never holds your funds. Identity is bound to each
+        Because HQ is non-custodial, it only decides the path — it never holds your funds. Identity is bound to each
         transaction, so routing stays compliant and auditable.
       </p>
 
       <h2>A concrete example</h2>
       <p>
         Suppose a shopper pays $500 in cash and wants Bitcoin. A fixed path might tokenize the cash, buy BTC on one
-        exchange, and settle on-chain — paying an exchange fee plus a congested-network gas fee. AERO instead checks
+        exchange, and settle on-chain — paying an exchange fee plus a congested-network gas fee. HQ instead checks
         every route: it might acquire the equivalent value on the cheapest venue, settle over Lightning or a low-fee L2,
         and deliver BTC to the wallet — arriving faster and cheaper, with the merchant still receiving familiar fiat.
       </p>

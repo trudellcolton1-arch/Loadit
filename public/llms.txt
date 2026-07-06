@@ -1,6 +1,6 @@
 # Loadit
 
-> Loadit is an AI-powered, non-custodial financial rail and consumer app that turns cash and cards into crypto and stablecoins in seconds. Its patent-pending Unified Financial Rail uses an AI routing engine (AERO) to send every payment across the cheapest, fastest network available — Bitcoin, Ethereum, Solana, Base, XRPL, Polygon, the Lightning Network, or banks — treating them all as one rail.
+> Loadit is an AI-powered, non-custodial financial rail and consumer app that turns cash and cards into crypto and stablecoins in seconds. Its patent-pending Unified Financial Rail uses an AI routing engine (HQ) to send every payment across the cheapest, fastest network available — Bitcoin, Ethereum, Solana, Base, XRPL, Polygon, the Lightning Network, or banks — treating them all as one rail.
 
 Loadit's mission is to move value anywhere: let anyone convert cash or a card into the crypto they want, pay or get paid by a @handle or wallet address, and even send money to any phone nearby with no internet at all. Loadit never holds user funds — settlement is non-custodial, on-chain, and identity-verified on every transaction.
 
@@ -18,13 +18,13 @@ Key facts:
 - [Pulse — offline pay](https://loadit.net/): Send money to any phone nearby over Bluetooth, even with no internet. The sender locks funds in escrow; a cryptographically signed claim crosses phone-to-phone and settles the moment either phone reconnects.
 - [Send to a @handle or wallet](https://loadit.net/): Pay any Hylaq @handle or raw crypto address. Send from your own crypto, or buy it on the spot and deliver it straight to their wallet.
 - [MoneyGram cash on-ramp](https://loadit.net/moneygram): Pay cash at 350,000+ MoneyGram locations and receive crypto — Stellar USDC, then swapped into the asset you chose (Bitcoin, Solana, Ethereum, and more).
-- [AI Router (AERO)](https://loadit.net/intent): AI Enhanced Routing Optimization scores routes across processors, blockchains, and liquidity pools in real time, choosing the optimal settlement path on every transaction and cutting fees by up to 86%.
+- [AI Router (HQ)](https://loadit.net/intent): HQ scores routes across processors, blockchains, and liquidity pools in real time, choosing the optimal settlement path on every transaction and cutting fees by up to 86%.
 
 ## Learn more
 
 - [How Loadit compares](https://loadit.net/compare): Loadit vs. legacy processors and other crypto on-ramps.
 - [Platform](https://loadit.net/platform): The Unified Financial Rail and how merchants and partners plug in.
-- [Technology](https://loadit.net/technology): AERO routing, non-custodial architecture, in-rail compliance, and post-quantum-ready security.
+- [Technology](https://loadit.net/technology): HQ routing, non-custodial architecture, in-rail compliance, and post-quantum-ready security.
 - [Developers](https://loadit.net/developers): APIs to route payments and turn fiat into crypto.
 - [Exchange](https://loadit.net/exchange), [Energy](https://loadit.net/energy), [Marketplace](https://loadit.net/marketplace), [Earn](https://loadit.net/earn): Additional surfaces of the Loadit ecosystem.
 
@@ -44,8 +44,8 @@ Key facts:
 
 ## FAQ
 
-- **What is Loadit?** An AI-powered, non-custodial financial rail that converts cash, cards, and fiat into stablecoins and crypto in seconds, routing every payment across the cheapest, fastest network via its AERO engine.
-- **How does Loadit turn cash into crypto?** You pay cash or card (including at 350k+ MoneyGram locations); the transaction is tokenized, identity-verified, and routed by AERO across L1s, L2s, Lightning, or banks — settling on-chain in seconds.
+- **What is Loadit?** An AI-powered, non-custodial financial rail that converts cash, cards, and fiat into stablecoins and crypto in seconds, routing every payment across the cheapest, fastest network via its HQ engine.
+- **How does Loadit turn cash into crypto?** You pay cash or card (including at 350k+ MoneyGram locations); the transaction is tokenized, identity-verified, and routed by HQ across L1s, L2s, Lightning, or banks — settling on-chain in seconds.
 - **What is HQ?** Loadit's in-app AI assistant. Tell it what to do with your money in plain language and it finds the cheapest real route and executes it.
 - **What is Pulse?** Loadit's offline payments feature — send money to any phone nearby over Bluetooth with no internet, settling automatically once either phone reconnects.
 - **What does Loadit charge?** A flat 0.75% convenience fee.

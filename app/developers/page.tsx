@@ -5,9 +5,9 @@ import { ApiDocs } from "@/components/sections/ApiDocs";
 import { ApiPlayground } from "@/components/sections/ApiPlayground";
 
 export const metadata: Metadata = {
-  title: "AERO Routing API for Developers",
+  title: "HQ Routing API for Developers",
   description:
-    "Integrate Loadit's patented AERO routing engine in one HTTP call. Get the cheapest, fastest non-custodial settlement route as JSON. Live playground, docs, and pricing.",
+    "Integrate Loadit's patented HQ routing engine in one HTTP call. Get the cheapest, fastest non-custodial settlement route as JSON. Live playground, docs, and pricing.",
   alternates: { canonical: "/developers" },
 };
 

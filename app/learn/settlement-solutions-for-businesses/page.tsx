@@ -91,7 +91,7 @@ export default function Page() {
       <p>
         Instead of committing to one method, a unified rail scores all of the above per transaction and settles over
         whichever is cheapest and fastest right now. Loadit&apos;s{" "}
-        <a href="/learn/ai-powered-financial-routing">AERO engine</a> arbitrates across Bitcoin, Ethereum, Solana, Base,
+        <a href="/learn/ai-powered-financial-routing">HQ engine</a> arbitrates across Bitcoin, Ethereum, Solana, Base,
         XRPL, Polygon, Lightning, and banks, is non-custodial, and binds identity and a cryptographic audit trail to
         every transaction — so a business gets the cheapest, fastest settlement without managing any of the underlying
         networks.

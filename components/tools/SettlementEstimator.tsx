@@ -56,10 +56,10 @@ export function SettlementEstimator() {
       </div>
 
       <div className="mt-8 rounded-2xl border border-rail/30 bg-rail/10 p-5">
-        <div className="text-xs font-semibold uppercase tracking-wider text-rail-400">Loadit (AERO-routed)</div>
+        <div className="text-xs font-semibold uppercase tracking-wider text-rail-400">Loadit (HQ-routed)</div>
         <div className="mt-1 text-3xl font-bold text-white">{fmt(fastest.seconds)}</div>
         <div className="mt-1 text-xs text-white/50">
-          AERO auto-selects the fastest viable path — here, {fastest.label.toLowerCase()}.
+          HQ auto-selects the fastest viable path — here, {fastest.label.toLowerCase()}.
         </div>
       </div>
 
@@ -92,7 +92,7 @@ export function SettlementEstimator() {
 
       <p className="mt-4 text-xs leading-relaxed text-white/35">
         Illustrative estimates of typical settlement/finality under normal conditions. Actual times vary with network
-        congestion and confirmation requirements. Loadit&apos;s AERO engine selects the fastest viable route per
+        congestion and confirmation requirements. Loadit&apos;s HQ engine selects the fastest viable route per
         transaction.
       </p>
     </div>

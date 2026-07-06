@@ -12,7 +12,7 @@ interface Msg {
 const GREETING: Msg = {
   role: "assistant",
   content:
-    "I'm AERO — the intelligence layer of the Loadit rail. Ask me how value moves: fees, corridors, offline payments, energy settlement, or how a specific transfer would route.",
+    "I'm HQ — the intelligence layer of the Loadit rail. Ask me how value moves: fees, corridors, offline payments, energy settlement, or how a specific transfer would route.",
 };
 
 const SUGGESTIONS = [
@@ -124,7 +124,7 @@ export function AeroChatWidget() {
                   <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-rail-400" />
                 </span>
                 <div>
-                  <div className="text-sm font-semibold text-white">Ask AERO</div>
+                  <div className="text-sm font-semibold text-white">Ask HQ</div>
                   {mode === "unknown" ? (
                     <div className="font-mono text-[0.55rem] uppercase tracking-widest text-white/40">
                       Loadit intelligence layer
@@ -173,7 +173,7 @@ export function AeroChatWidget() {
                   >
                     {m.role === "assistant" && (
                       <span className="mb-1 block font-mono text-[0.5rem] uppercase tracking-widest text-rail-400">
-                        AERO
+                        HQ
                       </span>
                     )}
                     {m.content}
@@ -222,7 +222,7 @@ export function AeroChatWidget() {
               <input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask AERO anything…"
+                placeholder="Ask HQ anything…"
                 className="flex-1 rounded-full border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm text-white outline-none placeholder:text-white/30 focus:border-rail-400/50"
               />
               <button
@@ -259,7 +259,7 @@ export function AeroChatWidget() {
                   Ask me anything
                 </span>
                 <span className="block font-mono text-[0.58rem] uppercase tracking-widest text-white/45">
-                  AERO · live intelligence
+                  HQ · live intelligence
                 </span>
               </span>
             </button>
@@ -277,7 +277,7 @@ export function AeroChatWidget() {
       {/* Floating button */}
       <motion.button
         onClick={toggle}
-        aria-label={open ? "Close AERO chat" : "Open AERO chat"}
+        aria-label={open ? "Close HQ chat" : "Open HQ chat"}
         initial={{ opacity: 0, scale: 0.8, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ delay: 1, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
@@ -309,7 +309,7 @@ export function AeroChatWidget() {
                 <circle cx="12" cy="11.5" r="1" fill="currentColor" />
                 <circle cx="15.5" cy="11.5" r="1" fill="currentColor" />
               </svg>
-              <span className="hidden sm:inline">Ask AERO</span>
+              <span className="hidden sm:inline">Ask HQ</span>
             </motion.span>
           )}
         </AnimatePresence>

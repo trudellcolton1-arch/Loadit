@@ -1,7 +1,7 @@
 /**
  * LIVE NETWORK FEES
  *
- * Replaces AERO's static per-network fee estimates with real on-chain data so
+ * Replaces HQ's static per-network fee estimates with real on-chain data so
  * the routing API quotes live economics, not a simulation.
  *
  * - Ethereum + Base: live `eth_gasPrice` via public RPC × 21,000 gas × live ETH

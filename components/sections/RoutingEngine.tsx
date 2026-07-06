@@ -45,14 +45,14 @@ export function RoutingEngine() {
         <div className="grid items-center gap-16 lg:grid-cols-2">
           <div>
             <SectionHeading
-              eyebrow="AERO · AI Routing Engine"
+              eyebrow="HQ · AI Routing Engine"
               title={
                 <>
                   AI finds the best path.{" "}
                   <span className="text-rail-gradient">Every time.</span>
                 </>
               }
-              description="AI Enhanced Routing Optimization tokenizes every payment and scores routes across legacy processors, L1s, L2s, Lightning, and liquidity pools in real time — then settles on the cheapest, fastest path available in that millisecond."
+              description="HQ tokenizes every payment and scores routes across legacy processors, L1s, L2s, Lightning, and liquidity pools in real time — then settles on the cheapest, fastest path available in that millisecond."
             />
 
             <div className="mt-10 grid grid-cols-2 gap-3 sm:max-w-md">
@@ -160,7 +160,7 @@ export function RoutingEngine() {
                 textAnchor="middle"
                 className="fill-white font-mono text-[13px] font-semibold"
               >
-                AERO
+                HQ
               </text>
 
               {/* network nodes */}

@@ -1,7 +1,7 @@
 /**
  * AFFILIATE PROVIDER REGISTRY
  *
- * Loadit's router is a non-custodial *recommendation* engine: AERO computes the
+ * Loadit's router is a non-custodial *recommendation* engine: HQ computes the
  * cheapest path, and we hand the user off to a real provider to complete it.
  * Each click-through carries our referral code, which is how this page earns
  * revenue without holding funds or needing a money-transmitter license.

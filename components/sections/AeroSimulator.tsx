@@ -219,7 +219,7 @@ export function AeroSimulator() {
             className="eyebrow"
           >
             <span className="h-1.5 w-1.5 rounded-full bg-cyan animate-pulse-rail" />
-            Loadit AERO™ · AI Settlement Router
+            Loadit HQ™ · AI Settlement Router
           </motion.span>
           <motion.h2
             initial={{ opacity: 0, y: 16 }}
@@ -289,7 +289,7 @@ export function AeroSimulator() {
           <div className="pointer-events-none absolute inset-x-0 top-0 flex items-center justify-between p-4 font-mono text-[0.6rem] uppercase tracking-[0.22em]">
             <span className="flex items-center gap-2 font-semibold text-rail-400">
               <span className="h-1.5 w-1.5 rounded-full bg-rail-400 shadow-[0_0_8px_2px_rgba(52,209,122,0.7)]" />
-              AERO Global Settlement
+              HQ Global Settlement
             </span>
             <span className={phase === "done" ? "text-signal" : "text-white/45"}>
               {phase === "analyzing"
@@ -329,7 +329,7 @@ export function AeroSimulator() {
                 </div>
               ) : (
                 <p className="text-center text-xs text-white/50">
-                  Choose a destination and run AERO to watch value fly across the
+                  Choose a destination and run HQ to watch value fly across the
                   globe in real time.
                 </p>
               )}
@@ -462,7 +462,7 @@ export function AeroSimulator() {
                 disabled={phase === "analyzing"}
                 className="w-full rounded-full bg-cyan px-6 py-3.5 text-sm font-semibold text-void transition-all hover:shadow-[0_0_40px_-8px_rgba(34,211,238,0.8)] disabled:opacity-60"
               >
-                {phase === "analyzing" ? "Running AERO…" : "Run AI Route →"}
+                {phase === "analyzing" ? "Running HQ…" : "Run AI Route →"}
               </button>
             </div>
           </div>
@@ -478,7 +478,7 @@ export function AeroSimulator() {
                   exit={{ opacity: 0 }}
                   className="m-auto max-w-sm text-center text-sm text-white/45"
                 >
-                  Configure a transaction and run AERO to see the optimal route,
+                  Configure a transaction and run HQ to see the optimal route,
                   fees, settlement time, savings, success probability, and risk —
                   scored live across 14 networks.
                 </motion.div>
@@ -550,12 +550,12 @@ export function AeroSimulator() {
                     />
                   </div>
 
-                  {/* Why AERO chose this route */}
+                  {/* Why HQ chose this route */}
                   <div className="mt-5 rounded-2xl border border-cyan/20 bg-cyan/[0.04] p-5">
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex min-w-0 items-center gap-2">
                         <span className="text-cyan">◇</span>
-                        <FieldLabel>Why AERO chose this route</FieldLabel>
+                        <FieldLabel>Why HQ chose this route</FieldLabel>
                       </div>
                       {ai.status === "live" && (
                         <span className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-cyan/30 bg-cyan/10 px-2.5 py-1 font-mono text-[0.55rem] uppercase tracking-wider text-cyan">
@@ -567,7 +567,7 @@ export function AeroSimulator() {
                     {ai.status === "loading" ? (
                       <p className="mt-2 flex items-center gap-2 text-sm text-white/50">
                         <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-cyan" />
-                        AERO is reasoning…
+                        HQ is reasoning…
                       </p>
                     ) : (
                       <p className="mt-2 text-pretty text-sm leading-relaxed text-white/75">

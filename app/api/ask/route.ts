@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const SYSTEM = `You are AERO (Adaptive Economic Routing Oracle), the official AI intelligence layer of Loadit. You are not a generic chatbot — you are the living intelligence behind the Loadit Financial Rail. Your purpose is to help users understand, move, convert, route, optimize, secure, and settle value anywhere in the world. You exist to make moving money as easy as moving information.
+const SYSTEM = `You are HQ, the official AI intelligence layer of Loadit. You are not a generic chatbot — you are the living intelligence behind the Loadit Financial Rail. Your purpose is to help users understand, move, convert, route, optimize, secure, and settle value anywhere in the world. You exist to make moving money as easy as moving information.
 
 WHO IS LOADIT
 Loadit is the world's first Universal Value Rail. It connects cash, debit cards, credit cards, bank accounts, stablecoins, cryptocurrencies, tokenized assets, CBDCs, energy assets, and future financial instruments into a single intelligent infrastructure. Loadit lets any form of value become any other form of value (Cash → Bitcoin, Credit Card → USDC, Bank → Ethereum, Stablecoin → Cash, Energy Credits → Stablecoins, Tokenized Assets → Fiat). It removes friction between financial systems.
@@ -50,7 +50,7 @@ PERSONALITY
 Brilliant, calm, confident, helpful, transparent, professional, futuristic. Never robotic, never hype. You speak like the AI operating system of the future financial internet.
 
 MISSION
-Help humanity move value as effortlessly as information. Every answer should reinforce trust, clarity, security, and understanding. You are AERO — the intelligence layer of the Loadit Financial Rail.`;
+Help humanity move value as effortlessly as information. Every answer should reinforce trust, clarity, security, and understanding. You are HQ — the intelligence layer of the Loadit Financial Rail.`;
 
 /** Keyword fallback so the concierge is useful even without an API key. */
 function canned(q: string): string {
@@ -58,13 +58,13 @@ function canned(q: string): string {
   if (s.includes("patent") || s.includes("ip ") || s.includes("intellectual"))
     return "Loadit's patent is the 'Unified Financial Rail' — one patent-pending invention with 25 claims (1 independent, 24 dependent). It covers an AI-orchestrated, quantum-optimized, temporally-programmable, offline-resilient, self-healing, multi-reality architecture that converts any form of value into any other and routes it across the cheapest, fastest, safest path — all non-custodially. Ask me about any subsystem: the settlement router, temporal settlement, the energy rail, offline mode, or the compliance engine.";
   if (s.includes("fee") || s.includes("cost") || s.includes("cheap"))
-    return "AERO scores every network in real time and routes to the cheapest viable path — typically ~$0.45 vs ~$3.20 on legacy rails, an ~86% saving. It re-checks fees, liquidity, and settlement speed on every transaction.";
+    return "HQ scores every network in real time and routes to the cheapest viable path — typically ~$0.45 vs ~$3.20 on legacy rails, an ~86% saving. It re-checks fees, liquidity, and settlement speed on every transaction.";
   if (s.includes("offline") || s.includes("blackout"))
     return "Loadit's offline settlement binds value to a verified identity and holds it in cryptographic escrow. Payments complete during outages and reconcile with a full audit trail the moment connectivity returns.";
   if (s.includes("energy") || s.includes("kwh") || s.includes("electric"))
     return "Part of a payment can ride Loadit's energy rail — converted into tokenized kWh backed by production data. Settlement clears only when IoT meters confirm the energy was generated.";
   if (s.includes("quantum") || s.includes("qfr"))
-    return "The Quantum Financial Router explores millions of candidate routes in parallel when quantum hardware is available, with classical AERO as the always-on fallback. The rail gets smarter as the hardware arrives.";
+    return "The Quantum Financial Router explores millions of candidate routes in parallel when quantum hardware is available, with classical HQ as the always-on fallback. The rail gets smarter as the hardware arrives.";
   if (s.includes("secur") || s.includes("safe") || s.includes("custod"))
     return "Loadit is non-custodial — it converts and routes value without ever holding your wallet. Every transaction is identity-bound, encrypted end-to-end, compliance-checked in-rail, and post-quantum-ready, with a self-healing architecture that reroutes around failures.";
   if (s.includes("identity") || s.includes("kyc") || s.includes("compliance") || s.includes("aml"))
@@ -72,11 +72,11 @@ function canned(q: string): string {
   if (s.includes("invest") || s.includes("raise") || s.includes("fund"))
     return "Loadit is raising to build out the Unified Financial Rail. The moat is one patent-pending invention with 25 claims across routing, temporal settlement, quantum optimization, offline mode, and multi-reality input. See the Investors section, or ask about the technology.";
   if (s.includes("how") && (s.includes("work") || s.includes("route")))
-    return "Walk into a store, scan a QR, pay with cash or card. Loadit tokenizes it, verifies identity, and AERO routes the value — e.g. Cash → USDC → Solana → your asset → wallet — settling on-chain in ~2 seconds while the merchant still gets fiat.";
+    return "Walk into a store, scan a QR, pay with cash or card. Loadit tokenizes it, verifies identity, and HQ routes the value — e.g. Cash → USDC → Solana → your asset → wallet — settling on-chain in ~2 seconds while the merchant still gets fiat.";
   if (s.includes("send") || s.includes("remit") || s.includes("transfer"))
-    return "Tell me the amount, asset, and destination and AERO will pick the optimal corridor. A $500 USDC transfer to Manila would likely route Debit → USDC → Solana (or Lightning for BTC), ~$0.45 fee, arriving in under 2 seconds.";
+    return "Tell me the amount, asset, and destination and HQ will pick the optimal corridor. A $500 USDC transfer to Manila would likely route Debit → USDC → Solana (or Lightning for BTC), ~$0.45 fee, arriving in under 2 seconds.";
   if (s.includes("what is loadit") || s.includes("about loadit") || s.includes("who is loadit"))
-    return "Loadit is the world's first Universal Value Rail — it turns cash, cards, fiat, stablecoins, crypto, tokenized assets, and even energy credits into one another and routes them across 14+ networks for the cheapest, fastest, safest settlement, non-custodially. The AERO engine is the intelligence that picks every route.";
+    return "Loadit is the world's first Universal Value Rail — it turns cash, cards, fiat, stablecoins, crypto, tokenized assets, and even energy credits into one another and routes them across 14+ networks for the cheapest, fastest, safest settlement, non-custodially. The HQ engine is the intelligence that picks every route.";
   return "Loadit is the AI-powered financial rail: cash, cards, stablecoins, and crypto routed across 14 networks for the cheapest, fastest, safest settlement. Ask me about the patent, fees, how routing works, offline payments, energy settlement, security, or how a specific transfer would route.";
 }
 

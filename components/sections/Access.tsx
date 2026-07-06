@@ -49,7 +49,7 @@ export function Access() {
             </h2>
             <p className="mx-auto mt-4 max-w-lg text-pretty text-white/50">
               Merchants, partners, and builders — get early access to the Loadit
-              network and the AERO routing API.
+              network and the HQ routing API.
             </p>
 
             <div className="mx-auto mt-8 max-w-md">

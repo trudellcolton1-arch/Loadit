@@ -15,7 +15,7 @@ export const dynamic = "force-dynamic";
  *
  * Turns a plain-language money request ("send my mom $200 in Manila the
  * cheapest way") into a structured, validated transaction intent, then runs it
- * through the real AERO engine (with live fees) so every number is grounded,
+ * through the real HQ engine (with live fees) so every number is grounded,
  * never hallucinated. Uses OpenAI tool-calling when configured; falls back to a
  * deterministic heuristic parser so it always works. Parsing/routing lives in
  * lib/intent.ts, shared with the /api/hq assistant.
@@ -37,7 +37,7 @@ export async function POST(req: Request) {
   const aiParsed = Boolean(intent);
   if (!intent) intent = heuristicParse(message);
 
-  // AERO engine + live HQ provider check in parallel; HQ is additive and
+  // HQ engine + live HQ provider check in parallel; HQ is additive and
   // absent whenever the service or key is unavailable.
   const [routed, live] = await Promise.all([
     routeIntent(intent),

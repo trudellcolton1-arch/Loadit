@@ -15,7 +15,7 @@ import { Faq } from "@/components/sections/Faq";
 export const metadata: Metadata = {
   title: "Platform — How the Loadit Rail Works",
   description:
-    "How Loadit turns cash, cards, and fiat into stablecoins and crypto in seconds — the AERO routing engine, the unified rail architecture, and how it compares to legacy payments.",
+    "How Loadit turns cash, cards, and fiat into stablecoins and crypto in seconds — the HQ routing engine, the unified rail architecture, and how it compares to legacy payments.",
   alternates: { canonical: "/platform" },
 };
 

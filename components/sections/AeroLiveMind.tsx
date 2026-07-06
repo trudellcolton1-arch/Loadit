@@ -5,7 +5,7 @@ import { motion, useInView } from "framer-motion";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 
 /* -------------------------------------------------------------------------- */
-/*  Networks AERO continuously scores                                          */
+/*  Networks HQ continuously scores                                          */
 /* -------------------------------------------------------------------------- */
 
 const NETS = [
@@ -285,9 +285,9 @@ export function AeroLiveMind() {
       <div className="container-px mx-auto max-w-7xl">
         <SectionHeading
           align="center"
-          eyebrow="AERO · Live Mind"
+          eyebrow="HQ · Live Mind"
           title="Watch the engine think."
-          description="AERO never sleeps. It continuously scores every network, predicts where the cheapest corridor opens next, and reroutes value in real time — this is the rail reasoning, live."
+          description="HQ never sleeps. It continuously scores every network, predicts where the cheapest corridor opens next, and reroutes value in real time — this is the rail reasoning, live."
         />
 
         {/* Decision banner */}
@@ -303,7 +303,7 @@ export function AeroLiveMind() {
               <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-rail-400" />
             </span>
             <span className="font-mono text-xs uppercase tracking-[0.2em] text-rail-400">
-              AERO Active
+              HQ Active
             </span>
           </div>
           <p className="text-center font-mono text-sm text-white/80 sm:text-base">

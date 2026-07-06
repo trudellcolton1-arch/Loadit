@@ -58,7 +58,7 @@ export function Agents() {
           align="center"
           eyebrow="Loadit Agents"
           title="Money that moves itself."
-          description="Autonomous agents run on the rail — routing, remitting, and rebalancing value on your behalf, 24/7. Set the goal; AERO does the rest."
+          description="Autonomous agents run on the rail — routing, remitting, and rebalancing value on your behalf, 24/7. Set the goal; HQ does the rest."
         />
 
         <div className="mt-14 grid gap-5 sm:grid-cols-2">

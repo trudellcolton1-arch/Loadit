@@ -59,7 +59,7 @@ export default function Page() {
               changes with network conditions.
             </p>
             <p>
-              Loadit&apos;s <a href="/learn/ai-powered-financial-routing">AERO engine</a> evaluates the viable paths for
+              Loadit&apos;s <a href="/learn/ai-powered-financial-routing">HQ engine</a> evaluates the viable paths for
               each transaction and routes over the fastest one automatically. Curious about the cost side? Use the{" "}
               <a href="/tools/cost-calculator">transaction cost calculator</a>.
             </p>

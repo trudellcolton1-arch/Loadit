@@ -125,7 +125,7 @@ export function IntentRouter() {
           align="center"
           eyebrow="AI Intent Router · World First"
           title="Just say it. The rail does the rest."
-          description="No forms. Tell AERO what you want to do with your money in plain language — it understands, finds the cheapest real route, and explains it. The first payment rail you can talk to."
+          description="No forms. Tell HQ what you want to do with your money in plain language — it understands, finds the cheapest real route, and explains it. The first payment rail you can talk to."
         />
 
         {/* input */}
@@ -210,7 +210,7 @@ export function IntentRouter() {
 
               {/* explanation */}
               <div className="glass rounded-3xl p-6">
-                <span className="mb-1 block font-mono text-[0.55rem] uppercase tracking-widest text-rail-400">AERO</span>
+                <span className="mb-1 block font-mono text-[0.55rem] uppercase tracking-widest text-rail-400">HQ</span>
                 <p className="text-sm leading-relaxed text-white/85 sm:text-base">{result.explanation}</p>
 
                 <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">

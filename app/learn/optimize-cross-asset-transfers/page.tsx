@@ -15,11 +15,11 @@ const faqs = [
   },
   {
     q: "How do I minimize fees on cross-border transfers?",
-    a: "Avoid fixed single-rail paths. Use an AI routing engine that scores live gas prices, liquidity, and FX spreads, prefers low-fee networks (Solana, Lightning, L2s) when appropriate, batches where possible, and settles in stablecoins to sidestep volatility. Loadit's AERO engine automates all of this.",
+    a: "Avoid fixed single-rail paths. Use an AI routing engine that scores live gas prices, liquidity, and FX spreads, prefers low-fee networks (Solana, Lightning, L2s) when appropriate, batches where possible, and settles in stablecoins to sidestep volatility. Loadit's HQ engine automates all of this.",
   },
   {
     q: "How can merchants accept crypto without holding it?",
-    a: "Use a non-custodial rail that lets the customer pay however they want while the merchant receives familiar fiat or a stablecoin. Loadit tokenizes the payment, routes it via AERO, and settles — the merchant never has to custody or manage crypto.",
+    a: "Use a non-custodial rail that lets the customer pay however they want while the merchant receives familiar fiat or a stablecoin. Loadit tokenizes the payment, routes it via HQ, and settles — the merchant never has to custody or manage crypto.",
   },
 ];
 
@@ -82,7 +82,7 @@ export default function Page() {
       <h2>6. Let AI do it automatically</h2>
       <p>
         Recomputing steps 1–5 on every transaction by hand is impossible at scale. This is exactly what Loadit&apos;s{" "}
-        <a href="/learn/ai-powered-financial-routing">AI-powered routing engine, AERO</a>, automates: it scores routes
+        <a href="/learn/ai-powered-financial-routing">AI-powered routing engine, HQ</a>, automates: it scores routes
         across Bitcoin, Ethereum, Solana, Base, XRPL, Polygon, Lightning, and banks in real time and executes the
         optimal path — cutting fees by up to 86% while settling in seconds. Merchants and platforms integrate once and
         get optimized cross-asset transfers on every payment without managing any of it.

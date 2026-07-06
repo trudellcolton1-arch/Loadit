@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 
 /**
- * AERO global settlement globe — a 3D dot-sphere with great-circle "money"
+ * HQ global settlement globe — a 3D dot-sphere with great-circle "money"
  * arcs flying from the Loadit origin to the chosen destination. Pure Canvas 2D
  * with hand-rolled 3D projection (no three.js / WebGL) so it stays light and
  * iOS-smooth. Pauses off-screen / during scroll / when hidden.

@@ -5,7 +5,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
- * Stripe subscription checkout for AERO API plans.
+ * Stripe subscription checkout for HQ API plans.
  * Creates a hosted Checkout Session (mode=subscription) for the Startup plan.
  * On payment, the Stripe webhook (/api/stripe/webhook) mints and delivers a
  * signed API key. Requires STRIPE_SECRET_KEY + STRIPE_PRICE_STARTUP (a recurring

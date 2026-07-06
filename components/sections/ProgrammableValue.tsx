@@ -48,7 +48,7 @@ export function ProgrammableValue() {
           align="center"
           eyebrow="Programmable Value"
           title="Money you can compose."
-          description="Snap together value primitives like building blocks. AERO compiles them into a single, atomic settlement object."
+          description="Snap together value primitives like building blocks. HQ compiles them into a single, atomic settlement object."
         />
 
         {/* palette */}

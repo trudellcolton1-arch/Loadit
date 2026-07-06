@@ -56,7 +56,7 @@ export default function Page() {
               Every payment method bundles a percentage fee, a fixed fee, and often hidden costs like FX markups and
               multi-day settlement delays. Card processors typically charge around 2.9% + $0.30 and take 1–3 days to
               settle; international cards add FX markups; wires cost a flat ~$25. Loadit charges a flat{" "}
-              <strong>0.75%</strong> and its <a href="/learn/ai-powered-financial-routing">AERO routing engine</a> sends
+              <strong>0.75%</strong> and its <a href="/learn/ai-powered-financial-routing">HQ routing engine</a> sends
               the underlying settlement over the cheapest network available, cutting network fees by up to 86% while
               settling on-chain in seconds.
             </p>

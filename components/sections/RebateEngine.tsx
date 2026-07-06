@@ -86,7 +86,7 @@ export function RebateEngine() {
           align="center"
           eyebrow="Loadit Rewards · World First"
           title="We pay you to move money."
-          description="Every legacy rail charges you to move money. AERO routes your transfer the cheapest way — and pays a share of the savings back to you. The first payment rail that earns you money."
+          description="Every legacy rail charges you to move money. HQ routes your transfer the cheapest way — and pays a share of the savings back to you. The first payment rail that earns you money."
         />
 
         {/* social proof */}
@@ -146,7 +146,7 @@ export function RebateEngine() {
                 disabled={loading}
                 className="w-full rounded-full bg-rail-500 px-6 py-3.5 text-sm font-semibold text-void transition-all hover:shadow-glow disabled:opacity-60"
               >
-                {loading ? "AERO is routing…" : "Route & earn →"}
+                {loading ? "HQ is routing…" : "Route & earn →"}
               </button>
             </div>
 
@@ -180,7 +180,7 @@ export function RebateEngine() {
               {!loading && !r && (
                 <motion.div key="e" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                   className="m-auto max-w-sm text-center text-sm text-white/45">
-                  Set up a transfer and run AERO. You&apos;ll see the legacy cost,
+                  Set up a transfer and run HQ. You&apos;ll see the legacy cost,
                   Loadit&apos;s cost, and the cash rebate paid back to you.
                 </motion.div>
               )}

@@ -142,7 +142,7 @@ export function SelfHealing() {
             <div className="mt-4 space-y-2.5 font-mono text-[0.76rem]">
               {log.length === 0 && (
                 <p className="text-white/35">
-                  Mesh healthy. Trigger a failure to watch AERO reroute.
+                  Mesh healthy. Trigger a failure to watch HQ reroute.
                 </p>
               )}
               <AnimatePresence initial={false}>

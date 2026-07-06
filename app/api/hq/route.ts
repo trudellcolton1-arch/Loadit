@@ -19,9 +19,9 @@ export const dynamic = "force-dynamic";
  *
  * One endpoint, two behaviors in a single conversation:
  * - Chat: answers as HQ, the in-app money copilot (short, mobile-friendly —
- *   unlike AERO's maximally-detailed web concierge at /api/ask).
+ *   unlike HQ's maximally-detailed web concierge at /api/ask).
  * - Action: when the user asks to actually move money, HQ parses the intent
- *   (OpenAI tool-calling, heuristic fallback), runs it through the real AERO
+ *   (OpenAI tool-calling, heuristic fallback), runs it through the real HQ
  *   engine with live fees, and returns a `route` payload alongside the reply
  *   so the app can render an actionable route card in the thread. Numbers
  *   always come from the engine, never from the model.
@@ -86,7 +86,7 @@ function hqExplain(intent: Intent, routed: RoutedIntent, live?: HQQuote | null):
   );
 }
 
-/** Run the AERO engine and the live HQ provider check in parallel. */
+/** Run the HQ engine and the live HQ provider check in parallel. */
 async function routeWithLiveQuote(intent: Intent) {
   const [routed, live] = await Promise.all([
     routeIntent(intent),
