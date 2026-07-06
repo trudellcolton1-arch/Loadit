@@ -110,7 +110,8 @@ export default function MoneyGram() {
 
               <View style={styles.feeCard}>
                 <View style={styles.feeRow}><Text style={styles.feeLabel}>Cash in</Text><Text style={styles.feeVal}>{money(plan.amountUsd)}</Text></View>
-                <View style={styles.feeRow}><Text style={styles.feeLabel}>Loadit fee (0.75%)</Text><Text style={styles.feeVal}>{money(plan.loaditFeeUsd)}</Text></View>
+                <View style={styles.feeRow}><Text style={styles.feeLabel}>Loadit fee (0.75%, $1 min)</Text><Text style={styles.feeVal}>{money(plan.loaditFeeUsd)}</Text></View>
+                {plan.swapFeeUsd ? <View style={styles.feeRow}><Text style={styles.feeLabel}>HQ swap (0.25%)</Text><Text style={styles.feeVal}>{money(plan.swapFeeUsd)}</Text></View> : null}
                 <View style={styles.feeRow}><Text style={styles.feeLabel}>Delivered as</Text><Text style={styles.feeVal}>{asset} → your wallet</Text></View>
               </View>
 

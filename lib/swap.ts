@@ -16,6 +16,9 @@
 
 export type SwapAsset = "BTC" | "ETH" | "SOL" | "XRP" | "USDC" | "USDT";
 
+/** Loadit's visible fee on the HQ swap leg (USDC → chosen asset). */
+export const HQ_SWAP_FEE_PCT = 0.0025;
+
 /** Where the user ultimately receives each asset. */
 const DEST_CHAIN: Record<SwapAsset, string> = {
   BTC: "Lightning",
@@ -39,6 +42,8 @@ export interface SwapPlan {
   steps: SwapStep[];
   /** Illustrative bridge+DEX cost as a fraction (not Loadit's fee). */
   estCostPct: number;
+  /** Loadit's visible swap fee fraction (0.25%). */
+  hqFeePct: number;
   /** Configured executor, or null while provider-agnostic. */
   provider: string | null;
   note: string;
@@ -70,6 +75,7 @@ export function planSwap(toAsset: SwapAsset): SwapPlan {
     toChain,
     steps,
     estCostPct: isStableTarget(toAsset) ? 0.003 : 0.006,
+    hqFeePct: HQ_SWAP_FEE_PCT,
     provider,
     note: provider
       ? `Swap executed by ${provider}, non-custodial.`

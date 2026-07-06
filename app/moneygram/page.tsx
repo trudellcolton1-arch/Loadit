@@ -36,19 +36,19 @@ const PRICING_TIERS = [
   { range: "$1,000 – $2,500", fee: "$10 + 0.5%" },
 ];
 const PRICING_EXAMPLES = [
-  { cash: "$100", mg: "$3.00", loadit: "$0.75", allIn: "3.8%" },
-  { cash: "$250", mg: "$4.50", loadit: "$1.88", allIn: "2.6%" },
-  { cash: "$500", mg: "$7.00", loadit: "$3.75", allIn: "2.2%" },
+  { cash: "$100", mg: "$3.00", loadit: "$1.25", allIn: "4.3%" },
+  { cash: "$250", mg: "$4.50", loadit: "$2.51", allIn: "2.8%" },
+  { cash: "$500", mg: "$7.00", loadit: "$5.00", allIn: "2.4%" },
 ];
 
 // Volume scenarios: users × 2 loads/mo × avg load, priced with MoneyGram's
 // tiers and Loadit's flat 0.75% — so the brief shows what the partnership is
 // worth to BOTH sides at each stage.
 const PROJECTIONS = [
-  { stage: "Pilot", users: "1,000", volume: "$300K / mo", mg: "$7K / mo", loadit: "$2.3K / mo" },
-  { stage: "Growth", users: "10,000", volume: "$3M / mo", mg: "$70K / mo", loadit: "$22.5K / mo" },
-  { stage: "Scale", users: "100,000", volume: "$40M / mo", mg: "$800K / mo", loadit: "$300K / mo" },
-  { stage: "Year at scale", users: "—", volume: "$480M / yr", mg: "$9.6M / yr", loadit: "$3.6M / yr" },
+  { stage: "Pilot", users: "1,000", volume: "$300K / mo", mg: "$7K / mo", loadit: "$3K / mo" },
+  { stage: "Growth", users: "10,000", volume: "$3M / mo", mg: "$70K / mo", loadit: "$30K / mo" },
+  { stage: "Scale", users: "100,000", volume: "$40M / mo", mg: "$800K / mo", loadit: "$400K / mo" },
+  { stage: "Year at scale", users: "—", volume: "$480M / yr", mg: "$9.6M / yr", loadit: "$4.8M / yr" },
 ];
 
 export default function MoneyGramBrief() {
@@ -155,7 +155,7 @@ export default function MoneyGramBrief() {
                   <span>{t.range}</span><b>{t.fee}</b>
                 </div>
               ))}
-              <div className="mg-price-note">Plus Loadit&apos;s flat 0.75% — the only fee we add. No spread, no markup on the asset.</div>
+              <div className="mg-price-note">Plus Loadit&apos;s 0.75% ($1 minimum) and a visible 0.25% on the HQ swap leg — the only fees we add. No spread, no markup on the asset.</div>
             </div>
             <div className="mg-price-card">
               <div className="mg-price-t">What the user pays, all-in</div>
@@ -176,7 +176,7 @@ export default function MoneyGramBrief() {
           <div className="mg-sec font-mono">Projected volume — what it&apos;s worth to both of us</div>
           <div className="mg-proj-table">
             <div className="mg-proj-row mg-proj-head">
-              <span>Stage</span><span>Active users</span><span>Cash volume</span><span className="mg-mg-col">MoneyGram earns</span><b>Loadit earns (0.75%)</b>
+              <span>Stage</span><span>Active users</span><span>Cash volume</span><span className="mg-mg-col">MoneyGram earns</span><b>Loadit earns (~1%)</b>
             </div>
             {PROJECTIONS.map((p) => (
               <div key={p.stage} className="mg-proj-row">
@@ -185,8 +185,9 @@ export default function MoneyGramBrief() {
             ))}
           </div>
           <div className="mg-proj-note">
-            Assumes 2 loads per active user per month at a $150–200 average, priced on the Ramps tiers above.
-            Every dollar of Loadit volume pays MoneyGram roughly 3× what it pays Loadit — our growth is your revenue.
+            Assumes 2 loads per active user per month at a $150–200 average, priced on the Ramps tiers above; Loadit&apos;s
+            take is 0.75% ($1 min) plus 0.25% on the HQ swap leg (~1% blended). Every dollar of Loadit volume pays
+            MoneyGram about 2× what it pays Loadit — our growth is your revenue.
             Cash-out (off-ramp, 174 countries) and larger corridors are upside on top.
           </div>
         </section>

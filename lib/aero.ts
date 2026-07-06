@@ -128,6 +128,12 @@ export interface RouteInput {
 
 /** Loadit's flat convenience fee on every conversion. */
 export const LOADIT_FEE_PCT = 0.0075;
+/** Floor so tiny conversions still cover their costs. */
+export const LOADIT_FEE_MIN_USD = 1;
+/** The convenience fee for an amount: 0.75%, $1 minimum. */
+export function calcLoaditFee(amountUsd: number): number {
+  return Math.round(Math.max(LOADIT_FEE_MIN_USD, amountUsd * LOADIT_FEE_PCT) * 100) / 100;
+}
 
 export interface RouteResult {
   /** Visual chain: User → HQ → … → Wallet */
@@ -218,7 +224,7 @@ export function computeRoute(input: RouteInput): RouteResult {
   // to the legacy rail's all-in cost for the chosen funding method.
   const legacyFee = round2(legacyCost(input.paymentMethod, amount));
   const networkCost = round2(networkFee + Math.max(0.05, amount * 0.001));
-  const loaditFee = round2(amount * LOADIT_FEE_PCT);
+  const loaditFee = calcLoaditFee(amount);
   const total = round2(amount + loaditFee);
   const savingsAbs = round2(Math.max(0, legacyFee - loaditFee));
   const savingsPct = clamp(Math.round((1 - loaditFee / legacyFee) * 100), 0, 99);
@@ -294,7 +300,7 @@ export function computeRoute(input: RouteInput): RouteResult {
       `${network.name} won on a blended score of fee, speed, and liquidity depth.`,
     ],
     costBreakdown: [
-      { label: "Loadit fee (0.75%)", value: formatUSD(loaditFee) },
+      { label: "Loadit fee (0.75%, $1 min)", value: formatUSD(loaditFee) },
       { label: "Network settlement", value: formatUSD(networkCost) },
       { label: "You pay", value: formatUSD(total) },
       { label: "Legacy equivalent", value: formatUSD(legacyFee) },

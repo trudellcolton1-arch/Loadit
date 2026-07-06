@@ -15,7 +15,8 @@ import QR from "qrcode";
 
 const WALLET = "bc1qm3…x7v4";
 const AMOUNT = 100;
-const FEE = 0.75;
+const FEE = 1.0; // 0.75%, $1 minimum — a $100 load hits the floor
+const SWAP_FEE = 0.25; // 0.25% on the HQ swap leg
 const BTC_OUT = "0.00087 BTC";
 const REF_CODE = "MG-4F72-1085";
 
@@ -47,7 +48,7 @@ const STEPS: StepInfo[] = [
     title: "Loadit shows the exact route",
     narration: [
       "Full transparency before any money moves: MoneyGram is the licensed cash leg and money-transmitter of record; HQ (Loadit's AI) handles the swap after.",
-      "One flat 0.75% Loadit fee, shown up front — cheaper than cards, banks, and crypto ATMs.",
+      "Loadit adds 0.75% ($1 minimum) plus 0.25% on the HQ swap — every fee shown up front, still cheaper than cards, banks, and crypto ATMs.",
     ],
   },
   {
@@ -298,7 +299,8 @@ function ScreenRoute() {
       ))}
       <div className="ap-fees">
         <div className="ap-fee-row"><span>Cash in</span><b>${AMOUNT.toFixed(2)}</b></div>
-        <div className="ap-fee-row"><span>Loadit fee (0.75%)</span><b>${FEE.toFixed(2)}</b></div>
+        <div className="ap-fee-row"><span>Loadit fee (0.75%, $1 min)</span><b>${FEE.toFixed(2)}</b></div>
+        <div className="ap-fee-row"><span>HQ swap (0.25%)</span><b>${SWAP_FEE.toFixed(2)}</b></div>
         <div className="ap-fee-row"><span>Delivered as</span><b>BTC → your wallet</b></div>
       </div>
       <div className="ap-cta">Get my MoneyGram code</div>
@@ -395,7 +397,8 @@ function ScreenDone() {
       <div className="ap-fees" style={{ width: "100%" }}>
         <div className="ap-fee-row"><span>Cash in</span><b>${AMOUNT.toFixed(2)}</b></div>
         <div className="ap-fee-row"><span>MoneyGram leg</span><b>USDC on Stellar</b></div>
-        <div className="ap-fee-row"><span>Loadit fee (0.75%)</span><b>${FEE.toFixed(2)}</b></div>
+        <div className="ap-fee-row"><span>Loadit fee (0.75%, $1 min)</span><b>${FEE.toFixed(2)}</b></div>
+        <div className="ap-fee-row"><span>HQ swap (0.25%)</span><b>${SWAP_FEE.toFixed(2)}</b></div>
         <div className="ap-fee-row"><span>Delivered</span><b>{BTC_OUT}</b></div>
         <div className="ap-fee-row"><span>To</span><b>{WALLET}</b></div>
       </div>

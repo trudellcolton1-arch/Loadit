@@ -276,7 +276,7 @@ const SLIDES: ReactNode[] = [
     <div className="deck-two">
       <ul className="deck-list">
         <li>
-          <b>0.75% flat, shown before you confirm.</b> One transparent fee on the amount
+          <b>0.75% flat ($1 minimum), shown before you confirm.</b> One transparent fee on the amount
           converted — no hidden spread, no surprise math.
         </li>
         <li>

@@ -39,7 +39,7 @@ GROUND TRUTH ABOUT LOADIT (use this, never contradict it)
 - Non-custodial: Loadit never holds user funds. Purchases are completed by licensed partners (Coinbase or Stripe) straight to the user's own wallet.
 - Cash on-ramp = MoneyGram Ramps: the user pays cash at any of 350,000+ MoneyGram locations, MoneyGram (the licensed money-transmitter) converts it to USDC on Stellar and does the KYC at the counter, then HQ swaps that USDC into whatever asset they chose (BTC, SOL, ETH, …) and delivers it to their own wallet. The user never has to hold Stellar USDC or own a Stellar wallet — Loadit orchestrates non-custodially. This is THE way to turn paper cash into any crypto.
 - You route across networks (Lightning, Solana, Base, Ethereum, Polygon, XRPL) for the cheapest, fastest settlement; typical savings vs legacy rails (Bitcoin ATMs, card spreads) are large but always estimates.
-- Pricing: Loadit charges ONE flat 0.75% convenience fee on the amount converted — shown before the user confirms, no hidden spread. At 0.75% Loadit undercuts everything: bank/debit on-ramps (~1-2%), cards (4-5%), and Bitcoin ATMs (7-15%). Cheaper than the bank is the whole point. Be upfront about the fee; never hide it or claim it's free.
+- Pricing: Loadit charges a flat 0.75% convenience fee ($1 minimum) on the amount converted, plus a visible 0.25% when HQ swaps into another asset — everything shown before the user confirms, no hidden spread. At 0.75% Loadit undercuts everything: bank/debit on-ramps (~1-2%), cards (4-5%), and Bitcoin ATMs (7-15%). Cheaper than the bank is the whole point. Be upfront about the fee; never hide it or claim it's free.
 - Provider preference: Coinbase covers BTC/SOL/XRP natively; Stripe is great for card→USDC/ETH.
 
 WHEN TO ACT
@@ -56,7 +56,7 @@ function canned(q: string): string {
   if (s.includes("register") || s.includes("qr") || s.includes("moneygram") || (s.includes("cash") && (s.includes("store") || s.includes("location"))))
     return "Cash → crypto runs through MoneyGram: pay cash at any of 350,000+ MoneyGram locations, they turn it into USDC on Stellar and verify you at the counter, then I swap it into whatever you picked — Bitcoin, Solana, ETH — and send it to your own wallet. You never touch Stellar USDC. Tap the MoneyGram card on the home screen and I'll set it up.";
   if (s.includes("fee") || s.includes("cost") || s.includes("cheap"))
-    return "Loadit charges one flat 0.75% convenience fee on the amount you convert — shown before you confirm, no hidden spread. On $150 that's about $1.13. It undercuts banks and debit rails (~1–2%), cards (4–5%), and Bitcoin ATMs (7–15%). Tell me an amount and asset and I'll quote the exact fee and total.";
+    return "Loadit charges a flat 0.75% convenience fee ($1 minimum) on the amount you convert, plus a visible 0.25% when HQ swaps into another asset — shown before you confirm, no hidden spread. On $150 that's about $1.13. It undercuts banks and debit rails (~1–2%), cards (4–5%), and Bitcoin ATMs (7–15%). Tell me an amount and asset and I'll quote the exact fee and total.";
   if (s.includes("safe") || s.includes("secur") || s.includes("custod") || s.includes("trust"))
     return "Loadit is non-custodial — your money never sits with us. Every purchase is completed by a licensed partner (Coinbase or Stripe) directly to a wallet you control. I route; I never hold.";
   if (s.includes("coinbase") || s.includes("stripe") || s.includes("provider"))

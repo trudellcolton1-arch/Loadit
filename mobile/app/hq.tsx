@@ -101,7 +101,7 @@ export default function HQ() {
                       <Stat styles={styles} label="Settles" value={m.route.eta} />
                     </View>
                     <View style={styles.statsRow}>
-                      <Stat styles={styles} label="Loadit fee (0.75%)" value={money(m.route.loadit_fee_usd)} />
+                      <Stat styles={styles} label="Loadit fee (0.75%, $1 min)" value={money(m.route.loadit_fee_usd)} />
                       <Stat
                         styles={styles}
                         label="You pay"
