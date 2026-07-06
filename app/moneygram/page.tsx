@@ -48,7 +48,9 @@ const PROJECTIONS = [
   { stage: "Pilot", users: "1,000", volume: "$300K / mo", mg: "$7K / mo", loadit: "$3K / mo" },
   { stage: "Growth", users: "10,000", volume: "$3M / mo", mg: "$70K / mo", loadit: "$30K / mo" },
   { stage: "Scale", users: "100,000", volume: "$40M / mo", mg: "$800K / mo", loadit: "$400K / mo" },
-  { stage: "Year at scale", users: "—", volume: "$480M / yr", mg: "$9.6M / yr", loadit: "$4.8M / yr" },
+  { stage: "At scale", users: "1M", volume: "$400M / mo", mg: "$8M / mo", loadit: "$4M / mo" },
+  { stage: "Category leader", users: "10M", volume: "$4B / mo", mg: "$80M / mo", loadit: "$40M / mo" },
+  { stage: "The ceiling", users: "100M", volume: "$40B / mo", mg: "$800M / mo", loadit: "$400M / mo" },
 ];
 
 export default function MoneyGramBrief() {
@@ -187,7 +189,9 @@ export default function MoneyGramBrief() {
           <div className="mg-proj-note">
             Assumes 2 loads per active user per month at a $150–200 average, priced on the Ramps tiers above; Loadit&apos;s
             take is 0.75% ($1 min) plus 0.25% on the HQ swap leg (~1% blended). Every dollar of Loadit volume pays
-            MoneyGram about 2× what it pays Loadit — our growth is your revenue.
+            MoneyGram about 2× what it pays Loadit — our growth is your revenue. At 10M+ users the rows are
+            illustrative ceilings, not forecasts: 100M users is the scale of the global cash economy itself —
+            roughly double MoneyGram&apos;s entire current annual customer base, reachable only together.
             Cash-out (off-ramp, 174 countries) and larger corridors are upside on top.
           </div>
         </section>
