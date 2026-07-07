@@ -1,5 +1,5 @@
 import { AppState, type AppStateStatus } from "react-native";
-import { startAdvertising, startAnnouncer, HELLO_PREFIX } from "./pulseBle";
+import { startAdvertising, startAnnouncer, HELLO_PREFIX, pulseDbg } from "./pulseBle";
 import { ingestPayload } from "./pulseInbox";
 import type { PulseNote } from "./pulseClaim";
 
@@ -59,11 +59,13 @@ export function announcedPeers(): string[] {
 async function arm() {
   if (!current) return;
   cleanup?.();
+  pulseDbg(`presence armed as @${current.handle}`);
   cleanup = await startAdvertising(current.handle, {
     onNote: async (payload) => {
       // A reverse-announce ("who I am"), not money — surface the handle and stop.
       if (payload.startsWith(HELLO_PREFIX)) {
         const handle = payload.slice(HELLO_PREFIX.length).replace(/^@/, "").toLowerCase().trim();
+        pulseDbg(`HELLO received from @${handle}`);
         if (handle && handle !== "loadit" && handle !== current?.handle.toLowerCase()) {
           announced.set(handle, Date.now());
           announceListeners.forEach((l) => l(handle));
@@ -87,6 +89,7 @@ export async function startGlobalPresence(handleId: string, handle: string): Pro
     // in a pocket (the iPhone can't read the Android; the Android must write).
     announcerCleanup?.();
     announcerCleanup = startAnnouncer(handle);
+    pulseDbg("global announcer started");
   }
   if (!appStateSub) {
     appStateSub = AppState.addEventListener("change", (s: AppStateStatus) => {
