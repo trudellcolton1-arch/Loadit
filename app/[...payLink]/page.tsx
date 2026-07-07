@@ -27,7 +27,8 @@ function parsePayLink(segments: string[]): { handle: string; amount: number | nu
   const handle = first.slice(1).toLowerCase();
   let amount: number | null = null;
   if (segments.length === 2) {
-    amount = Number(segments[1]);
+    // Tolerate "$20" — people paste amounts with the sign.
+    amount = Number(decodeURIComponent(segments[1]).replace(/^\$/, ""));
     if (!Number.isFinite(amount) || amount <= 0 || amount > 10000) return null;
     amount = Math.round(amount * 100) / 100;
   }
