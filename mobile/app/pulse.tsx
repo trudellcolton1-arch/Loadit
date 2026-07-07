@@ -23,7 +23,8 @@ import {
   type PulseNote,
 } from "@/lib/pulseClaim";
 import { scanNearby, bleReady, type NearbyPeer } from "@/lib/pulseNearby";
-import { tapAvailable, startScanning, armSend, nearestPeerDeviceId, readHandleForDevice } from "@/lib/pulseBle";
+import { tapAvailable, startScanning, armSend, nearestPeerDeviceId, readHandleForDevice, onPulseDebug, pulseDbg } from "@/lib/pulseBle";
+import Constants from "expo-constants";
 import { onPulseReceived, onPeerAnnounced, announcedPeers } from "@/lib/pulsePresence";
 import { ingestPayload } from "@/lib/pulseInbox";
 import { useTheme, type Theme } from "@/lib/theme";
@@ -106,6 +107,12 @@ export default function Pulse() {
   const nearbyRef = useRef<Set<string>>(new Set());
   const [toUser, setToUser] = useState<HandleProfile | null>(null);
   const [bleState, setBleState] = useState<"idle" | "scanning" | "off">("idle");
+  const [showDebug, setShowDebug] = useState(false);
+  const [debugLines, setDebugLines] = useState<string[]>([]);
+  useEffect(() => {
+    if (!showDebug) return;
+    return onPulseDebug(setDebugLines);
+  }, [showDebug]);
 
   const refreshQueue = useCallback(async () => setQueue(await readQueue()), []);
 
@@ -158,6 +165,7 @@ export default function Pulse() {
     // Only real @handles resolve to a profile+photo (BLE fallback ids can't).
     if (h.startsWith("peer-")) return;
     const r = await resolveHandle(h).catch(() => null);
+    pulseDbg(`resolve @${h}: ${r?.ok && r.profile ? "profile ok" : "FAILED"}`);
     if (r?.ok && r.profile) {
       setNearbyUsers((prev) => (prev.some((u) => u.profile.handle.toLowerCase() === r.profile!.handle.toLowerCase())
         ? prev : [...prev, { profile: r.profile!, rssi: null }]));
@@ -497,11 +505,21 @@ export default function Pulse() {
         )}
 
         {mode === "send" && !note && tapAvailable() && (
-          <View style={[styles.blePill, { borderColor: t.accentTint, backgroundColor: t.accentSoft }]}>
+          <TouchableOpacity activeOpacity={0.85} onLongPress={() => setShowDebug((v) => !v)} style={[styles.blePill, { borderColor: t.accentTint, backgroundColor: t.accentSoft }]}>
             <View style={[styles.bleDot, { backgroundColor: t.accent }]} />
             <Text style={[styles.bleText, { color: t.accentText }]}>
               {nearbyCount ? "Loadit phone nearby — ready to send" : "Bluetooth on · looking for people near you"}
             </Text>
+          </TouchableOpacity>
+        )}
+
+        {showDebug && (
+          <View style={styles.debugBox}>
+            <Text style={styles.debugHead}>Pulse diagnostics · v{Constants.expoConfig?.version ?? "?"} · {Platform.OS}</Text>
+            {debugLines.slice(-16).map((l, i) => (
+              <Text key={i} style={styles.debugLine}>{l}</Text>
+            ))}
+            {!debugLines.length && <Text style={styles.debugLine}>no radio events yet…</Text>}
           </View>
         )}
 
@@ -773,6 +791,9 @@ const makeStyles = (t: Theme) =>
     blePill: { flexDirection: "row", alignItems: "center", gap: 8, alignSelf: "flex-start", backgroundColor: t.surface, borderColor: t.border, borderWidth: 1, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 9, marginTop: 14 },
     bleDot: { width: 8, height: 8, borderRadius: 4 },
     bleText: { color: t.dim, fontSize: 12, fontWeight: "600" },
+    debugBox: { backgroundColor: "#0B0D12", borderColor: t.border, borderWidth: 1, borderRadius: 12, padding: 10, marginTop: 10 },
+    debugHead: { color: "#5EEAD4", fontSize: 10, fontWeight: "700", marginBottom: 6 },
+    debugLine: { color: "#9BE8C9", fontSize: 9.5, fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace", lineHeight: 14 },
     locBanner: { backgroundColor: t.accentSoft, borderColor: t.warn, borderWidth: 1, borderRadius: 14, padding: 12, marginTop: 14 },
     locText: { color: t.text, fontSize: 12.5, lineHeight: 18, fontWeight: "600" },
     nearbyGeneric: { flexDirection: "row", alignItems: "center", gap: 11, marginTop: 14, backgroundColor: t.accentSoft, borderColor: t.accentTint, borderWidth: 1, borderRadius: 16, padding: 13 },

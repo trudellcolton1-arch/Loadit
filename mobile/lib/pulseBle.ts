@@ -36,6 +36,24 @@ const CHUNK = 150;
 // iPhone finally learns the Android's @handle instead of a nameless peer id.
 export const HELLO_PREFIX = "LOADIT-HELLO:";
 
+/* ---- live diagnostics (long-press the BLE pill on the Pulse screen) ---- */
+const debugLines: string[] = [];
+let debugCb: ((lines: string[]) => void) | null = null;
+export function pulseDbg(msg: string) {
+  const t = new Date();
+  const hh = String(t.getHours()).padStart(2, "0");
+  const mm = String(t.getMinutes()).padStart(2, "0");
+  const ss = String(t.getSeconds()).padStart(2, "0");
+  debugLines.push(`${hh}:${mm}:${ss} ${msg}`);
+  if (debugLines.length > 60) debugLines.shift();
+  debugCb?.([...debugLines]);
+}
+export function onPulseDebug(cb: (lines: string[]) => void): () => void {
+  debugCb = cb;
+  cb([...debugLines]);
+  return () => { debugCb = null; };
+}
+
 /* ---- ble-plx manager (lazy) ---- */
 let manager: any = null;
 function mgr(): any {
@@ -208,6 +226,7 @@ export function startAnnouncer(myHandle: string): () => void {
         } catch { finish(); return; }
         setTimeout(finish, 6000);
       });
+      if (found.size) pulseDbg(`announcer: ${found.size} Loadit phone(s) in range`);
       for (const devId of found) {
         if (scanning || pending) break; // a Beam session started mid-cycle
         if (Date.now() - (lastAnnounce.get(devId) || 0) < 120_000) continue;
@@ -230,22 +249,27 @@ async function announceToPeer(deviceId: string): Promise<void> {
   const m = mgr();
   if (!m) return;
   const resume = scanning;
+  const tail = deviceId.slice(-5);
   try {
     if (resume) stopScan();
+    pulseDbg(`announce->${tail} connecting as @${handleForScan}`);
     let d: any = null;
+    let lastErr = "";
     for (let i = 0; i < 2 && !d; i++) {
       try { d = await m.connectToDevice(deviceId, { requestMTU: MTU, timeout: 6000 }); }
-      catch { if (i === 1) return; }
+      catch (e: any) { lastErr = String(e?.message || e).slice(0, 60); }
     }
-    if (!d) return;
+    if (!d) { pulseDbg(`announce->${tail} CONNECT FAIL: ${lastErr}`); return; }
     d = await d.discoverAllServicesAndCharacteristics();
     const raw = utf8Encode(HELLO_PREFIX + handleForScan + "\n");
     for (let i = 0; i < raw.length; i += CHUNK) {
       await d.writeCharacteristicWithResponseForService(SERVICE, NOTE_CHAR, bytesToBase64(raw.slice(i, i + CHUNK)));
     }
+    pulseDbg(`announce->${tail} WROTE OK`);
     announceAttempts.set(deviceId, 99); // delivered — stop hammering this device
     try { await m.cancelDeviceConnection(deviceId); } catch { /* noop */ }
-  } catch {
+  } catch (e: any) {
+    pulseDbg(`announce->${tail} FAIL: ${String(e?.message || e).slice(0, 60)}`);
     try { await m.cancelDeviceConnection(deviceId); } catch { /* noop */ }
   } finally {
     if (resume) startScan(handleForScan);
@@ -267,6 +291,7 @@ function startScan(myHandle: string) {
       if (handle === myHandle.toLowerCase()) return;
       const known = peers.has(handle);
       peers.set(handle, { deviceId: d.id, rssi: d.rssi ?? null });
+      if (!known) pulseDbg(`scan saw ${handle} (${String(d.id).slice(-5)} ${d.rssi ?? "?"}dB${d.localName ? ` name:${d.localName}` : ""})`);
       if (!known && presenceOnPeer) presenceOnPeer(handle);
       driveSend(handle, d.id);
     });
