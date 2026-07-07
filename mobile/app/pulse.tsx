@@ -24,7 +24,7 @@ import {
 } from "@/lib/pulseClaim";
 import { scanNearby, bleReady, type NearbyPeer } from "@/lib/pulseNearby";
 import { tapAvailable, startScanning, armSend, nearestPeerDeviceId, readHandleForDevice } from "@/lib/pulseBle";
-import { onPulseReceived, onPeerAnnounced } from "@/lib/pulsePresence";
+import { onPulseReceived, onPeerAnnounced, announcedPeers } from "@/lib/pulsePresence";
 import { ingestPayload } from "@/lib/pulseInbox";
 import { useTheme, type Theme } from "@/lib/theme";
 import { HandleAvatar } from "@/components/HandleAvatar";
@@ -183,6 +183,9 @@ export default function Pulse() {
       }
       startScanning(me?.handle || "loadit", { onPeer: addFace, onLost: removeFace })
         .then((c) => { if (cancelled) c(); else cleanup = c; });
+      // Phones that already introduced themselves (global announcer) show
+      // instantly — no waiting for the next announce cycle.
+      announcedPeers().forEach((h) => addFace(h));
       return () => { cancelled = true; cleanup?.(); };
     }
     if (!note) scanForPhones();

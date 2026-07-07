@@ -174,6 +174,57 @@ async function announceOneToPeer() {
   }
 }
 
+/**
+ * GLOBAL ANNOUNCER — runs for as long as the app is up (owned by
+ * pulsePresence), not just on the Pulse screen. Duty-cycled: every ~25s, scan
+ * briefly for Loadit phones and write our @handle to any we haven't announced
+ * to recently. This is what lets an iPhone on the Beam screen see an Android
+ * that's just sitting in someone's pocket — the Android introduces itself
+ * whenever the app is alive, from any screen. Yields entirely to an open Beam
+ * session (which runs its own faster announcer) and to in-flight sends.
+ */
+const lastAnnounce = new Map<string, number>(); // deviceId -> last announce ts
+let announcerTimer: ReturnType<typeof setInterval> | null = null;
+let announcerBusy = false;
+
+export function startAnnouncer(myHandle: string): () => void {
+  if (!mgr()) return () => {};
+  handleForScan = myHandle.toLowerCase();
+  const cycle = async () => {
+    const m = mgr();
+    if (!m || announcerBusy || scanning || pending) return; // Beam session owns the radio
+    announcerBusy = true;
+    try {
+      await ensureAndroidPerms();
+      const found = new Set<string>();
+      await new Promise<void>((resolve) => {
+        let done = false;
+        const finish = () => { if (!done) { done = true; try { m.stopDeviceScan(); } catch { /* noop */ } resolve(); } };
+        try {
+          m.startDeviceScan([SERVICE], null, (err: any, d: any) => {
+            if (err) { finish(); return; }
+            if (d) found.add(d.id);
+          });
+        } catch { finish(); return; }
+        setTimeout(finish, 6000);
+      });
+      for (const devId of found) {
+        if (scanning || pending) break; // a Beam session started mid-cycle
+        if (Date.now() - (lastAnnounce.get(devId) || 0) < 120_000) continue;
+        lastAnnounce.set(devId, Date.now());
+        await announceToPeer(devId);
+      }
+    } finally {
+      announcerBusy = false;
+    }
+  };
+  cycle();
+  announcerTimer = setInterval(cycle, 25_000);
+  return () => {
+    if (announcerTimer) { clearInterval(announcerTimer); announcerTimer = null; }
+  };
+}
+
 /** Connect to a peer and write our @handle to its note characteristic. */
 async function announceToPeer(deviceId: string): Promise<void> {
   const m = mgr();
