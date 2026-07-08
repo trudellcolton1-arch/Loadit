@@ -142,6 +142,8 @@ async function handle(req: Request, params: Record<string, unknown>) {
       amount_usd: amount,
       payment_method: method,
       loadit_fee_usd: r.loaditFee,
+      swap_fee_usd: r.swapFee,
+      total_usd: r.total,
       legacy_fee_usd: r.legacyFee,
       savings_usd: r.savingsAbs,
       savings_pct: r.savingsPct,

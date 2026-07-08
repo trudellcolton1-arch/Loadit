@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { handleByName, hylaqConfigured } from "@/lib/hylaqDb";
+import { limit } from "@/lib/ratelimit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -11,7 +12,10 @@ export const dynamic = "force-dynamic";
  * where value should land. Receive addresses are public by design; sensitive
  * columns are never read (see lib/hylaqDb).
  */
-export async function GET(_req: Request, { params }: { params: { handle: string } }) {
+export async function GET(req: Request, { params }: { params: { handle: string } }) {
+  // Throttle bulk enumeration of the handle→addresses namespace.
+  const limited = limit(req, "handle", 40);
+  if (limited) return limited;
   if (!hylaqConfigured()) {
     return NextResponse.json({ ok: false, reason: "not_configured" }, { status: 503 });
   }

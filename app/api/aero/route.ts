@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { limit } from "@/lib/ratelimit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -10,6 +11,8 @@ export const dynamic = "force-dynamic";
  * gracefully falls back to the deterministic local explanation.
  */
 export async function POST(req: Request) {
+  const limited = limit(req, "aero", 20);
+  if (limited) return limited;
   const key = process.env.OPENAI_API_KEY;
   if (!key) return NextResponse.json({ ok: false, reason: "no_key" });
 
