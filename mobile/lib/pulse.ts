@@ -21,6 +21,8 @@ import { HYLAQ } from "./config";
 const BASE = (HYLAQ.issuer || "https://www.hylaq.com").replace(/\/$/, "");
 const DEVICE_ID_KEY = "loadit_pulse_device_id";
 const QUEUE_KEY = "loadit_pulse_queue";
+const LOCKED_KEY = "loadit_pulse_locked_drops"; // escrows locked but not yet delivered/cancelled
+const REJECTED_KEY = "loadit_pulse_rejected"; // nonces Hylaq explicitly rejected (safe to clear)
 
 /* ------------------------------------------------------------- device id */
 
@@ -301,4 +303,71 @@ export async function clearSettled(nonces: string[]): Promise<void> {
 export async function pendingTotal(): Promise<number> {
   const q = await readQueue();
   return q.reduce((s, p) => s + (p.amountUsd || 0), 0);
+}
+
+/* ---- locked-escrow durability (sender side) ------------------------------ */
+// The escrow commits on Hylaq the instant dropPulse returns LOCKED. Persist it
+// immediately so a crash/interruption before delivery can't strand the funds —
+// on next launch we reconcile any drop that was never delivered or cancelled.
+
+export interface LockedDrop {
+  dropId: string;
+  handleId: string;
+  amountUsd: number;
+  createdAt: number;
+  delivered?: boolean;
+}
+
+export async function readLockedDrops(): Promise<LockedDrop[]> {
+  try {
+    const raw = await SecureStore.getItemAsync(LOCKED_KEY);
+    return raw ? (JSON.parse(raw) as LockedDrop[]) : [];
+  } catch {
+    return [];
+  }
+}
+async function writeLockedDrops(d: LockedDrop[]) {
+  await SecureStore.setItemAsync(LOCKED_KEY, JSON.stringify(d.slice(-25)));
+}
+/** Record a freshly-locked escrow (call the moment dropPulse returns LOCKED). */
+export async function saveLockedDrop(d: LockedDrop): Promise<void> {
+  const all = await readLockedDrops();
+  if (all.some((x) => x.dropId === d.dropId)) return;
+  all.push(d);
+  await writeLockedDrops(all);
+}
+/** Mark a locked drop as delivered (note handed off) — no longer needs rescue. */
+export async function markDropDelivered(dropId: string): Promise<void> {
+  const all = await readLockedDrops();
+  const hit = all.find((x) => x.dropId === dropId);
+  if (hit) hit.delivered = true;
+  await writeLockedDrops(all);
+}
+/** Forget a locked drop entirely (after a confirmed cancel/refund). */
+export async function forgetLockedDrop(dropId: string): Promise<void> {
+  const all = (await readLockedDrops()).filter((x) => x.dropId !== dropId);
+  await writeLockedDrops(all);
+}
+
+/* ---- rejected-claim tracking (receiver side) ----------------------------- */
+// Only claims Hylaq EXPLICITLY rejected/expired are safe to clear locally.
+// A genuine un-synced claim (sender still offline) must never be blanket-deleted.
+
+export async function readRejected(): Promise<string[]> {
+  try {
+    const raw = await SecureStore.getItemAsync(REJECTED_KEY);
+    return raw ? (JSON.parse(raw) as string[]) : [];
+  } catch {
+    return [];
+  }
+}
+export async function markRejected(nonces: string[]): Promise<void> {
+  if (!nonces.length) return;
+  const set = new Set([...(await readRejected()), ...nonces]);
+  await SecureStore.setItemAsync(REJECTED_KEY, JSON.stringify([...set].slice(-100)));
+}
+export async function clearRejectedMarks(nonces: string[]): Promise<void> {
+  const set = new Set(nonces);
+  const kept = (await readRejected()).filter((n) => !set.has(n));
+  await SecureStore.setItemAsync(REJECTED_KEY, JSON.stringify(kept));
 }

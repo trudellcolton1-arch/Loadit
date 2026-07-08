@@ -16,8 +16,11 @@ import { publicKeySpkiBase64 } from "@/lib/deviceKey";
 import {
   getDeviceId, registerDevice, syncPackets, dropPulse, fetchManifest, cancelDrop,
   readQueue, enqueueClaim, clearSettled,
-  type ClaimPacket, type ProximityEvidence,
+  saveLockedDrop, markDropDelivered, forgetLockedDrop, readLockedDrops,
+  markRejected, readRejected, clearRejectedMarks,
+  type ClaimPacket, type ProximityEvidence, type LockedDrop,
 } from "@/lib/pulse";
+import { sanitizeAmountInput, parseAmount } from "@/lib/money";
 import {
   makePulseNote, verifyPulseNote, encodeNote, decodeNote, noteToClaimPacket,
   type PulseNote,
@@ -78,7 +81,8 @@ export default function Pulse() {
   const [mode, setMode] = useState<"send" | "receive">("send");
 
   const [amountText, setAmountText] = useState("20");
-  const amount = Math.max(0, parseFloat(amountText) || 0);
+  const amount = parseAmount(amountText);
+  const beamLock = useRef(false); // synchronous double-tap guard for beam()
   const [memo, setMemo] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -135,10 +139,18 @@ export default function Pulse() {
     setBleState("idle");
   }, [bleState]);
 
+  // An escrow that locked but whose Pulse was never delivered — recoverable.
+  const [recoverDrop, setRecoverDrop] = useState<LockedDrop | null>(null);
+
   useEffect(() => {
     if (!ready || !session) return;
     getMyHandle(session.accessToken).then((r) => { if (r.linked && r.profile) setMe(r.profile); }).catch(() => {});
     refreshQueue();
+    // Reconcile stranded escrows: any drop locked >60s ago and never delivered.
+    readLockedDrops().then((drops) => {
+      const orphan = drops.find((d) => !d.delivered && Date.now() - d.createdAt > 60_000);
+      if (orphan) setRecoverDrop(orphan);
+    }).catch(() => {});
     // Lightweight reachability probe.
     (async () => {
       try {
@@ -228,7 +240,7 @@ export default function Pulse() {
     setTapStatus(toUser ? `Reaching @${toUser.handle}…` : "Hold the phones together…");
     armSend(toUser?.handle ?? null, encodeNote(note), {
       onStatus: (s) => { if (!cancelled) setTapStatus(s); },
-      onSent: () => { if (!cancelled) setSent(true); },
+      onSent: () => { if (!cancelled) { setSent(true); if (dropId) markDropDelivered(dropId).catch(() => {}); } },
       onError: (m) => { if (!cancelled) setTapStatus(m); },
     }).then((c) => { if (cancelled) c(); else cleanup = c; });
     return () => { cancelled = true; cleanup?.(); };
@@ -236,24 +248,81 @@ export default function Pulse() {
 
   if (ready && !session) return <Redirect href="/login" />;
 
-  const resetBeam = () => {
-    setNote(null); setSent(false); setTapStatus(""); setDropId(null);
+  /** Clear the beam UI back to a blank form (no escrow side-effects). */
+  const clearBeamUi = () => {
+    setNote(null); setSent(false); setTapStatus(""); setDropId(null); setEscrowLocked(false);
     setAmountText("20"); setMemo(""); setToUser(null);
   };
 
-  /** Cancel an unclaimed drop and refund the escrow back to the sender. */
+  /**
+   * Reset the beam. If an escrow is still locked and the note was NOT delivered,
+   * refunding is the only safe action — otherwise the money is stranded. A
+   * delivered note (sent) is left alone; the recipient holds a valid claim.
+   */
+  const resetBeam = async (): Promise<boolean> => {
+    if (escrowLocked && dropId && !sent) {
+      const refund = await new Promise<boolean>((resolve) => {
+        Alert.alert(
+          "Refund the locked funds?",
+          "This Pulse hasn't been delivered yet and its funds are still locked in escrow. Starting over will refund them to your wallet.",
+          [
+            { text: "Keep it open", style: "cancel", onPress: () => resolve(false) },
+            { text: "Refund & reset", style: "destructive", onPress: () => resolve(true) },
+          ]
+        );
+      });
+      if (!refund) return false;
+      await cancelBeam(); // handles refund + clears UI on success
+      return true;
+    }
+    if (dropId && sent) await markDropDelivered(dropId).catch(() => {});
+    clearBeamUi();
+    return true;
+  };
+
+  /** Cancel an unclaimed drop and refund the escrow. Keeps dropId on failure so
+   * the user can retry; only clears the UI once the refund is confirmed. */
   const cancelBeam = async () => {
-    if (!dropId || !me) { resetBeam(); return; }
+    if (!dropId || !me) { clearBeamUi(); return; }
     setBusy(true);
     try {
       const token = tokenRef.current || (await ensureToken());
-      if (!token) { resetBeam(); return; }
+      if (!token) return; // keep dropId; user can retry after entering password
       const r = await cancelDrop(token, me.id, dropId);
-      if (r?.canceled || r?.refundTxHash) Alert.alert("Refunded", "The funds were returned to your wallet.");
-      else if (r?.error) Alert.alert("Couldn't cancel", r.error);
-      resetBeam();
+      if (r?.canceled || r?.refundTxHash) {
+        Alert.alert("Refunded", "The funds were returned to your wallet.");
+        await forgetLockedDrop(dropId).catch(() => {});
+        clearBeamUi();
+      } else {
+        // Refund failed — DO NOT drop the id, or the escrow becomes unreclaimable.
+        Alert.alert("Couldn't refund yet", (r?.error as string) || "The funds are still locked. Try Cancel & refund again.");
+      }
     } catch {
-      Alert.alert("Couldn't cancel", "Try again from your wallet.");
+      Alert.alert("Couldn't refund yet", "The funds are still locked. Check your connection and try Cancel & refund again.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  /** Refund a stranded escrow found on launch (needs the wallet password). */
+  const reclaimDrop = async () => {
+    if (!recoverDrop || !me) return;
+    if (!password) { Alert.alert("Wallet password", "Enter your Hylaq wallet password to refund the locked funds."); return; }
+    setBusy(true);
+    try {
+      const token = await ensureToken();
+      if (!token) return;
+      const r = await cancelDrop(token, me.id, recoverDrop.dropId);
+      if (r?.canceled || r?.refundTxHash) {
+        await forgetLockedDrop(recoverDrop.dropId).catch(() => {});
+        setRecoverDrop(null);
+        setPassword("");
+        Alert.alert("Refunded", "The funds from your unfinished Pulse were returned to your wallet.");
+      } else {
+        Alert.alert("Couldn't refund yet", (r?.error as string) || "Try again in a moment.");
+      }
+    } catch {
+      Alert.alert("Couldn't refund yet", "Check your connection and try again.");
     } finally {
       setBusy(false);
     }
@@ -286,10 +355,12 @@ export default function Pulse() {
    * that carries the pulseId + manifest so the receiver can claim fully offline.
    */
   const beam = async () => {
+    if (beamLock.current) return; // synchronous guard — two escrows can't lock on a double-tap
     if (amount < 1) { Alert.alert("Amount", "Enter at least $1."); return; }
     if (!online) { Alert.alert("Go online to lock funds", "Beaming needs a connection to lock the money in escrow. Reconnect and try again."); return; }
     if (!me) { Alert.alert("Hylaq needed", "Log in with Hylaq to send."); return; }
     if (!password) { Alert.alert("Wallet password", "Enter your Hylaq wallet password to lock the funds."); return; }
+    beamLock.current = true;
     setBusy(true);
     try {
       const token = await ensureToken();
@@ -355,6 +426,13 @@ export default function Pulse() {
         return;
       }
 
+      // Persist the locked escrow IMMEDIATELY — before any step that can throw
+      // or the app can die — so a crash here can't strand the funds. Launch
+      // reconciliation will offer to refund it if delivery never happens.
+      await saveLockedDrop({ dropId: lockedId, handleId: me.id, amountUsd: amount, createdAt: Date.now() }).catch(() => {});
+      setDropId(lockedId);
+      setEscrowLocked(true);
+
       // Fetch the signed manifest to beam alongside the note (offline claiming).
       const manifest = await fetchManifest(token, { pulseId: lockedId, handleId: me.id, deviceId });
 
@@ -365,8 +443,6 @@ export default function Pulse() {
         amountUsd: amount, asset: "USDC", memo: memo.trim() || undefined,
         createdAt: Date.now(), pulseId: lockedId, manifest: manifest ?? undefined, evidence,
       });
-      setDropId(lockedId);
-      setEscrowLocked(true);
       setHandoff(tapAvailable() ? "tap" : "qr");
       setSent(false);
       setNote(n);
@@ -375,6 +451,7 @@ export default function Pulse() {
       Alert.alert("Couldn't create Pulse", "Try again.");
     } finally {
       setBusy(false);
+      beamLock.current = false;
     }
   };
 
@@ -420,8 +497,14 @@ export default function Pulse() {
       const res = await syncPackets(token, queue, deviceId, me!.id);
       if (!res) { Alert.alert("Offline", "Couldn't reach Hylaq — your Pulses stay pending and will settle later."); return; }
       const results = res.results || [];
-      const settled = results.filter((r) => r.status === "accepted").map((r) => r.nonce);
+      // Accepted → settle and remove. Conflict → already settled on a prior sync,
+      // also safe to remove. Everything else stays pending, but we remember which
+      // nonces Hylaq REJECTED so "Clear stuck" can target only those (never a
+      // genuine un-synced claim whose sender is just still offline).
+      const settled = results.filter((r) => r.status === "accepted" || r.status === "conflict").map((r) => r.nonce);
+      const rejected = results.filter((r) => r.status === "rejected").map((r) => r.nonce);
       if (settled.length) await clearSettled(settled);
+      if (rejected.length) await markRejected(rejected);
       await refreshQueue();
       setPassword("");
       if (settled.length) {
@@ -441,15 +524,24 @@ export default function Pulse() {
     }
   };
 
-  /** Clear locally-queued Pulses that Hylaq keeps rejecting (e.g. created before
-   * the escrow was actually locked, so there's nothing to settle). Local only. */
-  const clearStuck = () => {
+  /** Clear ONLY claims Hylaq explicitly rejected on a sync — never a genuine
+   * un-synced claim whose sender simply hasn't come back online yet. */
+  const clearStuck = async () => {
+    const rejected = new Set(await readRejected());
+    const removable = queue.filter((p) => rejected.has(p.nonce)).map((p) => p.nonce);
+    if (!removable.length) {
+      Alert.alert(
+        "Nothing to clear",
+        "None of your pending Pulses have been rejected by Hylaq. A Pulse stays pending until its sender is back online — clearing one that just hasn't synced would delete real money, so this only removes Pulses Hylaq has explicitly declined."
+      );
+      return;
+    }
     Alert.alert(
-      "Clear pending?",
-      "Remove pending Pulses that Hylaq won't settle — usually ones created before the funds were locked in escrow. This only clears them from this phone; no money is affected.",
+      "Clear rejected Pulses?",
+      `Remove ${removable.length} Pulse${removable.length === 1 ? "" : "s"} that Hylaq declined to settle. These carry no claimable money; this only clears them from this phone.`,
       [
         { text: "Cancel", style: "cancel" },
-        { text: "Clear", style: "destructive", onPress: async () => { await clearSettled(queue.map((p) => p.nonce)); await refreshQueue(); } },
+        { text: "Clear", style: "destructive", onPress: async () => { await clearSettled(removable); await clearRejectedMarks(removable); await refreshQueue(); } },
       ]
     );
   };
@@ -492,7 +584,7 @@ export default function Pulse() {
 
         <View style={styles.segment}>
           {(["send", "receive"] as const).map((m) => (
-            <TouchableOpacity key={m} style={[styles.segBtn, mode === m && styles.segBtnOn]} onPress={() => { resetBeam(); setMode(m); }}>
+            <TouchableOpacity key={m} style={[styles.segBtn, mode === m && styles.segBtnOn]} onPress={async () => { if (mode === m) return; if (await resetBeam()) setMode(m); }}>
               <Text style={[styles.segText, mode === m && styles.segTextOn]}>{m === "send" ? "Beam money" : "Collect"}</Text>
             </TouchableOpacity>
           ))}
@@ -502,6 +594,16 @@ export default function Pulse() {
           <TouchableOpacity style={styles.locBanner} onPress={() => Location.enableNetworkProviderAsync().then(() => setAndroidLocOff(false)).catch(() => {})}>
             <Text style={styles.locText}>⚠︎ Turn on Location so Bluetooth can find phones. Android requires it for scanning — it works offline, no internet. Tap to enable.</Text>
           </TouchableOpacity>
+        )}
+
+        {recoverDrop && !note && (
+          <View style={styles.recoverBanner}>
+            <Text style={styles.recoverTitle}>Unfinished Pulse — {money(recoverDrop.amountUsd)} locked</Text>
+            <Text style={styles.recoverSub}>A previous Pulse locked funds in escrow but was never delivered. Enter your wallet password below and refund it to your wallet.</Text>
+            <TouchableOpacity style={styles.recoverBtn} onPress={reclaimDrop} disabled={busy}>
+              {busy ? <ActivityIndicator color={t.buttonText} /> : <Text style={styles.recoverBtnText}>Refund {money(recoverDrop.amountUsd)}</Text>}
+            </TouchableOpacity>
+          </View>
         )}
 
         {mode === "send" && !note && tapAvailable() && (
@@ -644,7 +746,7 @@ export default function Pulse() {
                 <TextInput
                   style={styles.amountInput}
                   value={amountText}
-                  onChangeText={(v) => setAmountText(v.replace(/[^0-9.]/g, ""))}
+                  onChangeText={(v) => setAmountText(sanitizeAmountInput(v))}
                   keyboardType="decimal-pad"
                   placeholder="0"
                   placeholderTextColor={t.faint}
@@ -796,6 +898,11 @@ const makeStyles = (t: Theme) =>
     debugLine: { color: "#9BE8C9", fontSize: 9.5, fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace", lineHeight: 14 },
     locBanner: { backgroundColor: t.accentSoft, borderColor: t.warn, borderWidth: 1, borderRadius: 14, padding: 12, marginTop: 14 },
     locText: { color: t.text, fontSize: 12.5, lineHeight: 18, fontWeight: "600" },
+    recoverBanner: { backgroundColor: t.accentSoft, borderColor: t.warn, borderWidth: 1, borderRadius: 16, padding: 14, marginTop: 14 },
+    recoverTitle: { color: t.text, fontSize: 14.5, fontWeight: "800" },
+    recoverSub: { color: t.dim, fontSize: 12, lineHeight: 17, marginTop: 4 },
+    recoverBtn: { backgroundColor: t.button, borderRadius: 999, paddingVertical: 12, alignItems: "center", marginTop: 12 },
+    recoverBtnText: { color: t.buttonText, fontWeight: "700", fontSize: 14 },
     nearbyGeneric: { flexDirection: "row", alignItems: "center", gap: 11, marginTop: 14, backgroundColor: t.accentSoft, borderColor: t.accentTint, borderWidth: 1, borderRadius: 16, padding: 13 },
     nearbyGenericEmoji: { fontSize: 24 },
     nearbyGenericTitle: { color: t.text, fontSize: 14.5, fontWeight: "800" },
