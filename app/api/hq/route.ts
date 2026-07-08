@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { limit } from "@/lib/ratelimit";
 import {
   ROUTE_TOOL,
   heuristicParse,
@@ -159,6 +160,8 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  const limited = limit(req, "hq", 20);
+  if (limited) return limited;
   let body: { messages?: ChatMsg[] };
   try {
     body = await req.json();

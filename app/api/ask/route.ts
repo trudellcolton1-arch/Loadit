@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { limit } from "@/lib/ratelimit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -97,6 +98,10 @@ export async function GET(req: Request) {
   if (!url.searchParams.get("test")) {
     return NextResponse.json({ configured, model });
   }
+  // The ?test=1 branch makes a real (billable) OpenAI call — admin only.
+  if (process.env.ADMIN_TOKEN && url.searchParams.get("token") !== process.env.ADMIN_TOKEN) {
+    return NextResponse.json({ ok: false, reason: "forbidden" }, { status: 403 });
+  }
   if (!key) {
     return NextResponse.json({ configured: false, ok: false, reason: "no_key", hint: "Set OPENAI_API_KEY in the deployment env, then redeploy." });
   }
@@ -112,7 +117,7 @@ export async function GET(req: Request) {
       model,
       status: res.status,
       ok: res.ok,
-      detail: res.ok ? "OpenAI reachable - key valid." : text.slice(0, 400),
+      detail: res.ok ? "OpenAI reachable - key valid." : "OpenAI returned an error (see server logs).",
     });
   } catch (e) {
     return NextResponse.json({ configured: true, model, ok: false, reason: "network_error", detail: String(e).slice(0, 200) });
@@ -120,13 +125,18 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+  const limited = limit(req, "ask", 20);
+  if (limited) return limited;
   let body: { messages?: { role: string; content: string }[] };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ ok: false, reason: "bad_request" }, { status: 400 });
   }
-  const messages = Array.isArray(body.messages) ? body.messages.slice(-8) : [];
+  const messages = (Array.isArray(body.messages) ? body.messages : [])
+    .filter((m) => m && typeof m.content === "string" && (m.role === "user" || m.role === "assistant" || m.role === "system"))
+    .map((m) => ({ role: m.role, content: m.content.slice(0, 2000) }))
+    .slice(-8);
   const lastUser = [...messages].reverse().find((m) => m.role === "user")?.content ?? "";
 
   const key = process.env.OPENAI_API_KEY;

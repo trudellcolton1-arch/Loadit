@@ -134,6 +134,8 @@ export const LOADIT_FEE_MIN_USD = 1;
 export function calcLoaditFee(amountUsd: number): number {
   return Math.round(Math.max(LOADIT_FEE_MIN_USD, amountUsd * LOADIT_FEE_PCT) * 100) / 100;
 }
+/** Visible fee on the HQ swap leg (USDC → a non-stable asset). Matches lib/swap. */
+export const HQ_SWAP_FEE_PCT = 0.0025;
 
 export interface RouteResult {
   /** Visual chain: User → HQ → … → Wallet */
@@ -143,7 +145,9 @@ export interface RouteResult {
   loaditFee: number;
   /** Fraction charged (0.0075). */
   feePct: number;
-  /** Order amount + convenience fee. */
+  /** Visible 0.25% fee on the HQ swap leg — 0 for a stablecoin (no swap). */
+  swapFee: number;
+  /** Order amount + convenience fee + swap fee (the true all-in). */
   total: number;
   /** Underlying on-chain settlement cost (informational). */
   networkCost: number;
@@ -225,7 +229,10 @@ export function computeRoute(input: RouteInput): RouteResult {
   const legacyFee = round2(legacyCost(input.paymentMethod, amount));
   const networkCost = round2(networkFee + Math.max(0.05, amount * 0.001));
   const loaditFee = calcLoaditFee(amount);
-  const total = round2(amount + loaditFee);
+  // Non-stable assets route through USDC (a swap) — the same 0.25% the MoneyGram
+  // planner charges. Fold it into the all-in total so quotes never understate.
+  const swapFee = assetMeta.stable ? 0 : round2(amount * HQ_SWAP_FEE_PCT);
+  const total = round2(amount + loaditFee + swapFee);
   const savingsAbs = round2(Math.max(0, legacyFee - loaditFee));
   const savingsPct = clamp(Math.round((1 - loaditFee / legacyFee) * 100), 0, 99);
 
@@ -338,6 +345,7 @@ export function computeRoute(input: RouteInput): RouteResult {
     network,
     loaditFee,
     feePct: LOADIT_FEE_PCT,
+    swapFee,
     total,
     networkCost,
     legacyFee,

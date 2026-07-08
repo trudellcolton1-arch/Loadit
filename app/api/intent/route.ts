@@ -6,6 +6,7 @@ import {
   routeIntent,
 } from "@/lib/intent";
 import { getHQQuote, toWire } from "@/lib/hq";
+import { limit } from "@/lib/ratelimit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,13 +22,15 @@ export const dynamic = "force-dynamic";
  * lib/intent.ts, shared with the /api/hq assistant.
  */
 export async function POST(req: Request) {
+  const limited = limit(req, "intent", 20);
+  if (limited) return limited;
   let body: { message?: string };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ ok: false, reason: "bad_request" }, { status: 400 });
   }
-  const message = (body.message || "").trim();
+  const message = (body.message || "").trim().slice(0, 2000);
   if (!message) {
     return NextResponse.json({ ok: false, reason: "empty" }, { status: 422 });
   }

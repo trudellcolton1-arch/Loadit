@@ -31,15 +31,28 @@ const RPCS: Partial<Record<NetworkId, string>> = {
   base: "https://base.publicnode.com",
 };
 
-async function gasPriceWei(rpc: string): Promise<number | null> {
+/** fetch with a hard timeout — a stalled public RPC must not hang the router. */
+async function fetchT(url: string, opts: RequestInit = {}, ms = 4000): Promise<Response | null> {
+  const c = new AbortController();
+  const to = setTimeout(() => c.abort(), ms);
   try {
-    const r = await fetch(rpc, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_gasPrice", params: [] }),
-      next: { revalidate: 30 },
-    });
-    if (!r.ok) return null;
+    return await fetch(url, { ...opts, signal: c.signal });
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(to);
+  }
+}
+
+async function gasPriceWei(rpc: string): Promise<number | null> {
+  const r = await fetchT(rpc, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_gasPrice", params: [] }),
+    next: { revalidate: 30 },
+  });
+  if (!r || !r.ok) return null;
+  try {
     const d = await r.json();
     const wei = parseInt(d?.result, 16);
     return Number.isFinite(wei) ? wei : null;
@@ -49,11 +62,11 @@ async function gasPriceWei(rpc: string): Promise<number | null> {
 }
 
 async function ethPrice(): Promise<number | null> {
+  const r = await fetchT("https://api.coinbase.com/v2/exchange-rates?currency=ETH", {
+    next: { revalidate: 30 },
+  });
+  if (!r || !r.ok) return null;
   try {
-    const r = await fetch("https://api.coinbase.com/v2/exchange-rates?currency=ETH", {
-      next: { revalidate: 30 },
-    });
-    if (!r.ok) return null;
     const d = await r.json();
     const usd = Number(d?.data?.rates?.USD);
     return usd > 0 ? usd : null;
