@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { sanitizeAmountInput } from "@/lib/money";
 import {
   View, Text, TextInput, TouchableOpacity, ActivityIndicator,
   ScrollView, StyleSheet, Image, KeyboardAvoidingView, Platform, Alert,
@@ -17,7 +18,11 @@ import { Mark } from "@/components/Mark";
  * Clean card UI; every accent follows the user's chosen theme color.
  */
 
-type Step = "method" | "amount" | "wallet" | "success";
+type Step = "method" | "amount" | "wallet" | "success" | "submitted";
+
+// URL fragments providers redirect to when a payment completes / is cancelled.
+const SUCCESS_HINTS = ["success", "complete", "completed", "confirmed", "thank", "return"];
+const CANCEL_HINTS = ["cancel", "canceled", "cancelled", "failed", "declined"];
 
 const METHODS = [
   { id: "Cash", label: "Cash", icon: "💵" },
@@ -76,17 +81,29 @@ export default function Load() {
     }
   };
 
-  // Licensed-provider checkout in-app; closing it lands on Success.
+  // Licensed-provider checkout in-app. We only claim SUCCESS when the provider
+  // itself redirects to a success URL; a manual close lands on an honest
+  // "submitted — we'll confirm in your wallet" screen, never a fake receipt.
   if (checkoutUrl) {
+    const onNav = (navUrl: string) => {
+      const u = navUrl.toLowerCase();
+      if (u === checkoutUrl.toLowerCase()) return;
+      if (CANCEL_HINTS.some((h) => u.includes(h))) { setCheckoutUrl(null); setStep("wallet"); return; }
+      if (SUCCESS_HINTS.some((h) => u.includes(h))) { setCheckoutUrl(null); setStep("success"); }
+    };
     return (
       <SafeAreaView style={styles.wrap} edges={["top", "bottom"]}>
         <View style={styles.webHead}>
           <Text style={styles.webTitle}>{provider === "coinbase" ? "Coinbase" : "Stripe"} · secure checkout</Text>
-          <TouchableOpacity onPress={() => { setCheckoutUrl(null); setStep("success"); }}>
-            <Text style={styles.webDone}>Done</Text>
+          <TouchableOpacity onPress={() => { setCheckoutUrl(null); setStep("submitted"); }}>
+            <Text style={styles.webDone}>Close</Text>
           </TouchableOpacity>
         </View>
-        <WebView source={{ uri: checkoutUrl }} style={{ flex: 1, backgroundColor: t.bg }} />
+        <WebView
+          source={{ uri: checkoutUrl }}
+          style={{ flex: 1, backgroundColor: t.bg }}
+          onNavigationStateChange={(s) => onNav(s.url)}
+        />
       </SafeAreaView>
     );
   }
@@ -95,7 +112,7 @@ export default function Load() {
     <SafeAreaView style={styles.wrap} edges={["top", "bottom"]}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-          {step !== "success" && (
+          {step !== "success" && step !== "submitted" && (
             <TouchableOpacity
               onPress={() => (step === "method" ? router.back() : setStep(step === "wallet" ? "amount" : "method"))}
             >
@@ -139,7 +156,7 @@ export default function Load() {
                 <TextInput
                   style={styles.amountInput}
                   value={amount}
-                  onChangeText={(v) => setAmount(v.replace(/[^0-9.]/g, ""))}
+                  onChangeText={(v) => setAmount(sanitizeAmountInput(v))}
                   keyboardType="decimal-pad"
                   maxLength={8}
                   selectionColor={t.accent}
@@ -226,6 +243,19 @@ export default function Load() {
               </View>
               <TouchableOpacity style={styles.cta} onPress={() => router.replace("/")}>
                 <Text style={styles.ctaText}>Success</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {step === "submitted" && (
+            <View style={styles.successWrap}>
+              <Text style={{ fontSize: 44 }}>⏳</Text>
+              <Text style={styles.successAmount}>Payment submitted</Text>
+              <Text style={styles.successNote}>
+                If you completed the {provider === "coinbase" ? "Coinbase" : "Stripe"} checkout, your {coin} is on its way to your wallet — watch for it there. If you closed it without paying, nothing was charged.
+              </Text>
+              <TouchableOpacity style={styles.cta} onPress={() => router.replace("/")}>
+                <Text style={styles.ctaText}>Done</Text>
               </TouchableOpacity>
             </View>
           )}

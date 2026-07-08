@@ -73,6 +73,9 @@ class PulseBleModule : Module() {
           if (payload.isNotEmpty()) sendEvent("onNoteReceived", mapOf("payload" to payload))
         } else {
           buffer.append(chunk)
+          // Unterminated flood guard: a note is a few hundred bytes; past 8 KB a
+          // peer is streaming garbage to exhaust memory, so discard the buffer.
+          if (buffer.length > 8192) buffer.setLength(0)
         }
       }
       if (responseNeeded) {

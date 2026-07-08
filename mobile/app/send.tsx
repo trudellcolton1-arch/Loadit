@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { sanitizeAmountInput } from "@/lib/money";
 import {
   View, Text, TextInput, TouchableOpacity, ActivityIndicator,
   ScrollView, StyleSheet, Image, KeyboardAvoidingView, Platform, Alert,
@@ -66,7 +67,8 @@ export default function Send() {
   const [source, setSource] = useState<"wallet" | "buy">("wallet");
   const [password, setPassword] = useState("");
 
-  const [phase, setPhase] = useState<"form" | "review" | "success">("form");
+  const [phase, setPhase] = useState<"form" | "review" | "success" | "pending">("form");
+  const sendLock = useRef(false); // synchronous guard against double-broadcast
   const [busy, setBusy] = useState(false);
   const [build, setBuild] = useState<SendBuild | null>(null);
   const [tokenHold, setTokenHold] = useState<string | null>(null);
@@ -142,6 +144,8 @@ export default function Send() {
   // "I have crypto": phase 2 — sign + broadcast.
   const confirm = async () => {
     if (!me || !tokenHold || !build) return;
+    if (sendLock.current) return; // synchronous guard — never broadcast twice
+    sendLock.current = true;
     setBusy(true);
     try {
       const r = await signAndSubmit(tokenHold, me.id, build, password);
@@ -149,13 +153,21 @@ export default function Send() {
         setSignature(r.signature);
         setPhase("success");
         setPassword("");
+      } else if (r.errorType === "RPC_TIMEOUT" || r.errorType === "RPC_FAILURE") {
+        // Ambiguous: the tx may already be broadcasting. Do NOT invite a blind
+        // retry that could double-spend — send them to a "check your wallet"
+        // terminal state and require a fresh build before any resend.
+        setBuild(null);
+        setPhase("pending");
       } else {
         Alert.alert("Couldn't send", friendlyError(r.errorType, r.error));
       }
     } catch {
-      Alert.alert("Network", "Couldn't reach Hylaq. Try again.");
+      setBuild(null);
+      setPhase("pending");
     } finally {
       setBusy(false);
+      sendLock.current = false;
     }
   };
 
@@ -198,7 +210,18 @@ export default function Send() {
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
 
-          {phase === "success" && build ? (
+          {phase === "pending" ? (
+            <View style={styles.successWrap}>
+              <Text style={{ fontSize: 44 }}>⏳</Text>
+              <Text style={styles.successTitle}>Send may be processing</Text>
+              <Text style={styles.successSub}>
+                The network didn&apos;t confirm in time, so your {asset} transfer may have gone through. Check your wallet before trying again — don&apos;t re-send unless you&apos;re sure it didn&apos;t arrive, to avoid paying twice.
+              </Text>
+              <TouchableOpacity style={styles.cta} onPress={() => { setPhase("form"); setBuild(null); setSignature(null); setTokenHold(null); }}>
+                <Text style={styles.ctaText}>Done</Text>
+              </TouchableOpacity>
+            </View>
+          ) : phase === "success" && build ? (
             <View style={styles.successWrap}>
               <View style={styles.successCircle}><Text style={styles.successTick}>✓</Text></View>
               <Text style={styles.successTitle}>Sent {money(amount)} to {targetLabel}</Text>
@@ -289,7 +312,7 @@ export default function Send() {
                     <TextInput
                       style={styles.amountInput}
                       value={amountText}
-                      onChangeText={(v) => setAmountText(v.replace(/[^0-9.]/g, ""))}
+                      onChangeText={(v) => setAmountText(sanitizeAmountInput(v))}
                       keyboardType="decimal-pad"
                       placeholder="0"
                       placeholderTextColor={t.faint}

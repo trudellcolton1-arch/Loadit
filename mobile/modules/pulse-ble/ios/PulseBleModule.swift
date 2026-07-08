@@ -67,6 +67,11 @@ final class PulseBlePeripheral: NSObject, CBPeripheralManagerDelegate {
     ])
   }
 
+  // Max bytes we'll buffer before a newline. A Pulse note is a few hundred
+  // bytes; anything past this is a peer streaming garbage to exhaust memory, so
+  // we drop the buffer rather than crash.
+  private let kMaxBuffer = 8192
+
   func peripheralManager(_ peripheral: CBPeripheralManager, didReceiveWrite requests: [CBATTRequest]) {
     for req in requests {
       if req.characteristic.uuid == kNoteChar, let val = req.value {
@@ -75,6 +80,8 @@ final class PulseBlePeripheral: NSObject, CBPeripheralManagerDelegate {
           let noteData = buffer.subdata(in: buffer.startIndex..<nl)
           buffer.removeSubrange(buffer.startIndex...nl)
           if let s = String(data: noteData, encoding: .utf8), !s.isEmpty { onNote?(s) }
+        } else if buffer.count > kMaxBuffer {
+          buffer.removeAll(keepingCapacity: false) // unterminated flood — discard
         }
       }
     }

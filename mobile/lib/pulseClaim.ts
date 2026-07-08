@@ -16,7 +16,13 @@ import { publicKeySpkiBase64, signBase64, verifyBase64 } from "./deviceKey";
  * exactly the same bytes.
  */
 
-export const PULSE_PROTOCOL = 1;
+// v2: the signature now also commits to the manifest + evidence (v1 left them
+// unsigned, so a relay could strip/swap them). Bumped so a v1 note cleanly
+// fails verification on a v2 phone instead of mis-verifying.
+export const PULSE_PROTOCOL = 2;
+
+/** Largest single Pulse we'll accept as a sanity bound on decoded notes. */
+const MAX_PULSE_USD = 100_000;
 
 export interface PulseNote {
   v: number;
@@ -44,7 +50,9 @@ export interface PulseNote {
   sig: string;
 }
 
-/** Deterministic bytes both phones sign/verify — everything but the signature. */
+/** Deterministic bytes both phones sign/verify — everything but the signature.
+ * Includes a hash of the manifest + evidence so the signature commits to them
+ * and a BLE relay can't strip or swap either without invalidating the note. */
 function canonicalBody(n: Omit<PulseNote, "sig">): string {
   return JSON.stringify([
     n.v,
@@ -59,6 +67,8 @@ function canonicalBody(n: Omit<PulseNote, "sig">): string {
     n.memo ?? "",
     n.createdAt,
     n.pulseId ?? "",
+    n.manifest ? sha256Hex(JSON.stringify(n.manifest)) : "",
+    n.evidence ? sha256Hex(JSON.stringify(n.evidence)) : "",
   ]);
 }
 
@@ -125,7 +135,12 @@ function sha256Hex(s: string): string {
 /** Verify a received note's signature against the sender key it carries. */
 export function verifyPulseNote(n: PulseNote): boolean {
   if (!n || n.v !== PULSE_PROTOCOL || !n.from?.pub || !n.sig) return false;
-  if (!(n.amountUsd > 0)) return false;
+  // Type-check the amount (a string "100" passes `> 0` but corrupts sums).
+  if (typeof n.amountUsd !== "number" || !Number.isFinite(n.amountUsd)) return false;
+  if (n.amountUsd <= 0 || n.amountUsd > MAX_PULSE_USD) return false;
+  // A note with no escrow id can never settle — reject it rather than let it
+  // show as phantom "+$X pending" that a receiver mistakes for real money.
+  if (!n.pulseId || typeof n.pulseId !== "string") return false;
   const { sig, ...body } = n;
   return verifyBase64(canonicalBody(body), sig, n.from.pub);
 }
@@ -164,13 +179,16 @@ export async function noteToClaimPacket(
   monotonicClock: number
 ): Promise<ClaimPacket> {
   const deviceId = await getDeviceId();
+  // Invariant: only verified notes reach here, and verifyPulseNote rejects any
+  // without a pulseId — but guard so a future caller can't create a phantom.
+  if (!n.pulseId) throw new Error("note has no pulseId");
   const man = n.manifest;
   // payloadHash: prefer the value Hylaq put in the manifest; else derive it from
   // the manifest payloads with the same canonicalization the server uses.
   const payloadHash = man?.payloadHash
     ?? (man?.payloads !== undefined ? sha256Hex(JSON.stringify(man.payloads)) : undefined);
   const packet: Omit<ClaimPacket, "signature"> = {
-    pulseId: n.pulseId || n.id,
+    pulseId: n.pulseId, // guaranteed present (verifyPulseNote rejects notes without it)
     handleId: collectorHandleId,
     deviceId,
     nonce: n.id,

@@ -17,6 +17,7 @@ export default function Buy() {
   const [provider, setProvider] = useState<OnrampProvider>(preferredProvider(String(asset)));
   const [loading, setLoading] = useState(false);
   const [url, setUrl] = useState<string | null>(null);
+  const [submitted, setSubmitted] = useState(false);
 
   const amt = Math.max(1, Number(amount) || 0);
   const fee = Math.round(Math.max(1, amt * 0.0075) * 100) / 100;
@@ -44,15 +45,39 @@ export default function Buy() {
     }
   };
 
+  // Honest post-checkout state — never a fabricated success.
+  if (submitted) {
+    return (
+      <SafeAreaView style={styles.wrap} edges={["bottom"]}>
+        <View style={styles.submittedWrap}>
+          <Text style={{ fontSize: 44 }}>⏳</Text>
+          <Text style={styles.submittedTitle}>Payment submitted</Text>
+          <Text style={styles.submittedNote}>
+            If you completed the {provider === "coinbase" ? "Coinbase" : "Stripe"} checkout, your {String(asset)} is on its way to your wallet. If you closed it without paying, nothing was charged.
+          </Text>
+          <TouchableOpacity style={styles.cta} onPress={() => router.replace("/")}>
+            <Text style={styles.ctaText}>Done</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   // In-app licensed-provider checkout.
   if (url) {
+    const onNav = (navUrl: string) => {
+      const u = navUrl.toLowerCase();
+      if (u === url.toLowerCase()) return;
+      if (/(cancel|failed|declined)/.test(u)) { setUrl(null); return; }
+      if (/(success|complete|confirmed|thank|return)/.test(u)) { setUrl(null); setSubmitted(true); }
+    };
     return (
       <SafeAreaView style={styles.wrap} edges={["bottom"]}>
         <View style={styles.webHead}>
           <Text style={styles.webTitle}>{provider === "coinbase" ? "Coinbase" : "Stripe"} · secure checkout</Text>
-          <TouchableOpacity onPress={() => setUrl(null)}><Text style={styles.close}>Close</Text></TouchableOpacity>
+          <TouchableOpacity onPress={() => { setUrl(null); setSubmitted(true); }}><Text style={styles.close}>Close</Text></TouchableOpacity>
         </View>
-        <WebView source={{ uri: url }} style={{ flex: 1, backgroundColor: t.bg }} />
+        <WebView source={{ uri: url }} style={{ flex: 1, backgroundColor: t.bg }} onNavigationStateChange={(s) => onNav(s.url)} />
       </SafeAreaView>
     );
   }
@@ -133,6 +158,9 @@ const makeStyles = (t: Theme) =>
     providerTextOn: { color: t.text },
     cta: { backgroundColor: t.button, borderRadius: 999, paddingVertical: 16, alignItems: "center", marginTop: 20 },
     ctaText: { color: t.buttonText, fontWeight: "700", fontSize: 16 },
+    submittedWrap: { flex: 1, alignItems: "center", justifyContent: "center", gap: 10, padding: 28 },
+    submittedTitle: { color: t.text, fontSize: 22, fontWeight: "800", marginTop: 6 },
+    submittedNote: { color: t.dim, fontSize: 14, textAlign: "center", lineHeight: 20 },
     back: { color: t.faint, textAlign: "center", marginTop: 14, fontSize: 14 },
     legal: { color: t.faint, fontSize: 11, lineHeight: 16, marginTop: 18, textAlign: "center" },
     webHead: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: 14, borderBottomColor: t.border, borderBottomWidth: 1 },
