@@ -61,6 +61,7 @@ export default function MoneyGramBrief() {
       <div className="mg-bar">
         <a href="/" className="mg-home">← loadit.net</a>
         <div className="mg-bar-actions">
+          <a href="/moneygram/status" className="mg-demo">● Integration status</a>
           <a href="/moneygram/demo" className="mg-demo">▶ See the demo flow</a>
           <a href="/moneygram.pdf" download className="mg-dl">↓ Download PDF</a>
         </div>

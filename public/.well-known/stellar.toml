@@ -1,7 +1,10 @@
 # Loadit — Stellar SEP-1 info file (MoneyGram Ramps onboarding, testnet phase)
-VERSION = "2.0.0"
+# SIGNING_KEY is used for SEP-10 client_domain verification: Loadit's server
+# co-signs the anchor's auth challenge with this key to prove the request came
+# from the loadit.net wallet (wallet-partner attribution).
+VERSION = "2.1.0"
 NETWORK_PASSPHRASE = "Test SDF Network ; September 2015"
-SIGNING_KEY = "GCKCZHXEC5TKZNGRQIFZMC2AZAFRUG7IWZAKWBKGCA5B2MVQIF7M6FGX"
+SIGNING_KEY = "GCNLOGNOEEROESV4RD6NRJZWYF7W4GHFJE7H2R4W35OYWY6QQ4SIF4CC"
 
 [DOCUMENTATION]
 ORG_NAME = "Loadit"
