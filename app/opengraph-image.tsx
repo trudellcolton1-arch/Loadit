@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
 import { SITE } from "@/lib/constants";
+import { OG_MARK } from "@/lib/ogMark";
 
 export const runtime = "edge";
 export const alt = `${SITE.name} — ${SITE.tagline}`;
@@ -37,7 +38,7 @@ export default function OgImage() {
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={`${SITE.url}/loadit-mark.png`}
+            src={OG_MARK}
             width={56}
             height={56}
             alt=""
