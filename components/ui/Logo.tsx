@@ -1,9 +1,8 @@
 import { cn } from "@/lib/utils";
 
 /**
- * Loadit brand mark — the QR + rising-arrow logo.
- * Rendered light-on-dark (white QR, green arrow) so it reads on dark surfaces.
- * Sizing is controlled via className (the asset is square).
+ * Loadit brand mark — the green "L→" logo (transparent PNG, reads on dark
+ * surfaces). Sizing is controlled via className (the asset is square).
  */
 export function Logo({
   className,
