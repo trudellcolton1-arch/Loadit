@@ -52,7 +52,7 @@ export function buildJsonLd() {
         url: SITE.url,
         description: SITE.description,
         slogan: SITE.tagline,
-        logo: `${SITE.url}/icon.svg`,
+        logo: `${SITE.url}/icon-512.png`,
       },
       {
         "@type": "WebSite",
