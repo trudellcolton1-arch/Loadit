@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
 import { SITE } from "@/lib/constants";
+import { OG_MARK } from "@/lib/ogMark";
 
 /**
  * Shared Open Graph / share-card renderer. Every non-home page supplies its own
@@ -72,7 +73,8 @@ export function makeOgImage(cfg: OgConfig): ImageResponse {
         {/* header */}
         <div style={{ display: "flex", alignItems: "center", gap: 18, zIndex: 1 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={`${SITE.url}/loadit-mark.png`} width={52} height={52} alt="" />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={OG_MARK} width={52} height={52} alt="" />
           <div
             style={{
               display: "flex",
