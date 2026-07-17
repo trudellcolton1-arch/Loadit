@@ -18,33 +18,45 @@ const USDC_ISSUER = "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5";
 
 type State = "done" | "live" | "ready" | "pending";
 
-async function signingConfigured(): Promise<boolean> {
+interface VerifyResult {
+  tomlReachable?: boolean;
+  sep10Authenticated?: boolean;
+  sep24DepositInitiated?: boolean;
+  checkedAt?: string;
+}
+
+async function liveCheck(): Promise<VerifyResult> {
   try {
-    const res = await fetch("https://loadit.net/api/anchor/sign-challenge", { cache: "no-store" });
-    const d = await res.json();
-    return Boolean(d?.configured);
+    const res = await fetch("https://loadit.net/api/anchor/verify", { cache: "no-store" });
+    return (await res.json()) as VerifyResult;
   } catch {
-    return false;
+    return {};
   }
 }
 
 export default async function StatusPage() {
-  const signingLive = await signingConfigured();
+  const v = await liveCheck();
+  const signingLive = Boolean(v.sep10Authenticated);
+  const sep24Live = Boolean(v.sep24DepositInitiated);
 
   const checks: { key: string; title: string; detail: string; state: State }[] = [
     { key: "SEP-1", title: "stellar.toml hosted & valid", state: "live", detail: "loadit.net/.well-known/stellar.toml — org info, principal, SIGNING_KEY. Passes the Stellar TOML checker." },
-    { key: "SEP-10", title: "Web Auth + client_domain signing", state: signingLive ? "live" : "ready", detail: "Server co-signs the anchor's challenge with the toml SIGNING_KEY (non-custodial, home_domain flow). The private key never touches the client." },
-    { key: "SEP-24", title: "Interactive deposit flow", state: "ready", detail: "App renders the reference code + hosted webview slot; wires to the live anchor via one config value on sandbox allowlisting." },
+    { key: "SEP-10", title: "Web Auth + client_domain signing", state: signingLive ? "live" : "ready", detail: signingLive
+      ? "Verified live against MoneyGram's sandbox anchor — Loadit co-signs the challenge with its SIGNING_KEY and the anchor issues a JWT. Wallet-partner attribution confirmed."
+      : "Server co-signs the anchor's challenge with the toml SIGNING_KEY (non-custodial, home_domain flow). The private key never touches the client." },
+    { key: "SEP-24", title: "Interactive deposit flow", state: sep24Live ? "live" : "ready", detail: sep24Live
+      ? "Verified live — an authenticated deposit request returns MoneyGram's hosted interactive URL (KYC + cash reference code). End-to-end against the sandbox anchor."
+      : "App renders the reference code + hosted webview slot; wires to the live anchor via one config value." },
     { key: "SEP-9", title: "KYC pass-through", state: "ready", detail: "KYC handled entirely in MoneyGram's hosted UI; non-custodial wallets pass no mandatory amount field." },
-    { key: "Asset", title: "USDC on Stellar", state: "live", detail: "Trustline established on the funds account for testnet USDC." },
+    { key: "Asset", title: "USDC on Stellar", state: "live", detail: "Trustline established on the funds account for testnet USDC (issuer matches the anchor's)." },
   ];
 
   const stages: { label: string; state: State }[] = [
     { label: "SEP-1 toml live", state: "done" },
     { label: "Testnet keypairs funded", state: "done" },
-    { label: "SEP-10 signing service", state: signingLive ? "done" : "pending" },
-    { label: "Sandbox allowlisting", state: "pending" },
-    { label: "Certification", state: "pending" },
+    { label: "Sandbox allowlisting", state: signingLive ? "done" : "pending" },
+    { label: "SEP-10 authenticated", state: signingLive ? "done" : "pending" },
+    { label: "SEP-24 deposit tested", state: sep24Live ? "done" : "pending" },
     { label: "KYB + agreements", state: "pending" },
     { label: "Production", state: "pending" },
   ];
@@ -74,8 +86,9 @@ export default async function StatusPage() {
 
         <h1 className="st-h1">Integration readiness — live</h1>
         <p className="st-lede">
-          What&apos;s implemented on Loadit&apos;s side of the SEP standards, checked against the live
-          deployment. Everything below is done except the steps that require MoneyGram to allowlist us.
+          {signingLive
+            ? "Authenticated end-to-end against MoneyGram's sandbox anchor: SEP-10 issues a JWT with Loadit's client_domain attribution, and a SEP-24 deposit returns the hosted interactive URL. The badges below are checked live on every load — not hardcoded."
+            : "What's implemented on Loadit's side of the SEP standards, checked against the live deployment."}
         </p>
 
         <section className="st-checks">
