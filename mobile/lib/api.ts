@@ -246,6 +246,37 @@ export async function getOnramp(
   return res.json();
 }
 
+export interface ScreenResult {
+  ok: boolean;
+  vendor?: string;
+  /** Did the oracle actually answer? false on outage / no key. */
+  checked: boolean;
+  /** True ONLY on a confirmed sanctions match — the block signal. */
+  sanctioned: boolean;
+  categories: string[];
+  configured: boolean;
+  reason?: string;
+}
+
+/**
+ * Screen a destination wallet address against international sanctions lists
+ * (Chainalysis, server-side). We only ever block on `sanctioned: true`; an
+ * outage returns checked:false and the caller proceeds — an oracle hiccup must
+ * never freeze a legitimate payment.
+ */
+export async function screenAddress(address: string): Promise<ScreenResult> {
+  try {
+    const res = await fetch(`${API_BASE}/api/screen`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ address }),
+    });
+    return res.json();
+  } catch {
+    return { ok: false, checked: false, sanctioned: false, categories: [], configured: false, reason: "network" };
+  }
+}
+
 /** HQ provider preference: which licensed on-ramp to try first for an asset. */
 export function preferredProvider(asset: string): OnrampProvider {
   // Coinbase covers BTC/SOL/XRP natively; Stripe is great for card→USDC/ETH.
