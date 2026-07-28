@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { guardOnramp } from "@/lib/risk";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -65,6 +66,10 @@ export async function POST(req: Request) {
     );
   }
 
+  // HQ Fraud Shield: score the attempt before the provider hand-off.
+  const { verdict, blocked } = await guardOnramp(req, { amountUsd: amount, asset, wallet, payMethod: "card" }, "onramp/stripe", CORS);
+  if (blocked) return blocked;
+
   try {
     const params = new URLSearchParams();
     params.set("transaction_details[destination_currency]", m.currency);
@@ -97,6 +102,7 @@ export async function POST(req: Request) {
         id: data.id,
         // Hosted page that mounts the onramp UI with this client_secret.
         url: `https://loadit.net/onramp/stripe?cs=${encodeURIComponent(data.client_secret)}`,
+        risk: verdict.decision,
       },
       { headers: CORS }
     );
