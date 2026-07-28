@@ -39,10 +39,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, reason: "invalid_params" }, { status: 422 });
   }
 
-  // HQ Fraud Shield: score the request before planning the ramp.
-  const shield = await guardOnramp(req, { provider: "moneygram", amountUsd, asset, wallet });
-  if (shield) return shield;
+  // HQ Fraud Shield: score the attempt before planning the ramp.
+  const { verdict, blocked } = await guardOnramp(req, { amountUsd, asset, wallet, payMethod: "cash" }, "onramp/moneygram");
+  if (blocked) return blocked;
 
   const plan = planMoneyGram(amountUsd, asset, wallet);
-  return NextResponse.json({ ok: true, ...plan });
+  return NextResponse.json({ ok: true, ...plan, risk: verdict.decision });
 }

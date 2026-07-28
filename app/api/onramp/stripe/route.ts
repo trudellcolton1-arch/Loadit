@@ -66,9 +66,9 @@ export async function POST(req: Request) {
     );
   }
 
-  // HQ Fraud Shield: score the request before the provider hand-off.
-  const shield = await guardOnramp(req, { provider: "stripe", amountUsd: amount, asset, wallet, headers: CORS });
-  if (shield) return shield;
+  // HQ Fraud Shield: score the attempt before the provider hand-off.
+  const { verdict, blocked } = await guardOnramp(req, { amountUsd: amount, asset, wallet, payMethod: "card" }, "onramp/stripe", CORS);
+  if (blocked) return blocked;
 
   try {
     const params = new URLSearchParams();
@@ -102,6 +102,7 @@ export async function POST(req: Request) {
         id: data.id,
         // Hosted page that mounts the onramp UI with this client_secret.
         url: `https://loadit.net/onramp/stripe?cs=${encodeURIComponent(data.client_secret)}`,
+        risk: verdict.decision,
       },
       { headers: CORS }
     );

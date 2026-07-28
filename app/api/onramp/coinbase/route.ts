@@ -62,9 +62,9 @@ export async function POST(req: Request) {
     );
   }
 
-  // HQ Fraud Shield: score the request before the provider hand-off.
-  const shield = await guardOnramp(req, { provider: "coinbase", amountUsd: amount, asset, wallet, headers: CORS });
-  if (shield) return shield;
+  // HQ Fraud Shield: score the attempt before the provider hand-off.
+  const { verdict, blocked } = await guardOnramp(req, { amountUsd: amount, asset, wallet, payMethod: "card" }, "onramp/coinbase", CORS);
+  if (blocked) return blocked;
 
   const params = new URLSearchParams();
   params.set("appId", appId);
@@ -79,7 +79,7 @@ export async function POST(req: Request) {
 
   const url = `https://pay.coinbase.com/buy/select-asset?${params.toString()}`;
   return NextResponse.json(
-    { ok: true, provider: "coinbase", url, network: m.network, asset: m.asset },
+    { ok: true, provider: "coinbase", url, network: m.network, asset: m.asset, risk: verdict.decision },
     { headers: CORS }
   );
 }
