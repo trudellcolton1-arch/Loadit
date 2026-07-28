@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { planMoneyGram, moneygramConfigured } from "@/lib/moneygram";
 import { ASSETS, type Asset } from "@/lib/aero";
+import { guardOnramp } from "@/lib/risk";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -37,6 +38,10 @@ export async function POST(req: Request) {
   if (!Number.isFinite(amountUsd) || amountUsd <= 0 || amountUsd > 1_000_000 || !ASSET_IDS.includes(asset)) {
     return NextResponse.json({ ok: false, reason: "invalid_params" }, { status: 422 });
   }
+
+  // HQ Fraud Shield: score the request before planning the ramp.
+  const shield = await guardOnramp(req, { provider: "moneygram", amountUsd, asset, wallet });
+  if (shield) return shield;
 
   const plan = planMoneyGram(amountUsd, asset, wallet);
   return NextResponse.json({ ok: true, ...plan });

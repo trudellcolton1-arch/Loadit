@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { guardOnramp } from "@/lib/risk";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -60,6 +61,10 @@ export async function POST(req: Request) {
       { status: 422, headers: CORS }
     );
   }
+
+  // HQ Fraud Shield: score the request before the provider hand-off.
+  const shield = await guardOnramp(req, { provider: "coinbase", amountUsd: amount, asset, wallet, headers: CORS });
+  if (shield) return shield;
 
   const params = new URLSearchParams();
   params.set("appId", appId);
