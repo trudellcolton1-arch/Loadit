@@ -9,7 +9,7 @@ import { Redirect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@/lib/authContext";
 import {
-  resolveHandle, getOnramp, getMyHandle, preferredProvider,
+  resolveHandle, getOnramp, getMyHandle, preferredProvider, screenAddress,
   type HandleProfile, type OnrampProvider,
 } from "@/lib/api";
 import {
@@ -107,6 +107,30 @@ export default function Send() {
 
   const hasTarget = Boolean(recipient || externalAddr);
 
+  /**
+   * Sanctions gate — screen the destination address before any money moves.
+   * A confirmed OFAC/sanctions hit hard-blocks the send. An unreachable or
+   * unconfigured oracle never punishes the user: we only ever stop on a
+   * verified match. Returns true when it's safe to proceed.
+   */
+  const passesScreening = async (): Promise<boolean> => {
+    const dest = externalAddr || (recipient ? addressFor(recipient, asset) : null);
+    if (!dest) return true; // nothing concrete to screen; buildSend handles the rest
+    try {
+      const r = await screenAddress(dest);
+      if (r.sanctioned) {
+        Alert.alert(
+          "Can't send to this address",
+          "This wallet address appears on an international sanctions list, so Loadit can't send to it. If you believe this is an error, contact support@loadit.net."
+        );
+        return false;
+      }
+    } catch {
+      // Fail-open: never block a legitimate payment on a screening outage.
+    }
+    return true;
+  };
+
   // "I have crypto": phase 1 — mint token + build tx.
   const preview = async () => {
     if (!me) { Alert.alert("Hylaq needed", "Log in with Hylaq to send from your wallet."); return; }
@@ -114,6 +138,7 @@ export default function Send() {
     if (amount < 1) { Alert.alert("Amount", "Enter an amount of at least $1."); return; }
     setBusy(true);
     try {
+      if (!(await passesScreening())) return;
       // Reuse the minted token across previews for the same password — fewer
       // calls, so we don't trip Hylaq's transaction rate limit while adjusting.
       let token = tokenHold;
@@ -181,6 +206,7 @@ export default function Send() {
     }
     setBusy(true);
     try {
+      if (!(await passesScreening())) return;
       const provider = preferredProvider(asset) as OnrampProvider;
       const r = await getOnramp(provider, { amount_usd: amount, asset, wallet: dest });
       if (r.ok && r.url) setUrl(r.url);
