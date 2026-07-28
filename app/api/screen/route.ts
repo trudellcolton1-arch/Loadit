@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { limit } from "@/lib/ratelimit";
-import { screenAddress, screeningConfigured } from "@/lib/screen";
+import { screenAddress, screeningConfigured, screeningVendor } from "@/lib/screen";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -14,7 +14,7 @@ export const dynamic = "force-dynamic";
  * screening is live.
  */
 export function GET() {
-  return NextResponse.json({ configured: screeningConfigured(), vendor: "Chainalysis" });
+  return NextResponse.json({ configured: screeningConfigured(), vendor: screeningVendor() });
 }
 
 export async function POST(req: Request) {
@@ -34,5 +34,5 @@ export async function POST(req: Request) {
   }
 
   const result = await screenAddress(address);
-  return NextResponse.json({ ok: true, vendor: "Chainalysis", ...result });
+  return NextResponse.json({ ok: true, ...result });
 }
