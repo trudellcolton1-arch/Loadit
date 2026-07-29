@@ -1,18 +1,56 @@
 import { unstable_cache } from "next/cache";
-import { hylaqQuery, hylaqConfigured } from "@/lib/hylaqDb";
 
 /**
  * HQ CONTENT ENGINE — read-only view of the SEO pages HQ writes for this
- * domain. HQ (Hylaq Quantum) owns generation and publishes into Hylaq's shared
- * Neon Postgres (table hq_content_page, tagged per domain); Loadit only READS
- * and renders the pages tagged for loadit.net at /p/<slug>.
+ * domain. HQ (Hylaq Quantum) owns generation and publishes into ITS OWN Neon
+ * Postgres (table hq_content_page, tagged per domain) — a separate database
+ * from the primary Hylaq DB that powers handle lookups. Loadit only READS and
+ * renders the pages tagged for loadit.net at /p/<slug>.
+ *
+ * Connection: HQ_CONTENT_DATABASE_URL (HQ's Neon), falling back to
+ * HYLAQ_DATABASE_URL for a single-database setup. Same Neon HTTP SQL path as
+ * lib/hylaqDb.ts.
  *
  * Both helpers are ISR-cached (10 min) and never throw — a DB hiccup or a
- * missing HYLAQ_DATABASE_URL renders as "no pages", never a 500.
+ * missing connection string renders as "no pages", never a 500.
  */
 
 const DOMAINS = ["loadit.net", "www.loadit.net"];
 const REVALIDATE_S = 600;
+
+function contentDbUrl(): string | undefined {
+  return process.env.HQ_CONTENT_DATABASE_URL || process.env.HYLAQ_DATABASE_URL;
+}
+
+function contentDbConfigured(): boolean {
+  return Boolean(contentDbUrl());
+}
+
+/** Read-only query against HQ's content Neon over its HTTPS SQL endpoint. */
+async function contentQuery<T = Record<string, unknown>>(
+  query: string,
+  params: unknown[] = []
+): Promise<T[]> {
+  const conn = contentDbUrl();
+  if (!conn) throw new Error("content db not configured");
+  const host = new URL(conn.replace(/^postgres(ql)?:\/\//, "https://")).hostname;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 12000);
+  try {
+    const res = await fetch(`https://${host}/sql`, {
+      method: "POST",
+      headers: { "Neon-Connection-String": conn, "Content-Type": "application/json" },
+      body: JSON.stringify({ query, params }),
+      signal: controller.signal,
+      cache: "no-store",
+    });
+    if (!res.ok) throw new Error(`content db ${res.status}`);
+    const data = (await res.json()) as { rows?: T[] };
+    return data.rows ?? [];
+  } finally {
+    clearTimeout(timeout);
+  }
+}
 
 export interface HqFaq {
   q: string;
@@ -68,11 +106,11 @@ function toFaq(v: unknown): HqFaq[] {
 }
 
 const getHqPageUncached = async (slug: string): Promise<HqPage | null> => {
-  if (!hylaqConfigured()) return null;
+  if (!contentDbConfigured()) return null;
   const clean = (slug || "").trim().toLowerCase();
   if (!clean) return null;
   try {
-    const rows = await hylaqQuery<Record<string, unknown>>(
+    const rows = await contentQuery<Record<string, unknown>>(
       `select slug, title,
               meta_description as "metaDescription",
               body_html as "bodyHtml",
@@ -107,9 +145,9 @@ export const getHqPage = unstable_cache(getHqPageUncached, ["hq-content-page"], 
 });
 
 const listHqPagesUncached = async (): Promise<HqPageSummary[]> => {
-  if (!hylaqConfigured()) return [];
+  if (!contentDbConfigured()) return [];
   try {
-    const rows = await hylaqQuery<Record<string, unknown>>(
+    const rows = await contentQuery<Record<string, unknown>>(
       `select slug, title, published_at as "publishedAt"
        from hq_content_page
        where status = 'published' and domain = any($1)
