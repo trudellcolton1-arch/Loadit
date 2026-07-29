@@ -1,8 +1,9 @@
 import type { MetadataRoute } from "next";
 import { SITE } from "@/lib/constants";
 import { ARTICLES, TOOLS } from "@/lib/learn";
+import { listHqPages } from "@/lib/hqContent";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
   const routes: { path: string; priority: number }[] = [
     { path: "", priority: 1 },
@@ -22,10 +23,22 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...ARTICLES.map((a) => ({ path: a.href, priority: 0.7 })),
     ...TOOLS.map((t) => ({ path: t.href, priority: 0.7 })),
   ];
-  return routes.map((r) => ({
-    url: `${SITE.url}${r.path}`,
-    lastModified: now,
-    changeFrequency: "weekly",
-    priority: r.priority,
-  }));
+
+  // HQ-written SEO pages for this domain (read-only; empty on DB hiccup).
+  const hqPages = await listHqPages();
+
+  return [
+    ...routes.map((r) => ({
+      url: `${SITE.url}${r.path}`,
+      lastModified: now,
+      changeFrequency: "weekly" as const,
+      priority: r.priority,
+    })),
+    ...hqPages.map((p) => ({
+      url: `${SITE.url}/p/${p.slug}`,
+      lastModified: p.publishedAt ? new Date(p.publishedAt) : now,
+      changeFrequency: "weekly" as const,
+      priority: 0.7,
+    })),
+  ];
 }
