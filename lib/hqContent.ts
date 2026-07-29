@@ -37,12 +37,14 @@ async function contentQuery<T = Record<string, unknown>>(
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 12000);
   try {
+    // NOTE: no `cache: "no-store"` here — POST fetches are never cached anyway,
+    // and the explicit hint forces a dynamic bailout during the sitemap's
+    // static/ISR generation (thrown error → swallowed → empty page list).
     const res = await fetch(`https://${host}/sql`, {
       method: "POST",
       headers: { "Neon-Connection-String": conn, "Content-Type": "application/json" },
       body: JSON.stringify({ query, params }),
       signal: controller.signal,
-      cache: "no-store",
     });
     if (!res.ok) throw new Error(`content db ${res.status}`);
     const data = (await res.json()) as { rows?: T[] };
