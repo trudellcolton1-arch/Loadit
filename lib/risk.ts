@@ -274,9 +274,10 @@ export async function guardOnramp(
       // deliberately never escalated to "block" from HQ
     }
 
-    // Fire-and-forget log of non-allow verdicts.
+    // Log non-allow verdicts. Console first (always lands in Vercel runtime
+    // logs — no round-trip, no external dependency), then the optional webhook.
     if (verdict.decision !== "allow") {
-      void logVerdict({
+      const record = {
         event: "onramp_risk",
         ts: new Date().toISOString(),
         route,
@@ -290,7 +291,13 @@ export async function guardOnramp(
         ipHash,
         payMethod: signals.payMethod,
         shadow,
-      });
+      };
+      try {
+        console.log("[risk-event]", JSON.stringify(record));
+      } catch {
+        /* logging never breaks payments */
+      }
+      void logVerdict(record);
     }
 
     if (verdict.decision === "block" && !shadow) {
