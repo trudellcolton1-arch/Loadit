@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { guardOnramp } from "@/lib/risk";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -61,6 +62,10 @@ export async function POST(req: Request) {
     );
   }
 
+  // HQ Fraud Shield: score the attempt before the provider hand-off.
+  const { verdict, blocked } = await guardOnramp(req, { amountUsd: amount, asset, wallet, payMethod: "card" }, "onramp/coinbase", CORS);
+  if (blocked) return blocked;
+
   const params = new URLSearchParams();
   params.set("appId", appId);
   // addresses maps the user's wallet -> networks it can receive on.
@@ -74,7 +79,7 @@ export async function POST(req: Request) {
 
   const url = `https://pay.coinbase.com/buy/select-asset?${params.toString()}`;
   return NextResponse.json(
-    { ok: true, provider: "coinbase", url, network: m.network, asset: m.asset },
+    { ok: true, provider: "coinbase", url, network: m.network, asset: m.asset, risk: verdict.decision },
     { headers: CORS }
   );
 }
