@@ -3,6 +3,10 @@ import { SITE } from "@/lib/constants";
 import { ARTICLES, TOOLS } from "@/lib/learn";
 import { listHqPages } from "@/lib/hqContent";
 
+// Re-generate periodically so HQ pages published after the build appear
+// without a redeploy (the static prerender froze the list at build time).
+export const revalidate = 600;
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
   const routes: { path: string; priority: number }[] = [
