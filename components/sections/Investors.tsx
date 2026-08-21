@@ -126,8 +126,8 @@ export function Investors() {
             <Button href="#access" variant="primary">
               Request the Deck →
             </Button>
-            <Button href="mailto:invest@loadit.net" variant="secondary">
-              invest@loadit.net
+            <Button href="mailto:colt@loadit.net" variant="secondary">
+              colt@loadit.net
             </Button>
           </div>
         </Reveal>
