@@ -38,7 +38,7 @@ export function Footer() {
               </a>
             ))}
             <a
-              href="mailto:hello@loadit.net"
+              href="mailto:colt@loadit.net"
               className="text-sm text-white/50 transition-colors hover:text-white"
             >
               Contact

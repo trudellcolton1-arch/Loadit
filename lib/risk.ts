@@ -307,7 +307,7 @@ export async function guardOnramp(
           reason: "risk_blocked",
           decision: "block",
           message:
-            "This transaction couldn't be completed. If you believe this is an error, contact support@loadit.net.",
+            "This transaction couldn't be completed. If you believe this is an error, contact colt@loadit.net.",
         },
         { status: 403, headers: corsHeaders }
       );
