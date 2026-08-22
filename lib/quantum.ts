@@ -213,6 +213,18 @@ export async function sealReceipt(
   }
 }
 
+/** Most recent receipt id — lets /quantum link to a live, checkable example. */
+export async function getLatestReceiptId(): Promise<string | null> {
+  try {
+    const rows = await dbQuery<{ id: string }>(
+      `select id from loadit_quantum_receipt order by created_at desc limit 1`
+    );
+    return rows[0]?.id ?? null;
+  } catch {
+    return null;
+  }
+}
+
 /* ---------- fetch + verify ---------- */
 export interface VerifiedReceipt {
   id: string;

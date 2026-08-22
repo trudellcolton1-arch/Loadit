@@ -116,6 +116,15 @@ export interface HQRouteQuote {
   receipt?: { statement?: string; attestation?: { model?: string; ts?: string; reqId?: string } };
   /** Execution handle for the chosen provider (Zero Hash / Transak / MoonPay / MoneyGram SDKs). */
   execute?: { provider?: string; rail?: string } & Record<string, unknown>;
+  /** Quantum receipt (post-quantum signed; loadit.net/verify/<id>). */
+  quantum?: {
+    id: string;
+    url: string;
+    alg: string;
+    pubkeyFp: string;
+    entropy: "hq-qrng" | "csprng";
+    calibration: string;
+  };
 }
 
 /**

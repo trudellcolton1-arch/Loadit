@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  View, Text, TouchableOpacity, ActivityIndicator, ScrollView, StyleSheet,
+  View, Text, TouchableOpacity, ActivityIndicator, ScrollView, StyleSheet, Linking,
 } from "react-native";
 import { Redirect, useLocalSearchParams, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -89,7 +89,9 @@ export default function Quote() {
         {best && (
           <>
             <View style={[styles.card, styles.bestCard]}>
-              <Text style={styles.bestTag}>BEST ROUTE</Text>
+              <Text style={quote?.quantum ? styles.quantumTag : styles.bestTag}>
+                {quote?.quantum ? "◈ QUANTUM ROUTE" : "BEST ROUTE"}
+              </Text>
               <Text style={styles.provider}>{best.provider}</Text>
               <Text style={styles.assetOut}>You receive ~{best.assetOut} {asset}</Text>
               <View style={styles.statsRow}>
@@ -129,6 +131,18 @@ export default function Quote() {
                 <Text style={styles.receiptMeta}>
                   Signed{quote.receipt.attestation?.model ? ` by ${quote.receipt.attestation.model}` : ""} — your proof this was the best available price.
                 </Text>
+              </View>
+            )}
+
+            {quote?.quantum && (
+              <View style={[styles.card, styles.quantumCard]}>
+                <Text style={styles.quantumSectionTag}>◈ QUANTUM-PROOF RECEIPT</Text>
+                <Text style={styles.receiptMeta}>
+                  Sealed with {quote.quantum.alg} (NIST post-quantum) · {quote.quantum.calibration}
+                </Text>
+                <TouchableOpacity onPress={() => Linking.openURL(quote.quantum!.url)}>
+                  <Text style={styles.quantumVerify}>Verify publicly → {quote.quantum.url.replace("https://", "")}</Text>
+                </TouchableOpacity>
               </View>
             )}
           </>
