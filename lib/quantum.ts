@@ -15,8 +15,9 @@ import { ml_dsa65 } from "@noble/post-quantum/ml-dsa.js";
  *  - entropy.source states truthfully where the nonce came from: the HQ
  *    quantum-entropy endpoint when configured (HQ_ENTROPY_URL), otherwise the
  *    OS CSPRNG, labeled as such.
- *  - calibration reports "classical-v1" until the Phase-2 QAOA batch job is
- *    live — the receipt never invents a quantum batch that didn't run.
+ *  - calibration comes from hq_quantum_batch, where every row is a COMPLETED
+ *    job on IBM quantum hardware (backend + job id stored, auditable). With no
+ *    batch, receipts say "classical-v1" — never an invented run.
  *  - Signing failures NEVER break a quote: callers get null and the quote
  *    flows unsigned.
  */
@@ -114,6 +115,48 @@ async function dbQuery<T = Record<string, unknown>>(query: string, params: unkno
   }
 }
 
+/* ---------- QAOA calibration batch (written by HQ's nightly quantum job) ---------- */
+export interface QuantumBatch {
+  batchNo: number;
+  weights: Record<string, number>;
+  backend: string;
+  jobId: string;
+  shots: number;
+  ranAt: string;
+}
+let cachedBatch: { value: QuantumBatch | null; at: number } | null = null;
+const BATCH_TTL_MS = 10 * 60 * 1000;
+
+/** Latest real quantum calibration batch, or null. Every row in
+ *  hq_quantum_batch corresponds to a completed job on IBM hardware (the HQ
+ *  cron writes nothing on failure), so a non-null batch is auditable via its
+ *  IBM job id. Cached 10 min; failures fall back to null (classical). */
+export async function getLatestBatch(): Promise<QuantumBatch | null> {
+  if (cachedBatch && Date.now() - cachedBatch.at < BATCH_TTL_MS) return cachedBatch.value;
+  try {
+    const rows = await dbQuery<Record<string, unknown>>(
+      `select batch_no, weights, backend, job_id, shots, ran_at
+       from hq_quantum_batch order by batch_no desc limit 1`
+    );
+    const r = rows[0];
+    const value: QuantumBatch | null = r
+      ? {
+          batchNo: Number(r.batch_no),
+          weights: (typeof r.weights === "string" ? JSON.parse(r.weights) : r.weights) as Record<string, number>,
+          backend: String(r.backend),
+          jobId: String(r.job_id),
+          shots: Number(r.shots),
+          ranAt: String(r.ran_at),
+        }
+      : null;
+    cachedBatch = { value, at: Date.now() };
+    return value;
+  } catch {
+    cachedBatch = { value: null, at: Date.now() };
+    return null;
+  }
+}
+
 /* ---------- sign + store ---------- */
 export interface ReceiptPayload {
   v: 1;
@@ -123,6 +166,9 @@ export interface ReceiptPayload {
   quote: Record<string, unknown>;
   entropy: QuantumEntropy;
   calibration: string;
+  /** Present when a real quantum calibration batch existed at signing time —
+   *  backend + IBM job id make it independently auditable. */
+  batch: { no: number; backend: string; jobId: string; shots: number; weights: Record<string, number> } | null;
   signer: { alg: typeof SIG_ALG; pubkeyFp: string };
 }
 
@@ -136,13 +182,17 @@ export async function sealReceipt(
     const k = keys();
     if (!k) return null;
     const ent = await entropyNonce();
-    const calibration = process.env.QUANTUM_BATCH_ID || "classical-v1 (QAOA batch pending)";
+    const batch = await getLatestBatch();
+    const calibration = batch
+      ? `QAOA batch #${batch.batchNo} · ${batch.backend} · job ${batch.jobId} · ${batch.shots} shots`
+      : "classical-v1 (QAOA batch pending)";
     const fp = publicKeyFingerprint()!;
     const id = crypto.randomBytes(6).toString("hex"); // 12-char public id
 
     const payload: ReceiptPayload = {
       v: 1, id, ts: new Date().toISOString(), statement,
       quote: quoteSummary, entropy: ent, calibration,
+      batch: batch ? { no: batch.batchNo, backend: batch.backend, jobId: batch.jobId, shots: batch.shots, weights: batch.weights } : null,
       signer: { alg: SIG_ALG, pubkeyFp: fp },
     };
     // The EXACT string below is what gets signed and what gets stored (text

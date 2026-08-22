@@ -34,6 +34,9 @@ export default async function VerifyPage({ params }: Props) {
     ["Entropy source", p.entropy.source === "hq-qrng" ? "Quantum RNG (HQ harvest)" : "OS CSPRNG (quantum entropy pending)"],
     ["Nonce", p.entropy.nonce],
     ["Calibration", p.calibration],
+    ...(p.batch
+      ? ([["IBM Quantum job", `${p.batch.jobId} · ${p.batch.backend} · ${p.batch.shots} shots`]] as [string, string][])
+      : []),
   ];
 
   return (
