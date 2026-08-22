@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getHQQuote, hqConfigured } from "@/lib/hq";
+import { sealReceipt } from "@/lib/quantum";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -41,5 +42,18 @@ export async function POST(req: Request) {
   if (!quote) {
     return NextResponse.json({ ok: false, reason: "unavailable" }, { status: 502 });
   }
-  return NextResponse.json(quote);
+
+  // Quantum receipt (Phase 1): seal the best-price result with a post-quantum
+  // signature. Additive field; a signing/storage failure never blocks a quote.
+  const q = quote as unknown as Record<string, unknown>;
+  const best = q.best as Record<string, unknown> | undefined;
+  const statement = best
+    ? `Loadit routed $${amountUsd} → ${asset} via ${String(best.provider ?? "best route")} (${String(best.rail ?? "rail")}); best of ${Array.isArray(q.quotes) ? q.quotes.length : 1} live routes.`
+    : `Loadit quoted $${amountUsd} → ${asset}.`;
+  const quantum = await sealReceipt(
+    { amountUsd, asset, best: best ?? null, priceUsd: q.priceUsd ?? null, savingsUsd: q.savingsUsd ?? null, mode: q.mode ?? null },
+    statement
+  );
+
+  return NextResponse.json(quantum ? { ...q, quantum } : quote);
 }
