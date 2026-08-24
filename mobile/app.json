@@ -26,14 +26,15 @@
         "NSBluetoothPeripheralUsageDescription": "Loadit advertises over Bluetooth so nearby phones can pay you offline.",
         "NSLocationWhenInUseUsageDescription": "Loadit uses your location to find people nearby to pay and to verify offline Pulse claims.",
         "NSLocalNetworkUsageDescription": "Loadit hands money to nearby phones over Bluetooth and Wi-Fi — even with no internet.",
-        "NSBonjourServices": ["_loadit-pulse._tcp", "_loadit-pulse._udp"],
+        "NSBonjourServices": [
+          "_loadit-pulse._tcp",
+          "_loadit-pulse._udp"
+        ],
         "ITSAppUsesNonExemptEncryption": false,
         "UIBackgroundModes": [
           "bluetooth-central",
           "bluetooth-peripheral",
-          "location",
-          "processing",
-          "fetch"
+          "location"
         ]
       }
     },
@@ -64,7 +65,10 @@
         "react-native-ble-plx",
         {
           "isBackgroundEnabled": true,
-          "modes": ["central", "peripheral"],
+          "modes": [
+            "central",
+            "peripheral"
+          ],
           "bluetoothAlwaysPermission": "Loadit uses Bluetooth to send and receive money with people near you — even offline."
         }
       ],
