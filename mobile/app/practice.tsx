@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  View, Text, TouchableOpacity, ActivityIndicator, ScrollView, StyleSheet, Linking, Image,
+  View, Text, TouchableOpacity, ActivityIndicator, ScrollView, StyleSheet, Linking, Image, Platform,
 } from "react-native";
 import { WebView } from "react-native-webview";
 import { LinearGradient } from "expo-linear-gradient";
@@ -143,6 +143,8 @@ export default function Practice() {
             javaScriptEnabled
             domStorageEnabled
             sharedCookiesEnabled
+            geolocationEnabled
+            setSupportMultipleWindows={false}
             startInLoadingState
             renderLoading={() => (
               <View style={[styles.webLoading, { backgroundColor: t.bg }]}>
@@ -298,17 +300,32 @@ export default function Practice() {
                 </View>
               )}
               <Text style={[styles.body, { marginTop: 12 }]}>
-                Safari is the most reliable way — their page runs best in a full browser. Come
-                back here when you&apos;re done and the status updates live from their system.
+                {Platform.OS === "android"
+                  ? "Complete it right here in the app. Status updates live from their system when you're done."
+                  : "MoneyGram's new page currently only renders on Chromium browsers (reported to their team) — on iPhone, run this practice from a desktop Chrome, or wait for their fix. Status still updates here live."}
               </Text>
             </View>
-            <TouchableOpacity style={styles.cta} onPress={() => Linking.openURL(mgUrl)}>
-              <Text style={styles.ctaText}>Open MoneyGram in Safari</Text>
-              <Feather name="external-link" size={16} color={t.onAccent} />
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => { setWebErr(null); setShowWeb(true); }}>
-              <Text style={styles.quantumVerify}>Or try it in-app</Text>
-            </TouchableOpacity>
+            {Platform.OS === "android" ? (
+              <>
+                <TouchableOpacity style={styles.cta} onPress={() => { setWebErr(null); setShowWeb(true); }}>
+                  <Text style={styles.ctaText}>Continue in app</Text>
+                  <Feather name="chevron-right" size={16} color={t.onAccent} />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => Linking.openURL(mgUrl)}>
+                  <Text style={styles.quantumVerify}>Or open in Chrome</Text>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <>
+                <TouchableOpacity style={styles.cta} onPress={() => Linking.openURL(mgUrl)}>
+                  <Text style={styles.ctaText}>Try in Safari anyway</Text>
+                  <Feather name="external-link" size={16} color={t.onAccent} />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => { setWebErr(null); setShowWeb(true); }}>
+                  <Text style={styles.quantumVerify}>Or try it in-app</Text>
+                </TouchableOpacity>
+              </>
+            )}
             <TouchableOpacity style={[styles.cta, styles.ctaSecondary]} onPress={() => setStep("status")}>
               <Text style={styles.ctaSecondaryText}>I&apos;ve finished — show live status</Text>
             </TouchableOpacity>
