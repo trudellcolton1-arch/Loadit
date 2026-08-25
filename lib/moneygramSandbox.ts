@@ -89,7 +89,37 @@ export async function startSandboxDeposit(amountUsd: number): Promise<MgSandboxD
   if (!res.ok) throw new Error(`sep24 deposit ${res.status}`);
   const dep = (await res.json()) as { url?: string; id?: string };
   if (!dep.url || !dep.id) throw new Error("sep24 no url");
-  return { url: dep.url, id: dep.id, account: kp.publicKey(), anchor: anchor.homeDomain };
+  return {
+    url: fixRampsUrl(dep.url, amountUsd),
+    id: dep.id,
+    account: kp.publicKey(),
+    anchor: anchor.homeDomain,
+  };
+}
+
+/**
+ * MoneyGram's rebuilt Ramps UI (extramps/ramps.moneygram.com) routes deposits
+ * at /ramps/deposit and defaults `operation` to WITHDRAW when absent — but
+ * their anchor still hands out bare root URLs (?transaction_id&token), which
+ * render a blank page in the new portal. Rewrite to the shape the new UI
+ * expects; leave any non-Ramps URL untouched.
+ */
+function fixRampsUrl(raw: string, amountUsd: number): string {
+  try {
+    const u = new URL(raw);
+    if (!/(^|\.)ramps\.(aws\.)?moneygram\.com$/.test(u.hostname) && !/^(ext)?ramps\.moneygram\.com$/.test(u.hostname)) {
+      return raw;
+    }
+    if (u.pathname !== "/" && u.pathname !== "") return raw; // already routed
+    u.pathname = "/ramps/deposit";
+    if (!u.searchParams.get("operation")) u.searchParams.set("operation", "deposit");
+    if (!u.searchParams.get("asset_code")) u.searchParams.set("asset_code", "USDC");
+    if (!u.searchParams.get("lang")) u.searchParams.set("lang", "en");
+    if (!u.searchParams.get("amount")) u.searchParams.set("amount", String(amountUsd));
+    return u.toString();
+  } catch {
+    return raw;
+  }
 }
 
 export interface MgSandboxStatus {
