@@ -260,3 +260,41 @@ export function preferredProvider(asset: string): OnrampProvider {
   // Coinbase covers BTC/SOL/XRP natively; Stripe is great for card→USDC/ETH.
   return ["BTC", "SOL", "XRP"].includes(asset.toUpperCase()) ? "coinbase" : "stripe";
 }
+
+/* ---------- founder practice run (MoneyGram TESTNET sandbox) ---------- */
+
+export interface MgSandboxDeposit {
+  ok: boolean;
+  reason?: string;
+  mode?: string; // always "sandbox"
+  url?: string; // MoneyGram-hosted sandbox deposit UI
+  id?: string; // SEP-24 transaction id at the anchor
+  account?: string;
+  anchor?: string;
+}
+
+export interface MgSandboxStatus {
+  ok: boolean;
+  reason?: string;
+  id?: string;
+  status?: string;
+  amountIn?: string;
+  amountOut?: string;
+  message?: string;
+}
+
+/** Start a real SEP-24 deposit at MoneyGram's testnet anchor (test money). */
+export async function startMgSandboxDeposit(amountUsd: number): Promise<MgSandboxDeposit> {
+  const res = await fetch(`${API_BASE}/api/practice/moneygram`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ amountUsd }),
+  });
+  return res.json();
+}
+
+/** Live status of a sandbox deposit, straight from the anchor. */
+export async function getMgSandboxStatus(id: string): Promise<MgSandboxStatus> {
+  const res = await fetch(`${API_BASE}/api/practice/moneygram?id=${encodeURIComponent(id)}`);
+  return res.json();
+}

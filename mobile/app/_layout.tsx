@@ -31,6 +31,7 @@ function ThemedStack() {
         <Stack.Screen name="moneygram" options={{ title: "Cash → crypto" }} />
         <Stack.Screen name="register" options={{ title: "Cash at any register" }} />
         <Stack.Screen name="appearance" options={{ title: "Appearance" }} />
+        <Stack.Screen name="practice" options={{ title: "Practice run" }} />
       </Stack>
     </GestureHandlerRootView>
   );

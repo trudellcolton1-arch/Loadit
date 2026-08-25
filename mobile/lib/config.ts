@@ -21,5 +21,11 @@ export const HYLAQ = {
   scopes: extra.hylaq?.scopes || ["read"],
 };
 
+/** Founder accounts (Hylaq login email) — gates the Practice Run screen. */
+const FOUNDER_EMAILS = ["trudellcolton@gmail.com", "colt@loadit.net"];
+export function isFounder(email?: string | null): boolean {
+  return Boolean(email && FOUNDER_EMAILS.includes(email.trim().toLowerCase()));
+}
+
 // Colors live in lib/theme.tsx now — the user picks mode + accent and every
 // screen derives its palette from useTheme().

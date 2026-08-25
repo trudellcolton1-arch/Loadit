@@ -7,6 +7,7 @@ import { Redirect, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@/lib/authContext";
 import { routeIntent, type IntentResult } from "@/lib/api";
+import { isFounder } from "@/lib/config";
 import { useTheme, type Theme } from "@/lib/theme";
 import { Mark } from "@/components/Mark";
 
@@ -126,6 +127,19 @@ export default function Home() {
             </View>
             <Text style={styles.featureArrow}>→</Text>
           </TouchableOpacity>
+
+          {isFounder(session?.email) && (
+            <TouchableOpacity style={styles.featureCard} onPress={() => router.push("/practice")}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.featureTitle}>🧪 Practice run — sandbox</Text>
+                <Text style={styles.featureSub}>
+                  Founder only. Walk the full cash → crypto flow: live quote,
+                  real quantum receipt, MoneyGram test sandbox. No real money.
+                </Text>
+              </View>
+              <Text style={styles.featureArrow}>→</Text>
+            </TouchableOpacity>
+          )}
 
           <TouchableOpacity style={styles.featureCard} onPress={() => router.push("/moneygram")}>
             <View style={{ flex: 1 }}>
