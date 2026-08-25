@@ -57,6 +57,8 @@ export default function Practice() {
   const [mgUrl, setMgUrl] = useState<string | null>(null);
   const [mgId, setMgId] = useState<string | null>(null);
   const [mgErr, setMgErr] = useState<string | null>(null);
+  const [showWeb, setShowWeb] = useState(false);
+  const [webErr, setWebErr] = useState<string | null>(null);
   const [status, setStatus] = useState<MgSandboxStatus | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -99,6 +101,8 @@ export default function Practice() {
       if (r.ok && r.url && r.id) {
         setMgId(r.id);
         setMgUrl(r.url);
+        setWebErr(null);
+        setShowWeb(false);
         setStep("moneygram");
       } else {
         setMgErr(r.reason === "not_configured"
@@ -112,8 +116,8 @@ export default function Practice() {
     }
   };
 
-  // MoneyGram's hosted sandbox UI, full screen.
-  if (step === "moneygram" && mgUrl) {
+  // MoneyGram's hosted sandbox UI, full screen (in-app fallback path).
+  if (step === "moneygram" && mgUrl && showWeb) {
     return (
       <SafeAreaView style={styles.wrap} edges={["top", "bottom"]}>
         <View style={styles.webHead}>
@@ -121,11 +125,36 @@ export default function Practice() {
             <Text style={styles.webTitle}>MoneyGram · sandbox deposit</Text>
             <Text style={styles.webSub}>Test network — no real money</Text>
           </View>
-          <TouchableOpacity onPress={() => setStep("status")}>
+          <TouchableOpacity onPress={() => { setShowWeb(false); setStep("status"); }}>
             <Text style={styles.close}>I&apos;m done →</Text>
           </TouchableOpacity>
         </View>
-        <WebView source={{ uri: mgUrl }} style={{ flex: 1, backgroundColor: t.bg }} />
+        {webErr ? (
+          <View style={styles.webErrWrap}>
+            <Text style={styles.err}>MoneyGram&apos;s page couldn&apos;t load in-app: {webErr}</Text>
+            <TouchableOpacity style={styles.cta} onPress={() => Linking.openURL(mgUrl)}>
+              <Text style={styles.ctaText}>Open in Safari instead →</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <WebView
+            source={{ uri: mgUrl }}
+            style={{ flex: 1, backgroundColor: t.bg }}
+            originWhitelist={["*"]}
+            javaScriptEnabled
+            domStorageEnabled
+            sharedCookiesEnabled
+            startInLoadingState
+            renderLoading={() => (
+              <View style={[styles.webLoading, { backgroundColor: t.bg }]}>
+                <ActivityIndicator color={t.accentText} />
+                <Text style={styles.loadingText}>Loading MoneyGram…</Text>
+              </View>
+            )}
+            onError={(e) => setWebErr(e.nativeEvent.description || "load error")}
+            onHttpError={(e) => setWebErr(`HTTP ${e.nativeEvent.statusCode}`)}
+          />
+        )}
       </SafeAreaView>
     );
   }
@@ -210,6 +239,30 @@ export default function Practice() {
           </>
         )}
 
+        {step === "moneygram" && mgUrl && !showWeb && (
+          <>
+            <View style={[styles.card, styles.bestCard]}>
+              <Text style={styles.bestTag}>MONEYGRAM SANDBOX — READY</Text>
+              <Text style={styles.provider}>Your test deposit is created</Text>
+              <Text style={styles.body}>
+                Finish it in MoneyGram&apos;s hosted sandbox. Safari is the most reliable way —
+                their page runs best in a full browser. Come back here when you&apos;re done and
+                the status below updates live from their system.
+              </Text>
+              {mgId && <Text style={styles.meta}>SEP-24 transaction: {mgId}</Text>}
+            </View>
+            <TouchableOpacity style={styles.cta} onPress={() => Linking.openURL(mgUrl)}>
+              <Text style={styles.ctaText}>Open MoneyGram in Safari →</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => { setWebErr(null); setShowWeb(true); }}>
+              <Text style={styles.quantumVerify}>Or try it in-app</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.cta, styles.ctaSecondary]} onPress={() => setStep("status")}>
+              <Text style={styles.ctaSecondaryText}>I&apos;ve finished — show live status →</Text>
+            </TouchableOpacity>
+          </>
+        )}
+
         {step === "status" && (
           <>
             <View style={[styles.card, styles.bestCard]}>
@@ -230,8 +283,8 @@ export default function Practice() {
             </View>
 
             {mgUrl && (
-              <TouchableOpacity onPress={() => setStep("moneygram")}>
-                <Text style={styles.quantumVerify}>Reopen the MoneyGram window →</Text>
+              <TouchableOpacity onPress={() => Linking.openURL(mgUrl)}>
+                <Text style={styles.quantumVerify}>Reopen MoneyGram in Safari →</Text>
               </TouchableOpacity>
             )}
             <TouchableOpacity style={styles.cta} onPress={() => router.replace("/")}>
@@ -279,7 +332,11 @@ const makeStyles = (t: Theme) =>
     meta: { color: t.dim, fontSize: 12, marginTop: 6 },
     err: { color: t.warn, fontSize: 13, marginTop: 12 },
     cta: { backgroundColor: t.button, borderRadius: 999, paddingVertical: 16, alignItems: "center", marginTop: 18 },
+    ctaSecondary: { backgroundColor: "transparent", borderColor: t.border, borderWidth: 1 },
+    ctaSecondaryText: { color: t.text, fontWeight: "700", fontSize: 15 },
     ctaText: { color: t.buttonText, fontWeight: "700", fontSize: 15 },
+    webErrWrap: { padding: 20 },
+    webLoading: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, alignItems: "center", justifyContent: "center", gap: 10 },
     back: { color: t.faint, textAlign: "center", marginTop: 14, fontSize: 14 },
     disclaimer: { color: t.faint, fontSize: 11, lineHeight: 16, marginTop: 18, textAlign: "center" },
     webHead: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: 14, borderBottomColor: t.border, borderBottomWidth: 1 },
