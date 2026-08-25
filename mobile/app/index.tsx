@@ -1,22 +1,36 @@
 import { useMemo, useState } from "react";
 import {
   View, Text, TextInput, TouchableOpacity, ActivityIndicator,
-  ScrollView, StyleSheet, KeyboardAvoidingView, Platform,
+  ScrollView, StyleSheet, KeyboardAvoidingView, Platform, Image, Linking,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { Feather } from "@expo/vector-icons";
 import { Redirect, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@/lib/authContext";
 import { routeIntent, type IntentResult } from "@/lib/api";
 import { isFounder } from "@/lib/config";
-import { useTheme, type Theme } from "@/lib/theme";
+import { useTheme, rgba, type Theme } from "@/lib/theme";
 import { Mark } from "@/components/Mark";
 
-const EXAMPLES = [
-  "Turn $500 cash into Bitcoin",
-  "Buy $250 of Solana with my debit card",
-  "Move $1,000 from my bank into USDC",
-];
 const money = (n: number) => `$${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+function greeting(): string {
+  const h = new Date().getHours();
+  if (h < 5) return "Up late";
+  if (h < 12) return "Good morning";
+  if (h < 18) return "Good afternoon";
+  return "Good evening";
+}
+
+function initials(email?: string, name?: string): string {
+  const src = (name || email || "").trim();
+  if (!src) return "•";
+  const parts = src.split(/[\s._@-]+/).filter(Boolean);
+  const a = parts[0]?.[0] || "";
+  const b = parts[1]?.[0] || "";
+  return (a + b).toUpperCase() || a.toUpperCase();
+}
 
 export default function Home() {
   const { session, ready, signOut } = useAuth();
@@ -46,169 +60,129 @@ export default function Home() {
     <SafeAreaView style={styles.wrap} edges={["bottom"]}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+          {/* header */}
           <View style={styles.headRow}>
-            <Mark size={40} color={t.accent} />
+            <View style={styles.brandRow}>
+              <Mark size={34} color={t.accent} />
+              <Text style={styles.wordmark}>Loadit</Text>
+            </View>
             <View style={styles.headActions}>
-              <TouchableOpacity onPress={() => router.push("/profile")}>
-                <Text style={styles.headAction}>👤</Text>
+              <TouchableOpacity onPress={() => router.push("/appearance")} hitSlop={8}>
+                <Feather name="droplet" size={19} color={t.faint} />
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => router.push("/appearance")}>
-                <Text style={styles.headAction}>🎨</Text>
+              <TouchableOpacity onPress={() => router.push("/profile")} onLongPress={signOut}>
+                <View style={styles.avatar}>
+                  <Text style={styles.avatarText}>{initials(session?.email, session?.name)}</Text>
+                </View>
               </TouchableOpacity>
-              <TouchableOpacity onPress={signOut}><Text style={styles.signout}>Sign out</Text></TouchableOpacity>
             </View>
           </View>
 
-          <TouchableOpacity style={styles.loadCta} onPress={() => router.push("/load")}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.loadCtaTitle}>Load crypto</Text>
-              <Text style={styles.loadCtaSub}>Cash or card → Bitcoin, Solana, Ethereum, USDC</Text>
-            </View>
-            <Text style={styles.loadCtaArrow}>→</Text>
-          </TouchableOpacity>
-
+          {/* hero */}
+          <Text style={styles.greeting}>{greeting()}{session?.name ? `, ${session.name.split(" ")[0]}` : ""}</Text>
           <Text style={styles.h1}>Just say it.</Text>
-          <Text style={styles.sub}>Tell HQ what you want to do with your money. He finds the cheapest real route.</Text>
 
+          {/* intent input */}
           <View style={styles.inputRow}>
+            <Feather name="zap" size={17} color={t.accentText} />
             <TextInput
               style={styles.input}
-              placeholder="e.g. Turn $500 cash into Bitcoin"
+              placeholder="Turn $500 cash into Bitcoin…"
               placeholderTextColor={t.faint}
               value={text}
               onChangeText={setText}
               onSubmitEditing={() => run(text)}
               returnKeyType="go"
             />
-            <TouchableOpacity style={styles.go} onPress={() => run(text)} disabled={loading}>
-              {loading ? <ActivityIndicator color={t.buttonText} /> : <Text style={styles.goText}>Route</Text>}
+            <TouchableOpacity style={styles.go} onPress={() => run(text)} disabled={loading} hitSlop={6}>
+              {loading
+                ? <ActivityIndicator color={t.onAccent} size="small" />
+                : <Feather name="arrow-up" size={17} color={t.onAccent} />}
             </TouchableOpacity>
           </View>
 
-          {!result && !loading && (
-            <View style={styles.chips}>
-              {EXAMPLES.map((ex) => (
-                <TouchableOpacity key={ex} style={styles.chip} onPress={() => { setText(ex); run(ex); }}>
-                  <Text style={styles.chipText}>{ex}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
-
-          <TouchableOpacity style={styles.featureCard} onPress={() => router.push("/send")}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.featureTitle}>➡️ Send crypto</Text>
-              <Text style={styles.featureSub}>
-                Pay a @handle or any wallet address — from your own crypto, or
-                buy it on the spot. Lands straight in their wallet.
-              </Text>
-            </View>
-            <Text style={styles.featureArrow}>→</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.featureCard} onPress={() => router.push("/pulse")}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.featureTitle}>📡 Pulse — pay offline</Text>
-              <Text style={styles.featureSub}>
-                Send money to any phone right next to you — even with no
-                internet. It settles the moment either of you reconnects.
-              </Text>
-            </View>
-            <Text style={styles.featureArrow}>→</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.featureCard} onPress={() => router.push("/hq")}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.featureTitle}>🧠 HQ — your AI</Text>
-              <Text style={styles.featureSub}>
-                Chat with the brain behind your money. Ask anything, or say a
-                move and HQ routes it — cheapest real way, every time.
-              </Text>
-            </View>
-            <Text style={styles.featureArrow}>→</Text>
-          </TouchableOpacity>
-
-          {isFounder(session?.email) && (
-            <TouchableOpacity style={styles.featureCard} onPress={() => router.push("/practice")}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.featureTitle}>🧪 Practice run — sandbox</Text>
-                <Text style={styles.featureSub}>
-                  Founder only. Walk the full cash → crypto flow: live quote,
-                  real quantum receipt, MoneyGram test sandbox. No real money.
-                </Text>
-              </View>
-              <Text style={styles.featureArrow}>→</Text>
-            </TouchableOpacity>
-          )}
-
-          <TouchableOpacity style={styles.featureCard} onPress={() => router.push("/moneygram")}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.featureTitle}>💵 Cash → crypto at MoneyGram</Text>
-              <Text style={styles.featureSub}>
-                Pay cash at 350k+ MoneyGram locations. HQ turns it into any
-                crypto — Bitcoin, Solana, ETH — straight to your wallet.
-              </Text>
-            </View>
-            <Text style={styles.featureArrow}>→</Text>
-          </TouchableOpacity>
-
+          {/* intent result */}
           {result && (
             <View style={styles.card}>
-              <Text style={styles.aero}>HQ</Text>
+              <Text style={styles.microlabel}>HQ</Text>
               <Text style={styles.explain}>{result.explanation}</Text>
               {result.hq && (
                 <Text style={styles.liveQuote}>
-                  ⚡ Live: {result.hq.provider} — you receive ~{result.hq.asset_out} {result.intent.asset}
+                  Live: {result.hq.provider} — you receive ~{result.hq.asset_out} {result.intent.asset}
                 </Text>
               )}
-
               <View style={styles.statsRow}>
-                <Stat styles={styles} label="Route" value={result.route.network_name} />
-                <Stat styles={styles} label="Settles" value={result.route.eta} />
+                <Text style={styles.statInline}>
+                  {result.route.network_name} · settles {result.route.eta} · fee {money(result.route.loadit_fee_usd)}
+                </Text>
               </View>
-              <View style={styles.statsRow}>
-                <Stat styles={styles} label="Loadit fee (0.75%, $1 min)" value={money(result.route.loadit_fee_usd)} />
-                <Stat
-                  styles={styles}
-                  label="You pay"
-                  value={money(result.route.total_usd ?? result.intent.amount_usd + result.route.loadit_fee_usd)}
-                  sub={result.route.savings_pct > 0 ? `${result.route.savings_pct}% cheaper` : "all in"}
-                  accent
-                />
-              </View>
-
               <TouchableOpacity
-                style={styles.buy}
-                onPress={() =>
-                  router.push({
-                    pathname: "/buy",
-                    params: {
-                      asset: result.intent.asset,
-                      amount: String(result.intent.amount_usd),
-                    },
-                  })
-                }
+                style={styles.cta}
+                onPress={() => router.push({ pathname: "/buy", params: { asset: result.intent.asset, amount: String(result.intent.amount_usd) } })}
               >
-                <Text style={styles.buyText}>Buy {result.intent.asset} now →</Text>
+                <Text style={styles.ctaText}>Buy {result.intent.asset} now</Text>
+                <Feather name="chevron-right" size={16} color={t.onAccent} />
               </TouchableOpacity>
               <TouchableOpacity
-                onPress={() =>
-                  router.push({
-                    pathname: "/quote",
-                    params: {
-                      asset: result.intent.asset,
-                      amount: String(result.intent.amount_usd),
-                      payMethod: result.intent.payment_method,
-                    },
-                  })
-                }
+                onPress={() => router.push({ pathname: "/quote", params: { asset: result.intent.asset, amount: String(result.intent.amount_usd), payMethod: result.intent.payment_method } })}
               >
                 <Text style={styles.quoteLink}>See live provider quotes + receipt →</Text>
               </TouchableOpacity>
-              <Text style={styles.disclaimer}>
-                Completed by a licensed partner (Stripe / Coinbase) to your own wallet. Loadit never holds funds. Estimates depend on live conditions.
-              </Text>
             </View>
+          )}
+
+          {/* LOAD hero card */}
+          <TouchableOpacity activeOpacity={0.85} onPress={() => router.push("/load")}>
+            <LinearGradient
+              colors={[rgba(t.accent, 0.16), rgba(t.accent, 0.04), "rgba(255,255,255,0.02)"]}
+              start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+              style={styles.loadCard}
+            >
+              <Text style={[styles.microlabel, { color: t.accentText }]}>LOAD</Text>
+              <Text style={styles.loadTitle}>Cash or card → crypto</Text>
+              <Text style={styles.loadSub}>
+                Bitcoin, Solana, Ethereum, USDC. Best price across licensed partners — proven.
+              </Text>
+              <View style={styles.loadPill}>
+                <Text style={styles.loadPillText}>Start loading</Text>
+                <Feather name="chevron-right" size={15} color={t.onAccent} />
+              </View>
+            </LinearGradient>
+          </TouchableOpacity>
+
+          {/* action grid */}
+          <View style={styles.grid}>
+            <Tile styles={styles} t={t} icon="arrow-up-right" title="Send" sub="@handles & wallets" onPress={() => router.push("/send")} />
+            <Tile styles={styles} t={t} icon="radio" title="Pulse" sub="Pay with no internet" onPress={() => router.push("/pulse")} />
+            <Tile styles={styles} t={t} icon="message-circle" title="HQ" sub="The brain behind it" onPress={() => router.push("/hq")} />
+            <Tile
+              styles={styles} t={t} icon="◈" title="Quantum" sub="Proof on every quote" violet
+              onPress={() => Linking.openURL("https://loadit.net/quantum")}
+            />
+          </View>
+
+          {/* MoneyGram banner */}
+          <TouchableOpacity style={styles.mgBanner} activeOpacity={0.85} onPress={() => router.push("/moneygram")}>
+            <Image source={require("../assets/moneygram-logo.jpg")} style={styles.mgLogo} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.mgTitle}>Cash at MoneyGram</Text>
+              <Text style={styles.mgSub}>350,000+ locations · in integration</Text>
+            </View>
+            <Feather name="chevron-right" size={18} color={t.faint} />
+          </TouchableOpacity>
+
+          {/* founder practice */}
+          {isFounder(session?.email) && (
+            <TouchableOpacity style={styles.practiceBanner} activeOpacity={0.85} onPress={() => router.push("/practice")}>
+              <View style={styles.practiceIcon}>
+                <Feather name="play" size={16} color={t.warn} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.mgTitle}>Practice run</Text>
+                <Text style={styles.mgSub}>Founder only · full flow in the MoneyGram sandbox</Text>
+              </View>
+              <Feather name="chevron-right" size={18} color={t.faint} />
+            </TouchableOpacity>
           )}
         </ScrollView>
       </KeyboardAvoidingView>
@@ -216,56 +190,96 @@ export default function Home() {
   );
 }
 
-function Stat({ styles, label, value, sub, accent }: {
-  styles: ReturnType<typeof makeStyles>; label: string; value: string; sub?: string; accent?: boolean;
+function Tile({ styles, t, icon, title, sub, onPress, violet }: {
+  styles: ReturnType<typeof makeStyles>; t: Theme; icon: string; title: string; sub: string;
+  onPress: () => void; violet?: boolean;
 }) {
+  const tint = violet ? "#9D8CFF" : t.accentText;
+  const chipBg = violet ? "rgba(157,140,255,0.13)" : rgba(t.accent, 0.12);
   return (
-    <View style={styles.stat}>
-      <Text style={styles.statLabel}>{label}</Text>
-      <Text style={[styles.statValue, accent && styles.statAccent]}>{value}</Text>
-      {sub ? <Text style={styles.statSub}>{sub}</Text> : null}
-    </View>
+    <TouchableOpacity style={[styles.tile, violet && styles.tileViolet]} activeOpacity={0.85} onPress={onPress}>
+      <View style={[styles.tileIcon, { backgroundColor: chipBg }]}>
+        {icon === "◈"
+          ? <Text style={{ color: tint, fontSize: 17, fontWeight: "700" }}>◈</Text>
+          : <Feather name={icon as never} size={18} color={tint} />}
+      </View>
+      <Text style={styles.tileTitle}>{title}</Text>
+      <Text style={styles.tileSub}>{sub}</Text>
+    </TouchableOpacity>
   );
 }
 
 const makeStyles = (t: Theme) =>
   StyleSheet.create({
     wrap: { flex: 1, backgroundColor: t.bg },
-    scroll: { padding: 20, paddingBottom: 48 },
+    scroll: { padding: 22, paddingBottom: 48 },
     headRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-    mark: { width: 40, height: 40 },
+    brandRow: { flexDirection: "row", alignItems: "center", gap: 10 },
+    wordmark: { color: t.text, fontSize: 19, fontWeight: "800", letterSpacing: -0.4 },
     headActions: { flexDirection: "row", alignItems: "center", gap: 16 },
-    headAction: { fontSize: 20 },
-    signout: { color: t.faint, fontSize: 13 },
-    loadCta: { flexDirection: "row", alignItems: "center", gap: 12, marginTop: 16, backgroundColor: t.button, borderRadius: 20, padding: 18 },
-    loadCtaTitle: { color: t.buttonText, fontSize: 18, fontWeight: "800" },
-    loadCtaSub: { color: t.buttonText, opacity: 0.72, fontSize: 12, marginTop: 3 },
-    loadCtaArrow: { color: t.buttonText, fontSize: 22, fontWeight: "700" },
-    h1: { color: t.text, fontSize: 30, fontWeight: "800", letterSpacing: -0.5, marginTop: 22 },
-    sub: { color: t.dim, fontSize: 14, marginTop: 6, marginBottom: 18, lineHeight: 20 },
-    inputRow: { flexDirection: "row", gap: 8, alignItems: "center" },
-    input: { flex: 1, backgroundColor: t.surface, borderColor: t.border, borderWidth: 1, borderRadius: 16, paddingHorizontal: 16, paddingVertical: 14, color: t.text, fontSize: 15 },
-    go: { backgroundColor: t.button, borderRadius: 16, paddingHorizontal: 18, paddingVertical: 15 },
-    goText: { color: t.buttonText, fontWeight: "700" },
-    chips: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 16 },
-    chip: { borderColor: t.border, borderWidth: 1, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 8 },
-    chipText: { color: t.dim, fontSize: 12 },
-    featureCard: { flexDirection: "row", alignItems: "center", gap: 12, marginTop: 16, backgroundColor: t.accentSoft, borderColor: t.accentTint, borderWidth: 1, borderRadius: 20, padding: 16 },
-    featureTitle: { color: t.text, fontSize: 16, fontWeight: "700" },
-    featureSub: { color: t.dim, fontSize: 12, lineHeight: 17, marginTop: 3 },
-    featureArrow: { color: t.accentText, fontSize: 20, fontWeight: "700" },
-    card: { marginTop: 20, backgroundColor: t.card, borderColor: t.border, borderWidth: 1, borderRadius: 24, padding: 18 },
-    aero: { color: t.accentText, fontSize: 10, fontWeight: "700", letterSpacing: 2, marginBottom: 6 },
-    explain: { color: t.text, fontSize: 15, lineHeight: 22 },
-    liveQuote: { color: t.warn, fontSize: 12, fontWeight: "600", marginTop: 8 },
-    statsRow: { flexDirection: "row", gap: 10, marginTop: 12 },
-    stat: { flex: 1, backgroundColor: t.surface, borderColor: t.border, borderWidth: 1, borderRadius: 16, padding: 12 },
-    statLabel: { color: t.faint, fontSize: 10, letterSpacing: 1, textTransform: "uppercase" },
-    statValue: { color: t.text, fontSize: 16, fontWeight: "700", marginTop: 4 },
-    statAccent: { color: t.accentText },
-    statSub: { color: t.faint, fontSize: 11, marginTop: 2 },
-    buy: { backgroundColor: t.button, borderRadius: 999, paddingVertical: 15, alignItems: "center", marginTop: 16 },
-    buyText: { color: t.buttonText, fontWeight: "700", fontSize: 16 },
+    avatar: {
+      width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center",
+      backgroundColor: t.surface, borderColor: t.border, borderWidth: 1,
+    },
+    avatarText: { color: t.dim, fontSize: 12, fontWeight: "700" },
+    greeting: { color: t.faint, fontSize: 13, fontWeight: "500", marginTop: 24 },
+    h1: { color: t.text, fontSize: 32, fontWeight: "800", letterSpacing: -1, marginTop: 4 },
+    inputRow: {
+      flexDirection: "row", alignItems: "center", gap: 12, marginTop: 14,
+      backgroundColor: t.card, borderColor: t.border, borderWidth: 1, borderRadius: 18,
+      paddingLeft: 18, paddingRight: 8, paddingVertical: 7,
+    },
+    input: { flex: 1, color: t.text, fontSize: 15, paddingVertical: 8 },
+    go: { width: 36, height: 36, borderRadius: 18, backgroundColor: t.accent, alignItems: "center", justifyContent: "center" },
+    microlabel: { fontSize: 10, fontWeight: "700", letterSpacing: 2, textTransform: "uppercase", color: t.faint },
+    loadCard: {
+      marginTop: 16, borderRadius: 26, padding: 22,
+      borderColor: rgba(t.accent, 0.25), borderWidth: 1, overflow: "hidden",
+    },
+    loadTitle: { color: t.text, fontSize: 22, fontWeight: "800", letterSpacing: -0.5, marginTop: 6 },
+    loadSub: { color: t.dim, fontSize: 14, lineHeight: 20, marginTop: 5 },
+    loadPill: {
+      flexDirection: "row", alignItems: "center", gap: 6, alignSelf: "flex-start",
+      backgroundColor: t.accent, borderRadius: 999, paddingHorizontal: 18, paddingVertical: 10, marginTop: 14,
+      shadowColor: t.accent, shadowOpacity: 0.45, shadowRadius: 14, shadowOffset: { width: 0, height: 5 }, elevation: 6,
+    },
+    loadPillText: { color: t.onAccent, fontWeight: "700", fontSize: 14 },
+    grid: { flexDirection: "row", flexWrap: "wrap", gap: 11, marginTop: 12 },
+    tile: {
+      width: "48%", flexGrow: 1, backgroundColor: t.card, borderColor: t.border, borderWidth: 1,
+      borderRadius: 24, padding: 16,
+    },
+    tileViolet: { borderColor: "rgba(157,140,255,0.25)" },
+    tileIcon: { width: 38, height: 38, borderRadius: 12, alignItems: "center", justifyContent: "center" },
+    tileTitle: { color: t.text, fontSize: 15, fontWeight: "700", marginTop: 10 },
+    tileSub: { color: t.faint, fontSize: 12, marginTop: 3 },
+    mgBanner: {
+      flexDirection: "row", alignItems: "center", gap: 14, marginTop: 12,
+      backgroundColor: t.card, borderColor: t.border, borderWidth: 1, borderRadius: 24,
+      paddingHorizontal: 18, paddingVertical: 15,
+    },
+    mgLogo: { width: 40, height: 40, borderRadius: 20 },
+    mgTitle: { color: t.text, fontSize: 15, fontWeight: "700" },
+    mgSub: { color: t.faint, fontSize: 12, marginTop: 2 },
+    practiceBanner: {
+      flexDirection: "row", alignItems: "center", gap: 14, marginTop: 12,
+      backgroundColor: t.card, borderColor: rgba(t.warn, 0.35), borderWidth: 1, borderRadius: 24,
+      paddingHorizontal: 18, paddingVertical: 15,
+    },
+    practiceIcon: {
+      width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center",
+      backgroundColor: rgba(t.warn, 0.12),
+    },
+    card: { marginTop: 16, backgroundColor: t.card, borderColor: t.border, borderWidth: 1, borderRadius: 24, padding: 18 },
+    explain: { color: t.text, fontSize: 15, lineHeight: 22, marginTop: 8 },
+    liveQuote: { color: t.accentText, fontSize: 13, fontWeight: "600", marginTop: 8 },
+    statsRow: { marginTop: 10 },
+    statInline: { color: t.dim, fontSize: 13 },
+    cta: {
+      flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6,
+      backgroundColor: t.accent, borderRadius: 18, paddingVertical: 15, marginTop: 14,
+      shadowColor: t.accent, shadowOpacity: 0.35, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 6,
+    },
+    ctaText: { color: t.onAccent, fontWeight: "700", fontSize: 15 },
     quoteLink: { color: t.accentText, fontSize: 13, fontWeight: "600", textAlign: "center", marginTop: 12 },
-    disclaimer: { color: t.faint, fontSize: 11, lineHeight: 16, marginTop: 12, textAlign: "center" },
   });
