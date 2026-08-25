@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  View, Text, TouchableOpacity, ActivityIndicator, ScrollView, StyleSheet, Linking,
+  View, Text, TouchableOpacity, ActivityIndicator, ScrollView, StyleSheet, Linking, Image,
 } from "react-native";
 import { WebView } from "react-native-webview";
+import { LinearGradient } from "expo-linear-gradient";
+import { Feather } from "@expo/vector-icons";
 import { Redirect, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@/lib/authContext";
@@ -15,19 +17,16 @@ import { useTheme, rgba, type Theme } from "@/lib/theme";
 
 /**
  * PRACTICE RUN — founder-only walkthrough of the full cash→crypto journey.
- *
- * What's REAL: the live HQ quote, the quantum-proof receipt, and the
- * MoneyGram leg — a genuine SEP-24 deposit at MoneyGram's TESTNET anchor,
- * in their hosted sandbox UI, with a checkable transaction id.
- * What's TEST: the money. Stellar test network, test USDC, nothing charged.
- * The labels say so on every step — never pretend test is production.
+ * REAL: live HQ quote, quantum receipt, MoneyGram SEP-24 on their testnet.
+ * TEST: the money. Labels say so on every step — never pretend otherwise.
  */
 
+const VIOLET = "#9D8CFF";
+const MGRED = "#E8453C";
 const ASSETS = ["BTC", "SOL", "ETH", "USDC"] as const;
 const AMOUNTS = [50, 100, 200, 500] as const;
 const money = (n: number) => `$${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-/** Plain-English meaning of the SEP-24 statuses the sandbox walks through. */
 function statusLabel(s?: string): string {
   switch (s) {
     case "incomplete": return "Started — finish the steps in the MoneyGram window";
@@ -62,7 +61,6 @@ export default function Practice() {
   const [status, setStatus] = useState<MgSandboxStatus | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Poll the anchor while on the status step.
   useEffect(() => {
     if (step !== "status" || !mgId) return;
     let live = true;
@@ -133,7 +131,8 @@ export default function Practice() {
           <View style={styles.webErrWrap}>
             <Text style={styles.err}>MoneyGram&apos;s page couldn&apos;t load in-app: {webErr}</Text>
             <TouchableOpacity style={styles.cta} onPress={() => Linking.openURL(mgUrl)}>
-              <Text style={styles.ctaText}>Open in Safari instead →</Text>
+              <Text style={styles.ctaText}>Open in Safari instead</Text>
+              <Feather name="external-link" size={16} color={t.onAccent} />
             </TouchableOpacity>
           </View>
         ) : (
@@ -159,17 +158,30 @@ export default function Practice() {
     );
   }
 
+  const stepIndex = step === "intro" || step === "quote" ? 0 : step === "moneygram" ? 1 : 2;
+  const delivered = status?.status === "completed";
+
   return (
     <SafeAreaView style={styles.wrap} edges={["bottom"]}>
       <ScrollView contentContainerStyle={styles.scroll}>
+        {/* header */}
         <View style={styles.headRow}>
           <Text style={styles.h1}>Practice run</Text>
           <View style={styles.sandboxBadge}><Text style={styles.sandboxBadgeText}>SANDBOX</Text></View>
         </View>
         <Text style={styles.sub}>
-          The full cash → crypto journey. The quote and quantum receipt are live and real;
-          the MoneyGram leg runs in their official test sandbox — real flow, test money.
+          The full cash → crypto journey. Quote and quantum receipt are live and real; the
+          MoneyGram leg runs in their official test sandbox — real flow, test money.
         </Text>
+
+        {/* stepper */}
+        <View style={styles.stepper}>
+          <StepDot styles={styles} t={t} label="Quote" state={stepIndex > 0 || Boolean(quote?.best) ? "done" : stepIndex === 0 ? "active" : "todo"} />
+          <View style={[styles.stepLine, stepIndex >= 1 && { backgroundColor: t.accent }]} />
+          <StepDot styles={styles} t={t} label="MoneyGram" mg state={stepIndex === 1 ? "active" : stepIndex > 1 ? "done" : "todo"} />
+          <View style={[styles.stepLine, delivered && { backgroundColor: t.accent }]} />
+          <StepDot styles={styles} t={t} label="Delivered" state={delivered ? "done" : stepIndex === 2 ? "active" : "todo"} />
+        </View>
 
         {step === "intro" && (
           <>
@@ -190,7 +202,12 @@ export default function Practice() {
               ))}
             </View>
             <TouchableOpacity style={styles.cta} onPress={runQuote} disabled={busy}>
-              {busy ? <ActivityIndicator color={t.buttonText} /> : <Text style={styles.ctaText}>Start — get the live quote →</Text>}
+              {busy ? <ActivityIndicator color={t.onAccent} /> : (
+                <>
+                  <Text style={styles.ctaText}>Start — get the live quote</Text>
+                  <Feather name="chevron-right" size={16} color={t.onAccent} />
+                </>
+              )}
             </TouchableOpacity>
           </>
         )}
@@ -206,34 +223,57 @@ export default function Practice() {
             {quoteErr && (
               <View style={styles.card}>
                 <Text style={styles.body}>{quoteErr}</Text>
-                <TouchableOpacity style={styles.cta} onPress={runQuote}><Text style={styles.ctaText}>Retry</Text></TouchableOpacity>
+                <TouchableOpacity style={styles.cta} onPress={runQuote}>
+                  <Text style={styles.ctaText}>Retry</Text>
+                </TouchableOpacity>
               </View>
             )}
             {quote?.best && (
               <>
-                <View style={[styles.card, styles.bestCard]}>
+                <LinearGradient
+                  colors={[rgba(t.accent, 0.14), "rgba(255,255,255,0.03)"]}
+                  start={{ x: 0, y: 0 }} end={{ x: 0.9, y: 1 }}
+                  style={styles.hero}
+                >
                   <Text style={quote.quantum ? styles.quantumTag : styles.bestTag}>
                     {quote.quantum ? "◈ QUANTUM ROUTE — LIVE" : "BEST ROUTE — LIVE"}
                   </Text>
                   <Text style={styles.provider}>{quote.best.provider}</Text>
-                  <Text style={styles.body}>You&apos;d receive ~{quote.best.assetOut} {asset} for {money(amount)}</Text>
-                </View>
+                  <Text style={styles.body}>
+                    You&apos;d receive ~{quote.best.assetOut} {asset} for {money(amount)}
+                  </Text>
+                </LinearGradient>
                 {quote.quantum && (
-                  <View style={[styles.card, styles.quantumCard]}>
+                  <LinearGradient
+                    colors={["rgba(157,140,255,0.13)", "rgba(157,140,255,0.03)"]}
+                    start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                    style={styles.quantumCard}
+                  >
                     <Text style={styles.quantumSectionTag}>◈ QUANTUM-PROOF RECEIPT — REAL</Text>
                     <Text style={styles.meta}>
                       Sealed with {quote.quantum.alg} · {quote.quantum.calibration}
                     </Text>
-                    <TouchableOpacity onPress={() => Linking.openURL(quote.quantum!.url)}>
-                      <Text style={styles.quantumVerify}>Verify publicly → {quote.quantum.url.replace("https://", "")}</Text>
+                    <TouchableOpacity
+                      style={styles.quantumVerifyRow}
+                      onPress={() => Linking.openURL(quote.quantum!.url)}
+                    >
+                      <Text style={styles.quantumVerify}>Verify publicly</Text>
+                      <Feather name="external-link" size={13} color={VIOLET} />
                     </TouchableOpacity>
-                  </View>
+                  </LinearGradient>
                 )}
                 {mgErr && <Text style={styles.err}>{mgErr}</Text>}
                 <TouchableOpacity style={styles.cta} onPress={startMoneyGram} disabled={busy}>
-                  {busy ? <ActivityIndicator color={t.buttonText} /> : <Text style={styles.ctaText}>Pay cash at MoneyGram (sandbox) →</Text>}
+                  {busy ? <ActivityIndicator color={t.onAccent} /> : (
+                    <>
+                      <Text style={styles.ctaText}>Pay cash at MoneyGram (sandbox)</Text>
+                      <Feather name="chevron-right" size={16} color={t.onAccent} />
+                    </>
+                  )}
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => setStep("intro")}><Text style={styles.back}>Back</Text></TouchableOpacity>
+                <TouchableOpacity onPress={() => setStep("intro")}>
+                  <Text style={styles.back}>Back</Text>
+                </TouchableOpacity>
               </>
             )}
           </>
@@ -241,45 +281,67 @@ export default function Practice() {
 
         {step === "moneygram" && mgUrl && !showWeb && (
           <>
-            <View style={[styles.card, styles.bestCard]}>
-              <Text style={styles.bestTag}>MONEYGRAM SANDBOX — READY</Text>
-              <Text style={styles.provider}>Your test deposit is created</Text>
-              <Text style={styles.body}>
-                Finish it in MoneyGram&apos;s hosted sandbox. Safari is the most reliable way —
-                their page runs best in a full browser. Come back here when you&apos;re done and
-                the status below updates live from their system.
+            <View style={styles.card}>
+              <View style={styles.mgHead}>
+                <Image source={require("../assets/moneygram-logo.jpg")} style={styles.mgLogo} />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.mgTitle}>Test deposit created</Text>
+                  <View style={styles.statusRow}>
+                    <View style={styles.statusDot} />
+                    <Text style={styles.meta}>Finish it in MoneyGram&apos;s hosted sandbox</Text>
+                  </View>
+                </View>
+              </View>
+              {mgId && (
+                <View style={styles.monoBox}>
+                  <Text style={styles.mono}>SEP-24 · {mgId}</Text>
+                </View>
+              )}
+              <Text style={[styles.body, { marginTop: 12 }]}>
+                Safari is the most reliable way — their page runs best in a full browser. Come
+                back here when you&apos;re done and the status updates live from their system.
               </Text>
-              {mgId && <Text style={styles.meta}>SEP-24 transaction: {mgId}</Text>}
             </View>
             <TouchableOpacity style={styles.cta} onPress={() => Linking.openURL(mgUrl)}>
-              <Text style={styles.ctaText}>Open MoneyGram in Safari →</Text>
+              <Text style={styles.ctaText}>Open MoneyGram in Safari</Text>
+              <Feather name="external-link" size={16} color={t.onAccent} />
             </TouchableOpacity>
             <TouchableOpacity onPress={() => { setWebErr(null); setShowWeb(true); }}>
               <Text style={styles.quantumVerify}>Or try it in-app</Text>
             </TouchableOpacity>
             <TouchableOpacity style={[styles.cta, styles.ctaSecondary]} onPress={() => setStep("status")}>
-              <Text style={styles.ctaSecondaryText}>I&apos;ve finished — show live status →</Text>
+              <Text style={styles.ctaSecondaryText}>I&apos;ve finished — show live status</Text>
             </TouchableOpacity>
           </>
         )}
 
         {step === "status" && (
           <>
-            <View style={[styles.card, styles.bestCard]}>
+            <LinearGradient
+              colors={[rgba(t.accent, 0.12), "rgba(255,255,255,0.03)"]}
+              start={{ x: 0, y: 0 }} end={{ x: 0.9, y: 1 }}
+              style={styles.hero}
+            >
               <Text style={styles.bestTag}>MONEYGRAM SANDBOX — LIVE STATUS</Text>
               <Text style={styles.provider}>{statusLabel(status?.status)}</Text>
               <Text style={styles.meta}>
-                Anchor status: {status?.status || "…"}{status?.amountIn ? ` · in ${status.amountIn}` : ""}{status?.amountOut ? ` · out ${status.amountOut}` : ""}
+                Anchor status: {status?.status || "…"}
+                {status?.amountIn ? ` · in ${status.amountIn}` : ""}
+                {status?.amountOut ? ` · out ${status.amountOut}` : ""}
               </Text>
               {mgId && <Text style={styles.meta}>SEP-24 transaction: {mgId}</Text>}
               {status?.message && <Text style={styles.meta}>{status.message}</Text>}
-            </View>
+            </LinearGradient>
 
-            <View style={styles.card}>
-              <Text style={styles.sectionTag}>WHAT WAS REAL</Text>
-              <Text style={styles.body}>• Live HQ quote across licensed providers{"\n"}• Quantum-proof receipt (ML-DSA-65, IBM-calibrated){"\n"}• A genuine MoneyGram SEP-24 deposit at their testnet anchor</Text>
-              <Text style={[styles.sectionTag, { marginTop: 14 }]}>WHAT WAS TEST</Text>
-              <Text style={styles.body}>• The money — Stellar test network, test USDC, nothing charged{"\n"}• In production, MoneyGram gives a reference code and takes real cash at the counter</Text>
+            <View style={styles.realTestGrid}>
+              <View style={[styles.rtCard, { borderColor: rgba(t.accent, 0.25) }]}>
+                <Text style={[styles.microlabel, { color: t.accentText }]}>Real</Text>
+                <Text style={styles.rtBody}>Live HQ quote{"\n"}Quantum receipt{"\n"}MoneyGram SEP-24 rails</Text>
+              </View>
+              <View style={[styles.rtCard, { borderColor: rgba(t.warn, 0.3) }]}>
+                <Text style={[styles.microlabel, { color: t.warn }]}>Test</Text>
+                <Text style={styles.rtBody}>The money itself{"\n"}Stellar test network{"\n"}Nothing charged</Text>
+              </View>
             </View>
 
             {mgUrl && (
@@ -302,15 +364,45 @@ export default function Practice() {
   );
 }
 
+function StepDot({ styles, t, label, state, mg }: {
+  styles: ReturnType<typeof makeStyles>; t: Theme; label: string;
+  state: "done" | "active" | "todo"; mg?: boolean;
+}) {
+  return (
+    <View style={styles.stepCol}>
+      {state === "done" ? (
+        <View style={[styles.stepDot, { backgroundColor: t.accent }]}>
+          <Feather name="check" size={14} color={t.onAccent} />
+        </View>
+      ) : state === "active" ? (
+        <View style={[styles.stepDot, styles.stepDotActive, mg && { borderColor: MGRED, backgroundColor: rgba(MGRED, 0.15) }]}>
+          <View style={[styles.stepDotCore, mg && { backgroundColor: MGRED }]} />
+        </View>
+      ) : (
+        <View style={[styles.stepDot, styles.stepDotTodo]} />
+      )}
+      <Text style={[styles.stepLabel, state !== "todo" && { color: t.text }]}>{label}</Text>
+    </View>
+  );
+}
+
 const makeStyles = (t: Theme) =>
   StyleSheet.create({
     wrap: { flex: 1, backgroundColor: t.bg },
-    scroll: { padding: 20, paddingBottom: 48 },
-    headRow: { flexDirection: "row", alignItems: "center", gap: 10 },
-    h1: { color: t.text, fontSize: 26, fontWeight: "800", letterSpacing: -0.5 },
-    sandboxBadge: { backgroundColor: rgba(t.warn, 0.12), borderColor: t.warn, borderWidth: 1, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
-    sandboxBadgeText: { color: t.warn, fontSize: 10, fontWeight: "800", letterSpacing: 1 },
-    sub: { color: t.dim, fontSize: 13, marginTop: 6, marginBottom: 16, lineHeight: 19 },
+    scroll: { padding: 22, paddingBottom: 48 },
+    headRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+    h1: { color: t.text, fontSize: 26, fontWeight: "800", letterSpacing: -0.8 },
+    sandboxBadge: { backgroundColor: rgba(t.warn, 0.1), borderColor: rgba(t.warn, 0.4), borderWidth: 1, borderRadius: 8, paddingHorizontal: 9, paddingVertical: 4 },
+    sandboxBadgeText: { color: t.warn, fontSize: 10, fontWeight: "800", letterSpacing: 1.5 },
+    sub: { color: t.dim, fontSize: 13, marginTop: 6, lineHeight: 19 },
+    stepper: { flexDirection: "row", alignItems: "flex-start", marginTop: 22 },
+    stepCol: { alignItems: "center", width: 84 },
+    stepDot: { width: 30, height: 30, borderRadius: 15, alignItems: "center", justifyContent: "center" },
+    stepDotActive: { borderWidth: 2, borderColor: t.accent, backgroundColor: rgba(t.accent, 0.12) },
+    stepDotCore: { width: 10, height: 10, borderRadius: 5, backgroundColor: t.accent },
+    stepDotTodo: { borderWidth: 2, borderColor: t.border },
+    stepLabel: { color: t.faint, fontSize: 11, fontWeight: "600", marginTop: 7 },
+    stepLine: { flex: 1, height: 2, backgroundColor: t.border, marginTop: 14 },
     label: { color: t.faint, fontSize: 11, letterSpacing: 1, textTransform: "uppercase", marginTop: 18 },
     row: { flexDirection: "row", gap: 8, marginTop: 8, flexWrap: "wrap" },
     chip: { borderColor: t.border, borderWidth: 1, borderRadius: 999, paddingHorizontal: 16, paddingVertical: 10 },
@@ -319,28 +411,55 @@ const makeStyles = (t: Theme) =>
     chipTextOn: { color: t.text },
     loading: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 24 },
     loadingText: { color: t.dim, fontSize: 14 },
-    card: { marginTop: 14, backgroundColor: t.card, borderColor: t.border, borderWidth: 1, borderRadius: 20, padding: 16 },
-    bestCard: { borderColor: t.accentTint, backgroundColor: t.accentSoft },
+    card: { marginTop: 16, backgroundColor: t.card, borderColor: t.border, borderWidth: 1, borderRadius: 24, padding: 20 },
+    hero: {
+      marginTop: 16, borderRadius: 26, padding: 22,
+      borderColor: rgba(t.accent, 0.28), borderWidth: 1, overflow: "hidden",
+    },
     bestTag: { color: t.accentText, fontSize: 10, fontWeight: "700", letterSpacing: 2 },
-    quantumTag: { color: "#9D8CFF", fontSize: 10, fontWeight: "700", letterSpacing: 2 },
-    quantumCard: { borderColor: "#4A3F8F" },
-    quantumSectionTag: { color: "#9D8CFF", fontSize: 10, fontWeight: "700", letterSpacing: 2, marginBottom: 8 },
-    quantumVerify: { color: "#9D8CFF", fontSize: 13, fontWeight: "600", marginTop: 10 },
-    sectionTag: { color: t.faint, fontSize: 10, fontWeight: "700", letterSpacing: 2, marginBottom: 8 },
-    provider: { color: t.text, fontSize: 19, fontWeight: "800", marginTop: 6 },
+    quantumTag: { color: VIOLET, fontSize: 10, fontWeight: "700", letterSpacing: 2 },
+    quantumCard: {
+      marginTop: 12, borderRadius: 24, padding: 18,
+      borderColor: "rgba(157,140,255,0.3)", borderWidth: 1, overflow: "hidden",
+    },
+    quantumSectionTag: { color: VIOLET, fontSize: 10, fontWeight: "700", letterSpacing: 2, marginBottom: 6 },
+    quantumVerifyRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 10 },
+    quantumVerify: { color: VIOLET, fontSize: 13, fontWeight: "700", marginTop: 12, textAlign: "center" },
+    microlabel: { fontSize: 10, fontWeight: "700", letterSpacing: 2, textTransform: "uppercase" },
+    provider: { color: t.text, fontSize: 19, fontWeight: "800", letterSpacing: -0.4, marginTop: 8 },
     body: { color: t.text, fontSize: 14, lineHeight: 21, marginTop: 4 },
     meta: { color: t.dim, fontSize: 12, marginTop: 6 },
     err: { color: t.warn, fontSize: 13, marginTop: 12 },
-    cta: { backgroundColor: t.button, borderRadius: 999, paddingVertical: 16, alignItems: "center", marginTop: 18 },
-    ctaSecondary: { backgroundColor: "transparent", borderColor: t.border, borderWidth: 1 },
+    mgHead: { flexDirection: "row", alignItems: "center", gap: 14 },
+    mgLogo: {
+      width: 46, height: 46, borderRadius: 23,
+      shadowColor: MGRED, shadowOpacity: 0.35, shadowRadius: 10, shadowOffset: { width: 0, height: 4 },
+    },
+    mgTitle: { color: t.text, fontSize: 18, fontWeight: "800", letterSpacing: -0.4 },
+    statusRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 3 },
+    statusDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: t.warn },
+    monoBox: {
+      backgroundColor: "rgba(0,0,0,0.3)", borderColor: t.border, borderWidth: 1,
+      borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12, marginTop: 16,
+    },
+    mono: { color: t.dim, fontSize: 12, fontFamily: "Courier" },
+    cta: {
+      flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6,
+      backgroundColor: t.accent, borderRadius: 18, paddingVertical: 16, marginTop: 18,
+      shadowColor: t.accent, shadowOpacity: 0.4, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 6,
+    },
+    ctaSecondary: { backgroundColor: "transparent", borderColor: t.border, borderWidth: 1, shadowOpacity: 0, elevation: 0, marginTop: 10 },
     ctaSecondaryText: { color: t.text, fontWeight: "700", fontSize: 15 },
-    ctaText: { color: t.buttonText, fontWeight: "700", fontSize: 15 },
-    webErrWrap: { padding: 20 },
-    webLoading: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, alignItems: "center", justifyContent: "center", gap: 10 },
+    ctaText: { color: t.onAccent, fontWeight: "700", fontSize: 15 },
     back: { color: t.faint, textAlign: "center", marginTop: 14, fontSize: 14 },
+    realTestGrid: { flexDirection: "row", gap: 12, marginTop: 16 },
+    rtCard: { flex: 1, backgroundColor: t.card, borderWidth: 1, borderRadius: 20, padding: 16 },
+    rtBody: { color: t.dim, fontSize: 12, lineHeight: 20, marginTop: 8 },
     disclaimer: { color: t.faint, fontSize: 11, lineHeight: 16, marginTop: 18, textAlign: "center" },
     webHead: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: 14, borderBottomColor: t.border, borderBottomWidth: 1 },
     webTitle: { color: t.text, fontWeight: "600" },
     webSub: { color: t.warn, fontSize: 11, marginTop: 2 },
     close: { color: t.accentText, fontWeight: "600" },
+    webErrWrap: { padding: 20 },
+    webLoading: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, alignItems: "center", justifyContent: "center", gap: 10 },
   });

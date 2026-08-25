@@ -156,7 +156,7 @@ const makeStyles = (t: Theme) =>
     providerOn: { borderColor: t.accent, backgroundColor: t.accentSoft },
     providerText: { color: t.dim, fontWeight: "600" },
     providerTextOn: { color: t.text },
-    cta: { backgroundColor: t.button, borderRadius: 999, paddingVertical: 16, alignItems: "center", marginTop: 20 },
+    cta: { backgroundColor: t.button, borderRadius: 18, paddingVertical: 16, alignItems: "center", marginTop: 20, shadowColor: t.accent, shadowOpacity: 0.35, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 6 },
     ctaText: { color: t.buttonText, fontWeight: "700", fontSize: 16 },
     submittedWrap: { flex: 1, alignItems: "center", justifyContent: "center", gap: 10, padding: 28 },
     submittedTitle: { color: t.text, fontSize: 22, fontWeight: "800", marginTop: 6 },

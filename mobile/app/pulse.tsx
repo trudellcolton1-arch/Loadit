@@ -30,6 +30,7 @@ import { tapAvailable, startScanning, armSend, nearestPeerDeviceId, readHandleFo
 import Constants from "expo-constants";
 import { onPulseReceived, onPeerAnnounced, announcedPeers } from "@/lib/pulsePresence";
 import { ingestPayload } from "@/lib/pulseInbox";
+import { Feather } from "@expo/vector-icons";
 import { useTheme, type Theme } from "@/lib/theme";
 import { HandleAvatar } from "@/components/HandleAvatar";
 import * as SecureStore from "expo-secure-store";
@@ -696,7 +697,7 @@ export default function Pulse() {
                     <View style={styles.tapRing}><ActivityIndicator size="large" color={t.accent} /></View>
                     <Text style={styles.noteAmount}>{money(note.amountUsd)} USDC</Text>
                     {note.to ? <Text style={styles.noteTo}>to @{note.to}</Text> : null}
-                    {escrowLocked ? <View style={styles.lockPill}><Text style={styles.lockText}>🔒 Locked in escrow</Text></View> : null}
+                    {escrowLocked ? <View style={styles.lockPill}><Text style={styles.lockText}>Locked in escrow</Text></View> : null}
                     <Text style={styles.tapStatus}>{tapStatus}</Text>
                     <Text style={styles.noteSub}>Hold your phone against theirs. The money crosses over Bluetooth + Wi-Fi — no internet needed.</Text>
                     <TouchableOpacity style={styles.secondaryCta} onPress={() => setHandoff("qr")}><Text style={styles.secondaryText}>Show QR instead</Text></TouchableOpacity>
@@ -824,7 +825,7 @@ export default function Pulse() {
                   </>
                 ) : (
                   <>
-                    <Text style={styles.collectEmoji}>📡</Text>
+                    <Feather name="radio" size={40} color={t.accentText} style={{ alignSelf: "center" }} />
                     <Text style={styles.collectTitle}>Collect a Pulse</Text>
                     <Text style={styles.collectSub}>Scan a nearby phone's Pulse code to receive money offline.</Text>
                     <TouchableOpacity style={styles.cta} onPress={openScanner}>

@@ -66,10 +66,10 @@ const makeStyles = (t: Theme) =>
     mark: { width: 88, height: 88, marginBottom: 2 },
     logo: { color: t.text, fontSize: 40, fontWeight: "800", letterSpacing: -1 },
     tag: { color: t.dim, fontSize: 15, marginBottom: 24, lineHeight: 22 },
-    primary: { backgroundColor: t.button, borderRadius: 999, paddingVertical: 16, alignItems: "center" },
+    primary: { backgroundColor: t.button, borderRadius: 18, paddingVertical: 16, alignItems: "center", shadowColor: t.accent, shadowOpacity: 0.4, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 6 },
     primaryText: { color: t.buttonText, fontWeight: "700", fontSize: 16 },
     note: { color: t.faint, fontSize: 12, textAlign: "center" },
-    ghost: { borderColor: t.border, borderWidth: 1, borderRadius: 999, paddingVertical: 16, alignItems: "center" },
+    ghost: { borderColor: t.border, borderWidth: 1, borderRadius: 18, paddingVertical: 16, alignItems: "center" },
     ghostText: { color: t.text, fontWeight: "600", fontSize: 15 },
     legal: { color: t.faint, fontSize: 11, lineHeight: 16, textAlign: "center" },
   });

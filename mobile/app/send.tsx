@@ -15,7 +15,8 @@ import {
 import {
   mintApiToken, buildSend, signAndSubmit, type SendAsset, type SendBuild,
 } from "@/lib/hylaqWallet";
-import { useTheme, type Theme } from "@/lib/theme";
+import { Feather } from "@expo/vector-icons";
+import { useTheme, rgba, type Theme } from "@/lib/theme";
 import { HandleAvatar } from "@/components/HandleAvatar";
 
 /**
@@ -212,7 +213,7 @@ export default function Send() {
 
           {phase === "pending" ? (
             <View style={styles.successWrap}>
-              <Text style={{ fontSize: 44 }}>⏳</Text>
+              <View style={styles.pendingCircle}><Feather name="clock" size={34} color={t.warn} /></View>
               <Text style={styles.successTitle}>Send may be processing</Text>
               <Text style={styles.successSub}>
                 The network didn&apos;t confirm in time, so your {asset} transfer may have gone through. Check your wallet before trying again — don&apos;t re-send unless you&apos;re sure it didn&apos;t arrive, to avoid paying twice.
@@ -459,6 +460,7 @@ const makeStyles = (t: Theme) =>
     kvV: { color: t.text, fontSize: 13, fontWeight: "700" },
     successWrap: { alignItems: "center", justifyContent: "center", paddingTop: 40, gap: 6 },
     successCircle: { width: 76, height: 76, borderRadius: 38, backgroundColor: t.accent, alignItems: "center", justifyContent: "center", marginBottom: 8 },
+    pendingCircle: { width: 74, height: 74, borderRadius: 37, backgroundColor: rgba(t.warn, 0.12), alignItems: "center", justifyContent: "center", marginBottom: 8 },
     successTick: { color: t.onAccent, fontSize: 38, fontWeight: "800" },
     successTitle: { color: t.text, fontSize: 20, fontWeight: "800", textAlign: "center" },
     successSub: { color: t.dim, fontSize: 13, textAlign: "center", lineHeight: 19, paddingHorizontal: 20 },

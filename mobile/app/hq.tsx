@@ -93,7 +93,7 @@ export default function HQ() {
                   <View style={styles.routeCard}>
                     {m.hq && (
                       <Text style={styles.liveQuote}>
-                        ⚡ Live: {m.hq.provider} — you receive ~{m.hq.asset_out} {m.route.asset}
+                        Live: {m.hq.provider} — you receive ~{m.hq.asset_out} {m.route.asset}
                       </Text>
                     )}
                     <View style={styles.statsRow}>

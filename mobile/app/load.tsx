@@ -9,7 +9,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { WebView } from "react-native-webview";
 import { useAuth } from "@/lib/authContext";
 import { getOnramp, getRoute, preferredProvider } from "@/lib/api";
-import { useTheme, type Theme } from "@/lib/theme";
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { useTheme, rgba, type Theme } from "@/lib/theme";
 import { Mark } from "@/components/Mark";
 
 /**
@@ -25,9 +26,9 @@ const SUCCESS_HINTS = ["success", "complete", "completed", "confirmed", "thank",
 const CANCEL_HINTS = ["cancel", "canceled", "cancelled", "failed", "declined"];
 
 const METHODS = [
-  { id: "Cash", label: "Cash", icon: "💵" },
-  { id: "Debit Card", label: "Debit", icon: "💳" },
-  { id: "Credit Card", label: "Credit", icon: "🏦" },
+  { id: "Cash", label: "Cash", icon: "cash" },
+  { id: "Debit Card", label: "Debit", icon: "credit-card-outline" },
+  { id: "Credit Card", label: "Credit", icon: "bank-outline" },
 ] as const;
 
 const COINS = [
@@ -134,10 +135,12 @@ export default function Load() {
                     style={[styles.rowItem, i > 0 && styles.rowDivider]}
                     onPress={() => setMethod(m.id)}
                   >
-                    <View style={styles.rowIcon}><Text style={styles.rowIconText}>{m.icon}</Text></View>
+                    <View style={styles.rowIcon}>
+                      <MaterialCommunityIcons name={m.icon as never} size={19} color={t.accentText} />
+                    </View>
                     <Text style={styles.rowLabel}>{m.label}</Text>
                     {method === m.id && (
-                      <View style={styles.check}><Text style={styles.checkMark}>✓</Text></View>
+                      <View style={styles.check}><Feather name="check" size={14} color={t.onAccent} /></View>
                     )}
                   </TouchableOpacity>
                 ))}
@@ -177,7 +180,7 @@ export default function Load() {
                     </View>
                     <Text style={styles.rowLabel}>{c.label}</Text>
                     {coin === c.id && (
-                      <View style={styles.check}><Text style={styles.checkMark}>✓</Text></View>
+                      <View style={styles.check}><Feather name="check" size={14} color={t.onAccent} /></View>
                     )}
                   </TouchableOpacity>
                 ))}
@@ -225,7 +228,7 @@ export default function Load() {
 
           {step === "success" && (
             <View style={styles.successWrap}>
-              <View style={styles.successCircle}><Text style={styles.successTick}>✓</Text></View>
+              <View style={styles.successCircle}><Feather name="check" size={40} color={t.onAccent} /></View>
               <Text style={styles.successAmount}>
                 {estOut ? `${estOut} ${coin}` : `$${amt.toLocaleString()} → ${coin}`}
               </Text>
@@ -249,7 +252,7 @@ export default function Load() {
 
           {step === "submitted" && (
             <View style={styles.successWrap}>
-              <Text style={{ fontSize: 44 }}>⏳</Text>
+              <View style={styles.pendingCircle}><Feather name="clock" size={34} color={t.warn} /></View>
               <Text style={styles.successAmount}>Payment submitted</Text>
               <Text style={styles.successNote}>
                 If you completed the {provider === "coinbase" ? "Coinbase" : "Stripe"} checkout, your {coin} is on its way to your wallet — watch for it there. If you closed it without paying, nothing was charged.
@@ -275,16 +278,14 @@ const makeStyles = (t: Theme) =>
     wordmark: { color: t.text, fontSize: 34, fontWeight: "800", letterSpacing: -1, marginTop: 4 },
     h1: { color: t.text, fontSize: 26, fontWeight: "800", letterSpacing: -0.5, textAlign: "center", marginTop: 12, marginBottom: 18 },
     sectionTitle: { color: t.text, fontSize: 17, fontWeight: "700", marginTop: 18, marginBottom: 10 },
-    list: { backgroundColor: t.card, borderColor: t.border, borderWidth: 1, borderRadius: 16 },
+    list: { backgroundColor: t.card, borderColor: t.border, borderWidth: 1, borderRadius: 20, overflow: "hidden" },
     rowItem: { flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 14, paddingVertical: 14 },
     rowDivider: { borderTopColor: t.border, borderTopWidth: StyleSheet.hairlineWidth },
-    rowIcon: { width: 34, height: 34, borderRadius: 17, backgroundColor: t.surface, alignItems: "center", justifyContent: "center" },
-    rowIconText: { fontSize: 16 },
+    rowIcon: { width: 34, height: 34, borderRadius: 12, backgroundColor: rgba(t.accent, 0.12), alignItems: "center", justifyContent: "center" },
     coinWrap: { width: 34, height: 34, borderRadius: 17, backgroundColor: "#FFFFFF", borderColor: t.border, borderWidth: 1, alignItems: "center", justifyContent: "center" },
     coinLogo: { width: 22, height: 22, resizeMode: "contain" },
     rowLabel: { color: t.text, fontSize: 16, fontWeight: "600", flex: 1 },
     check: { width: 22, height: 22, borderRadius: 11, backgroundColor: t.accent, alignItems: "center", justifyContent: "center" },
-    checkMark: { color: t.onAccent, fontSize: 13, fontWeight: "800" },
     amountCard: { flexDirection: "row", alignItems: "center", justifyContent: "center", backgroundColor: t.card, borderColor: t.border, borderWidth: 1, borderRadius: 16, paddingVertical: 18, paddingHorizontal: 16 },
     amountCurrency: { color: t.text, fontSize: 34, fontWeight: "800", marginRight: 2 },
     amountInput: { color: t.text, fontSize: 34, fontWeight: "800", minWidth: 120, textAlign: "left", padding: 0 },
@@ -299,13 +300,13 @@ const makeStyles = (t: Theme) =>
     feeTotalVal: { color: t.accentText, fontSize: 15, fontWeight: "800" },
     qrHero: { alignItems: "center", marginTop: 26, gap: 6 },
     qrMark: { width: 170, height: 170 },
-    cta: { backgroundColor: t.button, borderRadius: 999, paddingVertical: 16, alignItems: "center", marginTop: 26 },
+    cta: { backgroundColor: t.button, borderRadius: 18, paddingVertical: 16, alignItems: "center", marginTop: 26, shadowColor: t.accent, shadowOpacity: 0.35, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 6 },
     ctaDisabled: { opacity: 0.4 },
     ctaText: { color: t.buttonText, fontWeight: "700", fontSize: 16 },
     legal: { color: t.faint, fontSize: 11, lineHeight: 16, marginTop: 14, textAlign: "center" },
     successWrap: { flex: 1, alignItems: "center", justifyContent: "center", gap: 6 },
-    successCircle: { width: 84, height: 84, borderRadius: 42, backgroundColor: t.accent, alignItems: "center", justifyContent: "center", marginBottom: 10 },
-    successTick: { color: t.onAccent, fontSize: 42, fontWeight: "800" },
+    successCircle: { width: 84, height: 84, borderRadius: 42, backgroundColor: t.accent, alignItems: "center", justifyContent: "center", marginBottom: 10, shadowColor: t.accent, shadowOpacity: 0.5, shadowRadius: 24, shadowOffset: { width: 0, height: 8 }, elevation: 8 },
+    pendingCircle: { width: 74, height: 74, borderRadius: 37, backgroundColor: rgba(t.warn, 0.12), alignItems: "center", justifyContent: "center", marginBottom: 8 },
     successAmount: { color: t.text, fontSize: 26, fontWeight: "800", letterSpacing: -0.5 },
     successNote: { color: t.dim, fontSize: 14 },
     txCard: { alignSelf: "stretch", backgroundColor: t.card, borderColor: t.border, borderWidth: 1, borderRadius: 16, padding: 16, marginTop: 18 },

@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import {
   View, Text, TouchableOpacity, ActivityIndicator, ScrollView, StyleSheet, Linking,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { Feather } from "@expo/vector-icons";
 import { Redirect, useLocalSearchParams, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@/lib/authContext";
@@ -10,15 +12,11 @@ import { useTheme, rgba, type Theme } from "@/lib/theme";
 
 /**
  * LIVE HQ QUOTE — "the money app that proves it got you the best price."
- *
- * Fetches real provider quotes through the Loadit backend (/api/quote → HQ;
- * the key never touches the phone) and shows: the best route, every provider
- * compared, the signed receipt as proof, and a test-mode badge whenever HQ is
- * in sandbox — never hidden. Confirm continues into the licensed buy flow;
- * the `execute` handle (Zero Hash / Transak / MoonPay / MoneyGram SDKs) plugs
- * in there as those integrations land.
+ * The receipt IS the interface: one glowing best-route card with the number
+ * huge, everything else recedes. Sandbox mode badge is never hidden.
  */
 
+const VIOLET = "#9D8CFF";
 const money = (n: number) => `$${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 export default function Quote() {
@@ -55,150 +53,202 @@ export default function Quote() {
 
   const best = quote?.best;
   const others = (quote?.quotes || []).filter((q) => q.provider !== best?.provider);
+  const routesChecked = quote?.quotes?.length || 0;
 
   return (
     <SafeAreaView style={styles.wrap} edges={["bottom"]}>
       <ScrollView contentContainerStyle={styles.scroll}>
+        {/* header */}
         <View style={styles.headRow}>
-          <Text style={styles.h1}>{money(amount)} → {asset}</Text>
+          <Text style={styles.kicker}>Live quote</Text>
+          {routesChecked > 0 && (
+            <Text style={styles.routesLabel}>● {routesChecked} routes compared</Text>
+          )}
           {quote?.mode === "sandbox" && (
             <View style={styles.testBadge}><Text style={styles.testBadgeText}>TEST MODE</Text></View>
           )}
         </View>
-        <Text style={styles.sub}>HQ compared licensed providers in real time. Best deal first — receipt included.</Text>
+        <Text style={styles.h1}>
+          {money(amount).replace(".00", "")} <Text style={styles.h1Arrow}>→</Text> {asset}
+        </Text>
 
         {!quote && !error && (
           <View style={styles.loading}>
             <ActivityIndicator color={t.accentText} />
-            <Text style={styles.loadingText}>Getting live quotes…</Text>
+            <Text style={styles.loadingText}>HQ is comparing live routes…</Text>
           </View>
         )}
 
         {error && (
           <View style={styles.card}>
-            <Text style={styles.explain}>{error}</Text>
+            <Text style={styles.body}>{error}</Text>
             <TouchableOpacity
-              style={styles.buy}
+              style={styles.cta}
               onPress={() => router.push({ pathname: "/buy", params: { asset, amount: String(amount) } })}
             >
-              <Text style={styles.buyText}>Continue to buy {asset} →</Text>
+              <Text style={styles.ctaText}>Continue to buy {asset}</Text>
+              <Feather name="chevron-right" size={16} color={t.onAccent} />
             </TouchableOpacity>
           </View>
         )}
 
         {best && (
           <>
-            <View style={[styles.card, styles.bestCard]}>
-              <Text style={quote?.quantum ? styles.quantumTag : styles.bestTag}>
-                {quote?.quantum ? "◈ QUANTUM ROUTE" : "BEST ROUTE"}
+            {/* best-route hero */}
+            <LinearGradient
+              colors={[rgba(t.accent, 0.14), "rgba(255,255,255,0.03)"]}
+              start={{ x: 0, y: 0 }} end={{ x: 0.9, y: 1 }}
+              style={styles.hero}
+            >
+              <View style={styles.heroTop}>
+                <Text style={quote?.quantum ? styles.quantumTag : styles.bestTag}>
+                  {quote?.quantum ? "◈ QUANTUM ROUTE" : "BEST ROUTE"}
+                </Text>
+                <View style={styles.providerChip}>
+                  <Text style={styles.providerChipText}>{best.provider}</Text>
+                </View>
+              </View>
+              <Text style={styles.receiveLabel}>You receive</Text>
+              <Text style={styles.receiveNum}>
+                {best.assetOut} <Text style={styles.receiveAsset}>{asset}</Text>
               </Text>
-              <Text style={styles.provider}>{best.provider}</Text>
-              <Text style={styles.assetOut}>You receive ~{best.assetOut} {asset}</Text>
               <View style={styles.statsRow}>
-                <Stat styles={styles} label="Fee" value={money(best.feeUsd)} />
-                <Stat styles={styles} label="Spread" value={`${best.spreadPct}%`} />
-                <Stat styles={styles} label="ETA" value={`~${best.etaMinutes} min`} />
+                <Text style={styles.stat}>Fee <Text style={styles.statVal}>{money(best.feeUsd)}</Text></Text>
+                <Text style={styles.stat}>Spread <Text style={styles.statVal}>{best.spreadPct}%</Text></Text>
+                <Text style={styles.stat}>ETA <Text style={styles.statVal}>~{best.etaMinutes} min</Text></Text>
               </View>
               {typeof quote?.savingsUsd === "number" && quote.savingsUsd > 0 && (
-                <Text style={styles.savings}>Beats the next-best offer by {money(quote.savingsUsd)}</Text>
+                <View style={styles.savingsRow}>
+                  <Feather name="check" size={14} color={t.accentText} />
+                  <Text style={styles.savings}>Beats the next-best offer by {money(quote.savingsUsd)}</Text>
+                </View>
               )}
               <TouchableOpacity
-                style={styles.buy}
+                style={styles.cta}
                 onPress={() => router.push({ pathname: "/buy", params: { asset, amount: String(amount) } })}
               >
-                <Text style={styles.buyText}>Confirm — buy {asset} →</Text>
+                <Text style={styles.ctaText}>Confirm — buy {asset}</Text>
+                <Feather name="chevron-right" size={16} color={t.onAccent} />
               </TouchableOpacity>
-            </View>
+            </LinearGradient>
 
+            {/* also checked */}
             {others.length > 0 && (
-              <View style={styles.card}>
-                <Text style={styles.sectionTag}>ALSO CHECKED</Text>
+              <View style={styles.alsoWrap}>
+                <Text style={styles.microlabel}>Also checked</Text>
                 {others.map((q) => (
                   <View key={q.provider} style={styles.quoteRow}>
                     <Text style={styles.quoteProvider}>{q.provider}</Text>
                     <Text style={styles.quoteMeta}>
-                      {money(q.feeUsd)} fee · {q.spreadPct}% · ~{q.assetOut} {asset}
+                      {money(q.feeUsd)} · {q.spreadPct}% · {q.assetOut}
                     </Text>
                   </View>
                 ))}
               </View>
             )}
 
+            {/* signed receipt statement */}
             {quote?.receipt?.statement && (
               <View style={styles.card}>
-                <Text style={styles.sectionTag}>PROOF — SIGNED RECEIPT</Text>
-                <Text style={styles.receipt}>{quote.receipt.statement}</Text>
-                <Text style={styles.receiptMeta}>
-                  Signed{quote.receipt.attestation?.model ? ` by ${quote.receipt.attestation.model}` : ""} — your proof this was the best available price.
-                </Text>
+                <Text style={styles.microlabel}>Proof — signed receipt</Text>
+                <Text style={styles.receiptText}>{quote.receipt.statement}</Text>
               </View>
             )}
 
+            {/* quantum receipt jewel */}
             {quote?.quantum && (
-              <View style={[styles.card, styles.quantumCard]}>
-                <Text style={styles.quantumSectionTag}>◈ QUANTUM-PROOF RECEIPT</Text>
-                <Text style={styles.receiptMeta}>
-                  Sealed with {quote.quantum.alg} (NIST post-quantum) · {quote.quantum.calibration}
+              <LinearGradient
+                colors={["rgba(157,140,255,0.13)", "rgba(157,140,255,0.03)"]}
+                start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                style={styles.quantumCard}
+              >
+                <View style={styles.quantumHead}>
+                  <Text style={styles.quantumDiamond}>◈</Text>
+                  <Text style={styles.quantumSectionTag}>QUANTUM-PROOF RECEIPT</Text>
+                </View>
+                <Text style={styles.quantumMeta}>
+                  Sealed with {quote.quantum.alg} · {quote.quantum.calibration}
                 </Text>
-                <TouchableOpacity onPress={() => Linking.openURL(quote.quantum!.url)}>
-                  <Text style={styles.quantumVerify}>Verify publicly → {quote.quantum.url.replace("https://", "")}</Text>
+                <Text style={styles.quantumMeta}>
+                  Signed before you pay. Verifiable by anyone, forever.
+                </Text>
+                <TouchableOpacity
+                  style={styles.quantumVerifyRow}
+                  onPress={() => Linking.openURL(quote.quantum!.url)}
+                >
+                  <Text style={styles.quantumVerify}>Verify publicly</Text>
+                  <Feather name="external-link" size={14} color={VIOLET} />
                 </TouchableOpacity>
-              </View>
+              </LinearGradient>
             )}
           </>
         )}
 
         <Text style={styles.disclaimer}>
-          Quotes are live estimates and can move with the market. Purchases complete via a licensed
-          provider straight to your own wallet — Loadit never holds funds.
+          Quotes move with the market. Purchases complete via a licensed provider straight
+          to your own wallet — Loadit never holds funds.
         </Text>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-function Stat({ styles, label, value }: { styles: ReturnType<typeof makeStyles>; label: string; value: string }) {
-  return (
-    <View style={styles.stat}>
-      <Text style={styles.statLabel}>{label}</Text>
-      <Text style={styles.statValue}>{value}</Text>
-    </View>
-  );
-}
-
 const makeStyles = (t: Theme) =>
   StyleSheet.create({
     wrap: { flex: 1, backgroundColor: t.bg },
-    scroll: { padding: 20, paddingBottom: 48 },
+    scroll: { padding: 22, paddingBottom: 48 },
     headRow: { flexDirection: "row", alignItems: "center", gap: 10 },
-    h1: { color: t.text, fontSize: 26, fontWeight: "800", letterSpacing: -0.5 },
+    kicker: { color: t.dim, fontSize: 15, fontWeight: "500", flex: 1 },
+    routesLabel: { color: t.accentText, fontSize: 10, fontWeight: "700", letterSpacing: 1.5, textTransform: "uppercase" },
     testBadge: { backgroundColor: rgba(t.warn, 0.12), borderColor: t.warn, borderWidth: 1, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
     testBadgeText: { color: t.warn, fontSize: 10, fontWeight: "800", letterSpacing: 1 },
-    sub: { color: t.dim, fontSize: 13, marginTop: 6, marginBottom: 16, lineHeight: 19 },
-    loading: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 24 },
+    h1: { color: t.text, fontSize: 36, fontWeight: "800", letterSpacing: -1.2, marginTop: 6 },
+    h1Arrow: { color: t.faint, fontSize: 26, fontWeight: "600" },
+    loading: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 26 },
     loadingText: { color: t.dim, fontSize: 14 },
-    card: { marginTop: 14, backgroundColor: t.card, borderColor: t.border, borderWidth: 1, borderRadius: 20, padding: 16 },
-    bestCard: { borderColor: t.accentTint, backgroundColor: t.accentSoft },
+    hero: {
+      marginTop: 20, borderRadius: 28, padding: 24,
+      borderColor: rgba(t.accent, 0.3), borderWidth: 1, overflow: "hidden",
+    },
+    heroTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
     bestTag: { color: t.accentText, fontSize: 10, fontWeight: "700", letterSpacing: 2 },
-    quantumTag: { color: "#9D8CFF", fontSize: 10, fontWeight: "700", letterSpacing: 2 },
-    quantumCard: { borderColor: "#4A3F8F" },
-    quantumSectionTag: { color: "#9D8CFF", fontSize: 10, fontWeight: "700", letterSpacing: 2, marginBottom: 8 },
-    quantumVerify: { color: "#9D8CFF", fontSize: 13, fontWeight: "600", marginTop: 10 },
-    provider: { color: t.text, fontSize: 20, fontWeight: "800", marginTop: 6 },
-    assetOut: { color: t.text, fontSize: 15, marginTop: 4 },
-    statsRow: { flexDirection: "row", gap: 8, marginTop: 12 },
-    stat: { flex: 1, backgroundColor: t.surface, borderColor: t.border, borderWidth: 1, borderRadius: 14, padding: 10 },
-    statLabel: { color: t.faint, fontSize: 9, letterSpacing: 1, textTransform: "uppercase" },
-    statValue: { color: t.text, fontSize: 14, fontWeight: "700", marginTop: 3 },
-    savings: { color: t.accentText, fontSize: 13, fontWeight: "700", marginTop: 12 },
-    buy: { backgroundColor: t.button, borderRadius: 999, paddingVertical: 14, alignItems: "center", marginTop: 14 },
-    buyText: { color: t.buttonText, fontWeight: "700", fontSize: 15 },
-    sectionTag: { color: t.faint, fontSize: 10, fontWeight: "700", letterSpacing: 2, marginBottom: 8 },
-    quoteRow: { paddingVertical: 8, borderTopColor: t.border, borderTopWidth: StyleSheet.hairlineWidth },
-    quoteProvider: { color: t.text, fontSize: 14, fontWeight: "600" },
-    quoteMeta: { color: t.dim, fontSize: 12, marginTop: 2 },
-    explain: { color: t.text, fontSize: 14, lineHeight: 20 },
-    receipt: { color: t.dim, fontSize: 12, lineHeight: 18, fontFamily: "Courier" },
-    receiptMeta: { color: t.faint, fontSize: 11, marginTop: 8 },
+    quantumTag: { color: VIOLET, fontSize: 10, fontWeight: "700", letterSpacing: 2 },
+    providerChip: { backgroundColor: "rgba(255,255,255,0.06)", borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
+    providerChipText: { color: t.dim, fontSize: 11, fontWeight: "600" },
+    receiveLabel: { color: t.dim, fontSize: 13, fontWeight: "500", marginTop: 16 },
+    receiveNum: { color: t.text, fontSize: 40, fontWeight: "800", letterSpacing: -1.4, marginTop: 2, fontVariant: ["tabular-nums"] },
+    receiveAsset: { fontSize: 21, fontWeight: "700", color: t.dim, letterSpacing: 0 },
+    statsRow: { flexDirection: "row", gap: 18, marginTop: 14 },
+    stat: { color: t.dim, fontSize: 13, fontWeight: "500" },
+    statVal: { color: t.text, fontWeight: "700", fontVariant: ["tabular-nums"] },
+    savingsRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 13 },
+    savings: { color: t.accentText, fontSize: 13, fontWeight: "700" },
+    cta: {
+      flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6,
+      backgroundColor: t.accent, borderRadius: 18, paddingVertical: 16, marginTop: 17,
+      shadowColor: t.accent, shadowOpacity: 0.4, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 6,
+    },
+    ctaText: { color: t.onAccent, fontWeight: "700", fontSize: 16, letterSpacing: -0.2 },
+    alsoWrap: { marginTop: 20 },
+    microlabel: { color: t.faint, fontSize: 10, fontWeight: "700", letterSpacing: 2, textTransform: "uppercase", marginBottom: 6 },
+    quoteRow: {
+      flexDirection: "row", justifyContent: "space-between", alignItems: "center",
+      paddingVertical: 11, borderTopColor: t.border, borderTopWidth: StyleSheet.hairlineWidth,
+    },
+    quoteProvider: { color: t.dim, fontSize: 14, fontWeight: "500" },
+    quoteMeta: { color: t.faint, fontSize: 13, fontVariant: ["tabular-nums"] },
+    card: { marginTop: 16, backgroundColor: t.card, borderColor: t.border, borderWidth: 1, borderRadius: 24, padding: 18 },
+    body: { color: t.text, fontSize: 14, lineHeight: 21 },
+    receiptText: { color: t.dim, fontSize: 12, lineHeight: 18, fontFamily: "Courier" },
+    quantumCard: {
+      marginTop: 16, borderRadius: 24, padding: 20,
+      borderColor: "rgba(157,140,255,0.3)", borderWidth: 1, overflow: "hidden",
+    },
+    quantumHead: { flexDirection: "row", alignItems: "center", gap: 8 },
+    quantumDiamond: { color: VIOLET, fontSize: 16 },
+    quantumSectionTag: { color: VIOLET, fontSize: 10, fontWeight: "700", letterSpacing: 2 },
+    quantumMeta: { color: t.dim, fontSize: 13, lineHeight: 19, marginTop: 8 },
+    quantumVerifyRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 12 },
+    quantumVerify: { color: VIOLET, fontSize: 13, fontWeight: "700" },
     disclaimer: { color: t.faint, fontSize: 11, lineHeight: 16, marginTop: 18, textAlign: "center" },
   });

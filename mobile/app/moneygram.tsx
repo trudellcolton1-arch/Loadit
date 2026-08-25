@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import {
   View, Text, TextInput, TouchableOpacity, ActivityIndicator,
-  ScrollView, StyleSheet, KeyboardAvoidingView, Platform,
+  ScrollView, StyleSheet, KeyboardAvoidingView, Platform, Image,
 } from "react-native";
 import { Redirect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -49,7 +49,10 @@ export default function MoneyGram() {
     <SafeAreaView style={styles.wrap} edges={["bottom"]}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-          <Text style={styles.h1}>Cash → crypto at MoneyGram</Text>
+          <View style={styles.titleRow}>
+            <Image source={require("../assets/moneygram-logo.jpg")} style={styles.mgLogo} />
+            <Text style={styles.h1}>Cash → crypto{"\n"}at MoneyGram</Text>
+          </View>
           <Text style={styles.sub}>
             Pay cash at 350,000+ MoneyGram locations. They turn it into USDC and verify you
             at the counter; HQ swaps it into your asset and sends it to your own wallet.
@@ -134,7 +137,9 @@ const makeStyles = (t: Theme) =>
   StyleSheet.create({
     wrap: { flex: 1, backgroundColor: t.bg },
     scroll: { padding: 20, paddingBottom: 48 },
-    h1: { color: t.text, fontSize: 26, fontWeight: "800", letterSpacing: -0.5 },
+    titleRow: { flexDirection: "row", alignItems: "center", gap: 14 },
+    mgLogo: { width: 46, height: 46, borderRadius: 23 },
+    h1: { color: t.text, fontSize: 24, fontWeight: "800", letterSpacing: -0.6, lineHeight: 28 },
     sub: { color: t.dim, fontSize: 14, lineHeight: 20, marginTop: 6 },
     label: { color: t.faint, fontSize: 11, letterSpacing: 1, textTransform: "uppercase", marginTop: 18 },
     row: { flexDirection: "row", gap: 8, marginTop: 8, flexWrap: "wrap" },
@@ -143,7 +148,7 @@ const makeStyles = (t: Theme) =>
     chipText: { color: t.dim, fontWeight: "600" },
     chipTextOn: { color: t.text },
     input: { backgroundColor: t.surface, borderColor: t.border, borderWidth: 1, borderRadius: 16, paddingHorizontal: 16, paddingVertical: 14, color: t.text, fontSize: 14, marginTop: 8 },
-    cta: { backgroundColor: t.button, borderRadius: 999, paddingVertical: 16, alignItems: "center", marginTop: 20 },
+    cta: { backgroundColor: t.button, borderRadius: 18, paddingVertical: 16, alignItems: "center", marginTop: 20, shadowColor: t.accent, shadowOpacity: 0.35, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 6 },
     ctaText: { color: t.buttonText, fontWeight: "700", fontSize: 16 },
     planCard: { marginTop: 22, backgroundColor: t.card, borderColor: t.border, borderWidth: 1, borderRadius: 24, padding: 18 },
     flowHead: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 14 },
