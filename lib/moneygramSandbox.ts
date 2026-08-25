@@ -31,22 +31,41 @@ export function mgSandboxConfigured(): boolean {
   return isTestnet() && Boolean(practiceKeypair());
 }
 
-/** SEP-10: challenge → sign with the practice keypair → JWT. */
+/** SEP-10: challenge → sign with the practice keypair → JWT.
+ *  When STELLAR_SIGNING_SECRET is set, requests client_domain attribution
+ *  (loadit.net) and co-signs — MoneyGram's whitelist recognizes the wallet
+ *  by the SIGNING_KEY published in loadit.net/.well-known/stellar.toml. */
 async function sep10Token(): Promise<string> {
   if (!isTestnet()) throw new Error("sandbox only");
   const kp = practiceKeypair();
   if (!kp) throw new Error("not configured");
   const anchor = mgAnchor();
 
-  const chRes = await fetch(`${anchor.webAuth}?account=${kp.publicKey()}`, {
-    cache: "no-store",
-  });
+  const clientDomain = process.env.LOADIT_CLIENT_DOMAIN || "loadit.net";
+  let domainKp: Keypair | null = null;
+  try {
+    domainKp = process.env.STELLAR_SIGNING_SECRET
+      ? Keypair.fromSecret(process.env.STELLAR_SIGNING_SECRET)
+      : null;
+  } catch {
+    domainKp = null;
+  }
+
+  const params = new URLSearchParams({ account: kp.publicKey() });
+  if (domainKp) params.set("client_domain", clientDomain);
+  let chRes = await fetch(`${anchor.webAuth}?${params}`, { cache: "no-store" });
+  if (!chRes.ok && domainKp) {
+    // Anchor may not support client_domain yet — retry without it.
+    chRes = await fetch(`${anchor.webAuth}?account=${kp.publicKey()}`, { cache: "no-store" });
+    domainKp = null;
+  }
   if (!chRes.ok) throw new Error(`sep10 challenge ${chRes.status}`);
   const ch = (await chRes.json()) as { transaction?: string; network_passphrase?: string };
   if (!ch.transaction) throw new Error("sep10 no challenge");
 
   const tx = new Transaction(ch.transaction, ch.network_passphrase || Networks.TESTNET);
   tx.sign(kp);
+  if (domainKp) tx.sign(domainKp); // client_domain attestation co-signature
 
   const tokRes = await fetch(anchor.webAuth, {
     method: "POST",
