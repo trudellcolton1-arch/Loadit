@@ -22,6 +22,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: "/earn", priority: 0.7 },
     { path: "/moneygram", priority: 0.7 },
     { path: "/quantum", priority: 0.8 },
+    { path: "/blog/loadit-moneygram", priority: 0.8 },
     { path: "/install", priority: 0.8 },
     { path: "/deck", priority: 0.6 },
     { path: "/learn", priority: 0.8 },
