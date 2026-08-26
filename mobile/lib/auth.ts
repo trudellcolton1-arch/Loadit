@@ -70,7 +70,14 @@ export async function signInWithHylaq(): Promise<Session> {
   const result = await request.promptAsync(discovery);
 
   if (result.type !== "success" || !result.params.code) {
-    throw new Error("Login was cancelled.");
+    // Surface WHAT failed, not just that it failed — "dismiss" means the
+    // browser closed before the loadit:// redirect returned (deep-link issue),
+    // "error" carries the OAuth server's own error code.
+    const p = result.type === "error" ? result.params : undefined;
+    throw new Error(
+      `Login didn't complete (${result.type}${p?.error ? `: ${p.error}` : ""}${p?.error_description ? ` — ${p.error_description}` : ""}). ` +
+      `Redirect used: ${redirectUri}`
+    );
   }
 
   // Exchange the code via the Loadit backend — Hylaq's token endpoint requires
