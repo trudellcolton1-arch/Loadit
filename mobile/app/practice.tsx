@@ -58,6 +58,7 @@ export default function Practice() {
   const [mgErr, setMgErr] = useState<string | null>(null);
   const [showWeb, setShowWeb] = useState(false);
   const [webErr, setWebErr] = useState<string | null>(null);
+  const [diag, setDiag] = useState<string[]>([]);
   const [status, setStatus] = useState<MgSandboxStatus | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -114,6 +115,42 @@ export default function Practice() {
     }
   };
 
+  // Diagnostic probe injected into MoneyGram's page: reports JS errors,
+  // unhandled rejections, and a boot status back to the app so a blank
+  // screen tells us WHY instead of nothing.
+  const DIAG_JS = `
+    (function () {
+      var send = function (m) {
+        try { window.ReactNativeWebView && window.ReactNativeWebView.postMessage(JSON.stringify(m)); } catch (e) {}
+      };
+      window.addEventListener("error", function (e) {
+        send({ diag: "js-error", msg: String(e.message || e.error).slice(0, 300), src: String(e.filename || "").slice(-80) + ":" + e.lineno });
+      });
+      window.addEventListener("unhandledrejection", function (e) {
+        send({ diag: "promise-rejection", msg: String(e.reason && (e.reason.stack || e.reason.message) || e.reason).slice(0, 300) });
+      });
+      var origErr = console.error;
+      console.error = function () {
+        try { send({ diag: "console-error", msg: Array.prototype.map.call(arguments, String).join(" ").slice(0, 300) }); } catch (e) {}
+        return origErr.apply(console, arguments);
+      };
+      setTimeout(function () {
+        var failed = [];
+        try {
+          performance.getEntriesByType("resource").forEach(function (r) {
+            if (r.transferSize === 0 && r.decodedBodySize === 0 && !/data:/.test(r.name)) failed.push(r.name.slice(-70));
+          });
+        } catch (e) {}
+        send({
+          diag: "boot-status",
+          ready: document.readyState,
+          appChildren: (document.getElementById("app") || {}).childElementCount,
+          bodyLen: (document.body && document.body.innerText || "").length,
+          failedResources: failed.slice(0, 5),
+        });
+      }, 6000);
+    })(); true;`;
+
   // MoneyGram's hosted sandbox UI, full screen (in-app fallback path).
   if (step === "moneygram" && mgUrl && showWeb) {
     return (
@@ -136,25 +173,47 @@ export default function Practice() {
             </TouchableOpacity>
           </View>
         ) : (
-          <WebView
-            source={{ uri: mgUrl }}
-            style={{ flex: 1, backgroundColor: t.bg }}
-            originWhitelist={["*"]}
-            javaScriptEnabled
-            domStorageEnabled
-            sharedCookiesEnabled
-            geolocationEnabled
-            setSupportMultipleWindows={false}
-            startInLoadingState
-            renderLoading={() => (
-              <View style={[styles.webLoading, { backgroundColor: t.bg }]}>
-                <ActivityIndicator color={t.accentText} />
-                <Text style={styles.loadingText}>Loading MoneyGram…</Text>
-              </View>
+          <>
+            <WebView
+              source={{ uri: mgUrl }}
+              // White bg + 0.99 opacity: works around the Android WebView
+              // hardware-acceleration bug that paints content as black.
+              style={{ flex: 1, backgroundColor: "#FFFFFF", opacity: 0.99 }}
+              originWhitelist={["*"]}
+              javaScriptEnabled
+              domStorageEnabled
+              sharedCookiesEnabled
+              geolocationEnabled
+              setSupportMultipleWindows={false}
+              injectedJavaScriptBeforeContentLoaded={DIAG_JS}
+              onMessage={(e) => {
+                try {
+                  const m = JSON.parse(e.nativeEvent.data) as Record<string, unknown>;
+                  if (m.diag) {
+                    setDiag((d) => [...d.slice(-11), `${m.diag}: ${JSON.stringify({ ...m, diag: undefined })}`.slice(0, 220)]);
+                  }
+                } catch { /* not ours */ }
+              }}
+              onRenderProcessGone={() => setWebErr("Android WebView renderer crashed — update 'Android System WebView' in the Play Store and retry")}
+              onContentProcessDidTerminate={() => setWebErr("iOS web content process terminated — retry")}
+              startInLoadingState
+              renderLoading={() => (
+                <View style={[styles.webLoading, { backgroundColor: "#FFFFFF" }]}>
+                  <ActivityIndicator color={t.accentText} />
+                  <Text style={styles.loadingText}>Loading MoneyGram…</Text>
+                </View>
+              )}
+              onError={(e) => setWebErr(e.nativeEvent.description || "load error")}
+              onHttpError={(e) => setWebErr(`HTTP ${e.nativeEvent.statusCode}`)}
+            />
+            {diag.length > 0 && (
+              <ScrollView style={styles.diagStrip}>
+                {diag.map((d, i) => (
+                  <Text key={i} style={styles.diagText} selectable>{d}</Text>
+                ))}
+              </ScrollView>
             )}
-            onError={(e) => setWebErr(e.nativeEvent.description || "load error")}
-            onHttpError={(e) => setWebErr(`HTTP ${e.nativeEvent.statusCode}`)}
-          />
+          </>
         )}
       </SafeAreaView>
     );
@@ -478,5 +537,7 @@ const makeStyles = (t: Theme) =>
     webSub: { color: t.warn, fontSize: 11, marginTop: 2 },
     close: { color: t.accentText, fontWeight: "600" },
     webErrWrap: { padding: 20 },
+    diagStrip: { maxHeight: 160, backgroundColor: "#12060A", borderTopColor: "#5A2430", borderTopWidth: 1, paddingHorizontal: 12, paddingVertical: 8 },
+    diagText: { color: "#FF9AA8", fontSize: 10, fontFamily: "Courier", lineHeight: 15 },
     webLoading: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, alignItems: "center", justifyContent: "center", gap: 10 },
   });
