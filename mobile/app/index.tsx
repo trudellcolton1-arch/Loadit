@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import {
   View, Text, TextInput, TouchableOpacity, ActivityIndicator,
-  ScrollView, StyleSheet, KeyboardAvoidingView, Platform, Image, Linking,
+  ScrollView, StyleSheet, KeyboardAvoidingView, Platform, Image,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
@@ -157,7 +157,7 @@ export default function Home() {
             <Tile styles={styles} t={t} icon="message-circle" title="HQ" sub="The brain behind it" onPress={() => router.push("/hq")} />
             <Tile
               styles={styles} t={t} icon="◈" title="Quantum" sub="Proof on every quote" violet
-              onPress={() => Linking.openURL("https://loadit.net/quantum")}
+              onPress={() => router.push("/quantum")}
             />
           </View>
 

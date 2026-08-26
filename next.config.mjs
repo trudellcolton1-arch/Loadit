@@ -8,6 +8,12 @@ const nextConfig = {
   experimental: {
     optimizePackageImports: ["framer-motion"],
   },
+  async redirects() {
+    return [
+      // Vanity URL for the quantum receipts story.
+      { source: "/proof", destination: "/quantum", permanent: false },
+    ];
+  },
   async headers() {
     const security = [
       { key: "X-Content-Type-Options", value: "nosniff" },

@@ -32,6 +32,7 @@ function ThemedStack() {
         <Stack.Screen name="register" options={{ title: "Cash at any register" }} />
         <Stack.Screen name="appearance" options={{ title: "Appearance" }} />
         <Stack.Screen name="practice" options={{ title: "Practice run" }} />
+        <Stack.Screen name="quantum" options={{ title: "Quantum Routing" }} />
       </Stack>
     </GestureHandlerRootView>
   );
