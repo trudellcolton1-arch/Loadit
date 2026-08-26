@@ -124,6 +124,24 @@ export default function Practice() {
     // real file only sets an empty auto-detect config — predefine the same
     // value so their app boots even when their CDN serves the wrong bytes.
     window.RAMPS_CONFIG = window.RAMPS_CONFIG || {};
+    // Loadit co-brand ribbon pinned above MoneyGram's flow (our container).
+    (function () {
+      var addRibbon = function () {
+        if (document.getElementById("loadit-ribbon") || !document.body) return;
+        var r = document.createElement("div");
+        r.id = "loadit-ribbon";
+        r.style.cssText = "position:fixed;top:0;left:0;right:0;z-index:2147483647;display:flex;align-items:center;gap:8px;height:40px;padding:0 14px;background:#05070C;border-bottom:1px solid rgba(61,227,131,.35);font-family:-apple-system,Roboto,sans-serif;";
+        r.innerHTML = '<img src="https://loadit.net/icon-512.png" style="width:20px;height:20px;border-radius:6px;"/>' +
+          '<span style="color:#fff;font-weight:700;font-size:13px;letter-spacing:-0.2px;">Loadit</span>' +
+          '<span style="color:rgba(255,255,255,.45);font-size:12px;">non-custodial cash-in</span>' +
+          '<span style="margin-left:auto;color:#F5B84B;border:1px solid rgba(245,184,75,.5);border-radius:6px;padding:2px 7px;font-size:9px;font-weight:800;letter-spacing:1px;">SANDBOX</span>';
+        document.body.appendChild(r);
+        document.body.style.paddingTop = (parseFloat(getComputedStyle(document.body).paddingTop) || 0) + 40 + "px";
+      };
+      if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", addRibbon);
+      else addRibbon();
+      setTimeout(addRibbon, 1500);
+    })();
     (function () {
       var send = function (m) {
         try { window.ReactNativeWebView && window.ReactNativeWebView.postMessage(JSON.stringify(m)); } catch (e) {}
@@ -161,8 +179,13 @@ export default function Practice() {
     return (
       <SafeAreaView style={styles.wrap} edges={["top", "bottom"]}>
         <View style={styles.webHead}>
+          <View style={styles.webBrandRow}>
+            <Image source={require("../assets/mark.png")} style={styles.webBrandLogo} />
+            <Text style={styles.webBrandX}>×</Text>
+            <Image source={require("../assets/moneygram-logo.jpg")} style={[styles.webBrandLogo, { borderRadius: 13 }]} />
+          </View>
           <View style={{ flex: 1 }}>
-            <Text style={styles.webTitle}>MoneyGram · sandbox deposit</Text>
+            <Text style={styles.webTitle}>Sandbox deposit</Text>
             <Text style={styles.webSub}>Test network — no real money</Text>
           </View>
           <TouchableOpacity onPress={() => { setShowWeb(false); setStep("status"); }}>
@@ -537,7 +560,10 @@ const makeStyles = (t: Theme) =>
     rtCard: { flex: 1, backgroundColor: t.card, borderWidth: 1, borderRadius: 20, padding: 16 },
     rtBody: { color: t.dim, fontSize: 12, lineHeight: 20, marginTop: 8 },
     disclaimer: { color: t.faint, fontSize: 11, lineHeight: 16, marginTop: 18, textAlign: "center" },
-    webHead: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: 14, borderBottomColor: t.border, borderBottomWidth: 1 },
+    webHead: { flexDirection: "row", alignItems: "center", gap: 12, padding: 14, borderBottomColor: t.border, borderBottomWidth: 1 },
+    webBrandRow: { flexDirection: "row", alignItems: "center", gap: 6 },
+    webBrandLogo: { width: 26, height: 26, borderRadius: 8 },
+    webBrandX: { color: t.faint, fontSize: 13, fontWeight: "700" },
     webTitle: { color: t.text, fontWeight: "600" },
     webSub: { color: t.warn, fontSize: 11, marginTop: 2 },
     close: { color: t.accentText, fontWeight: "600" },
