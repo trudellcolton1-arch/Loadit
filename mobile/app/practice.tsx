@@ -141,6 +141,48 @@ export default function Practice() {
       if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", addRibbon);
       else addRibbon();
       setTimeout(addRibbon, 1500);
+
+      // Activity indicator: MoneyGram's staging often "thinks" for seconds with
+      // no spinner. Track their in-flight requests and animate a progress bar
+      // under the ribbon so slow reads as working, never dead.
+      var active = 0, barTimer = null;
+      var setBusy = function (busy) {
+        var r = document.getElementById("loadit-ribbon");
+        if (!r) return;
+        var bar = document.getElementById("loadit-progress");
+        if (busy && !bar) {
+          bar = document.createElement("div");
+          bar.id = "loadit-progress";
+          bar.style.cssText = "position:fixed;top:40px;left:0;right:0;height:2px;z-index:2147483647;overflow:hidden;background:rgba(61,227,131,.15);";
+          bar.innerHTML = '<div style="width:35%;height:100%;background:#3DE383;border-radius:2px;animation:loaditSlide 1.1s ease-in-out infinite;"></div>';
+          if (!document.getElementById("loadit-progress-style")) {
+            var st = document.createElement("style");
+            st.id = "loadit-progress-style";
+            st.textContent = "@keyframes loaditSlide{0%{transform:translateX(-110%)}100%{transform:translateX(390px)}}";
+            document.head.appendChild(st);
+          }
+          document.body.appendChild(bar);
+        } else if (!busy && bar) {
+          bar.remove();
+        }
+      };
+      var bump = function (d) {
+        active += d;
+        clearTimeout(barTimer);
+        if (active > 0) barTimer = setTimeout(function () { setBusy(true); }, 500);
+        else setBusy(false);
+      };
+      var of = window.fetch;
+      window.fetch = function () {
+        bump(1);
+        return of.apply(this, arguments).finally(function () { bump(-1); });
+      };
+      var oo = XMLHttpRequest.prototype.open;
+      XMLHttpRequest.prototype.open = function () {
+        this.addEventListener("loadstart", function () { bump(1); });
+        this.addEventListener("loadend", function () { bump(-1); });
+        return oo.apply(this, arguments);
+      };
     })();
     (function () {
       var send = function (m) {
