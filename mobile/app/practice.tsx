@@ -168,7 +168,7 @@ export default function Practice() {
           <View style={styles.webErrWrap}>
             <Text style={styles.err}>MoneyGram&apos;s page couldn&apos;t load in-app: {webErr}</Text>
             <TouchableOpacity style={styles.cta} onPress={() => Linking.openURL(mgUrl)}>
-              <Text style={styles.ctaText}>Open in Safari instead</Text>
+              <Text style={styles.ctaText}>Open in {Platform.OS === "ios" ? "Safari" : "Chrome"} instead</Text>
               <Feather name="external-link" size={16} color={t.onAccent} />
             </TouchableOpacity>
           </View>
@@ -422,7 +422,7 @@ export default function Practice() {
 
             {mgUrl && (
               <TouchableOpacity onPress={() => Linking.openURL(mgUrl)}>
-                <Text style={styles.quantumVerify}>Reopen MoneyGram in Safari →</Text>
+                <Text style={styles.quantumVerify}>Reopen MoneyGram in {Platform.OS === "ios" ? "Safari" : "Chrome"} →</Text>
               </TouchableOpacity>
             )}
             <TouchableOpacity style={styles.cta} onPress={() => router.replace("/")}>
