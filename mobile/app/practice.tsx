@@ -119,6 +119,11 @@ export default function Practice() {
   // unhandled rejections, and a boot status back to the app so a blank
   // screen tells us WHY instead of nothing.
   const DIAG_JS = `
+    // BOOT SHIM: MoneyGram's staging CDN intermittently serves HTML for
+    // /config.js on mobile network paths, killing their app at line 1. The
+    // real file only sets an empty auto-detect config — predefine the same
+    // value so their app boots even when their CDN serves the wrong bytes.
+    window.RAMPS_CONFIG = window.RAMPS_CONFIG || {};
     (function () {
       var send = function (m) {
         try { window.ReactNativeWebView && window.ReactNativeWebView.postMessage(JSON.stringify(m)); } catch (e) {}
