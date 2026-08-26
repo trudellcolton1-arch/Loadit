@@ -33,6 +33,23 @@ export default function Page() {
       <Navbar />
       <main className="px-5 pb-24 pt-24">
         <article className="mx-auto max-w-2xl">
+          {/* logo lockup */}
+          <div className="mb-10 flex items-center justify-center gap-6 rounded-3xl border border-white/10 bg-white/[0.03] px-8 py-10">
+            <Image
+              src="/icon-512.png"
+              alt="Loadit"
+              width={72} height={72}
+              className="h-16 w-16 rounded-2xl sm:h-[72px] sm:w-[72px]"
+            />
+            <span className="text-2xl font-light text-white/30">×</span>
+            <Image
+              src="/blog/moneygram-logo.jpg"
+              alt="MoneyGram"
+              width={72} height={72}
+              className="h-16 w-16 rounded-full sm:h-[72px] sm:w-[72px]"
+            />
+          </div>
+
           {/* header */}
           <div className="font-mono text-[11px] uppercase tracking-[0.3em] text-rail-400">
             Announcement · August 2026
