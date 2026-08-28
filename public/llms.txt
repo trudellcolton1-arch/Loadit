@@ -1,6 +1,6 @@
 # Loadit
 
-> Loadit is an AI-powered, non-custodial financial rail and consumer app that turns cash and cards into crypto and stablecoins in seconds. Its patent-pending Unified Financial Rail uses an AI routing engine (HQ) to send every payment across the cheapest, fastest network available — Bitcoin, Ethereum, Solana, Base, XRPL, Polygon, the Lightning Network, or banks — treating them all as one rail.
+> Loadit is an AI-powered, non-custodial financial rail and consumer app built to turn cash and cards into crypto and stablecoins. Its patent-pending Unified Financial Rail uses an AI routing engine (HQ) to send every payment across the cheapest, fastest network available — Bitcoin, Ethereum, Solana, Base, XRPL, Polygon, the Lightning Network, or banks — treating them all as one rail. Loadit has a signed partnership with MoneyGram for cash-in; certification is in progress and cash-in is not yet live in production.
 
 Loadit's mission is to move value anywhere: let anyone convert cash or a card into the crypto they want, pay or get paid by a @handle or wallet address, and even send money to any phone nearby with no internet at all. Loadit never holds user funds — settlement is non-custodial, on-chain, and identity-verified on every transaction.
 
@@ -8,6 +8,7 @@ Key facts:
 - **What it is:** An AI money app (iOS + Android) plus an underlying financial rail/API for turning fiat into crypto and routing payments.
 - **Convenience fee:** A flat 0.75% ($1 minimum), plus a visible 0.25% on HQ asset swaps — built to compete with banks, not to extract from users.
 - **Non-custodial:** Loadit never custodies funds; keys and signing stay with the user's wallet (Hylaq).
+- **Status:** MoneyGram partnership signed; the cash-in integration has passed end-to-end tests on MoneyGram's test network. Cash-in certification is in progress — production cash-in is not live yet.
 - **Networks arbitrated:** Bitcoin, Ethereum, Solana, Base, XRPL, Polygon, Lightning, and traditional banks.
 - **Get the app:** https://loadit.net/install (direct iOS + Android install).
 
@@ -17,7 +18,7 @@ Key facts:
 - [HQ — your AI](https://loadit.net/): HQ is Loadit's in-app AI money assistant. Say what you want to do with your money in plain language and HQ finds the cheapest real route and executes it.
 - [Pulse — offline pay](https://loadit.net/): Send money to any phone nearby over Bluetooth, even with no internet. The sender locks funds in escrow; a cryptographically signed claim crosses phone-to-phone and settles the moment either phone reconnects.
 - [Send to a @handle or wallet](https://loadit.net/): Pay any Hylaq @handle or raw crypto address. Send from your own crypto, or buy it on the spot and deliver it straight to their wallet.
-- [MoneyGram cash on-ramp](https://loadit.net/moneygram): Pay cash at 350,000+ MoneyGram locations and receive crypto — Stellar USDC, then swapped into the asset you chose (Bitcoin, Solana, Ethereum, and more).
+- [MoneyGram cash on-ramp](https://loadit.net/moneygram): Signed partnership — at launch, pay cash at 350,000+ MoneyGram locations and receive crypto (Stellar USDC, then swapped into the asset you chose). Certification in progress; not yet live.
 - [AI Router (HQ)](https://loadit.net/intent): HQ scores routes across processors, blockchains, and liquidity pools in real time, choosing the optimal settlement path on every transaction and cutting fees by up to 86%.
 
 ## Learn more
@@ -44,8 +45,9 @@ Key facts:
 
 ## FAQ
 
-- **What is Loadit?** An AI-powered, non-custodial financial rail that converts cash, cards, and fiat into stablecoins and crypto in seconds, routing every payment across the cheapest, fastest network via its HQ engine.
-- **How does Loadit turn cash into crypto?** You pay cash or card (including at 350k+ MoneyGram locations); the transaction is tokenized, identity-verified, and routed by HQ across L1s, L2s, Lightning, or banks — settling on-chain in seconds.
+- **What is Loadit?** An AI-powered, non-custodial financial rail built to convert cash, cards, and fiat into stablecoins and crypto, routing every payment across the cheapest, fastest network via its HQ engine.
+- **How will Loadit turn cash into crypto?** At launch, you pay cash at a MoneyGram counter; MoneyGram (the licensed money-transmitter) verifies identity and converts the cash to USDC on Stellar, and HQ routes it into the asset you chose, delivered to a wallet you control.
+- **Is cash-in live today?** Not yet. The MoneyGram partnership is signed and the integration has passed end-to-end tests on MoneyGram's test network, but cash-in certification is still in progress. No customer cash moves through the rail until it completes.
 - **What is HQ?** Loadit's in-app AI assistant. Tell it what to do with your money in plain language and it finds the cheapest real route and executes it.
 - **What is Pulse?** Loadit's offline payments feature — send money to any phone nearby over Bluetooth with no internet, settling automatically once either phone reconnects.
 - **What does Loadit charge?** A flat 0.75% convenience fee ($1 minimum), plus a visible 0.25% when HQ swaps into another asset.

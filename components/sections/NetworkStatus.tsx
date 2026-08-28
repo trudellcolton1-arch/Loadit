@@ -44,9 +44,9 @@ export function NetworkStatus() {
     <section id="status" className="relative section-py border-t border-white/5" ref={ref}>
       <div className="container-px mx-auto max-w-7xl">
         <SectionHeading
-          eyebrow="Network Status"
-          title="Operational. Continuously."
-          description="A self-healing, post-quantum-ready rail — monitored in real time, built to run for the next 100 years."
+          eyebrow="Network Status · Simulation"
+          title="Built to heal itself. Continuously."
+          description="A self-healing, post-quantum-ready rail, built to run for the next 100 years. The console below is a simulation of how it monitors itself — not live production traffic."
         />
 
         <div className="mt-12 flex items-center gap-3">
@@ -55,7 +55,7 @@ export function NetworkStatus() {
             <span className="relative inline-flex h-3 w-3 rounded-full bg-rail-400" />
           </span>
           <span className="text-lg font-semibold text-white">
-            All systems operational
+            Simulated status console
           </span>
         </div>
 
@@ -78,9 +78,9 @@ export function NetworkStatus() {
             </div>
             <div className="mt-6 grid grid-cols-3 gap-3">
               {[
-                { k: "Uptime", v: "99.99%" },
-                { k: "Settled / min", v: throughput.toLocaleString() },
-                { k: "Median latency", v: "38ms" },
+                { k: "Uptime target", v: "99.99%" },
+                { k: "Settled / min (sim)", v: throughput.toLocaleString() },
+                { k: "Latency target", v: "38ms" },
               ].map((m) => (
                 <div key={m.k} className="rounded-2xl border border-white/8 bg-white/[0.02] p-3.5">
                   <div className="font-mono text-[0.58rem] uppercase tracking-widest text-white/40">
@@ -102,7 +102,7 @@ export function NetworkStatus() {
               </span>
               <span className="flex items-center gap-1.5 font-mono text-[0.55rem] uppercase tracking-widest text-rail-400">
                 <span className="h-1 w-1 rounded-full bg-rail-400 animate-pulse-rail" />
-                live
+                sim
               </span>
             </div>
             <div className="mt-4 space-y-2.5 font-mono text-[0.78rem]">

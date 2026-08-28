@@ -98,7 +98,7 @@ export function ArticleLayout({ slug, kind, title, description, updated, readMin
           <div className="mt-14 flex flex-col items-start gap-4 rounded-3xl border border-rail/20 bg-gradient-to-br from-rail/10 to-transparent p-8 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <div className="text-lg font-semibold text-white">Try it with Loadit</div>
-              <div className="mt-1 text-sm text-white/60">Turn cash or card into crypto in seconds — AI-routed, non-custodial.</div>
+              <div className="mt-1 text-sm text-white/60">The AI money app — non-custodial, AI-routed. MoneyGram cash-in launches after certification.</div>
             </div>
             <Link
               href="/install"

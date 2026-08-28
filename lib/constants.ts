@@ -8,7 +8,7 @@ export const SITE = {
   domain: "loadit.net",
   tagline: "Move Value. Anywhere.",
   description:
-    "Loadit turns cash and cards into crypto and stablecoins in seconds — an AI-powered, non-custodial rail routing every payment over the cheapest, fastest network.",
+    "Loadit is the AI-powered, non-custodial rail built to turn cash and cards into crypto and stablecoins — routing every payment over the cheapest, fastest network. MoneyGram partnership signed; cash-in certification in progress.",
   url: "https://loadit.net",
 } as const;
 
@@ -129,13 +129,13 @@ export const RAIL_LAYERS = [
   },
 ] as const;
 
-/** Section 5 — how it works steps. */
+/** Section 5 — how it works steps (the designed flow; cash-in launches after certification). */
 export const HOW_STEPS = [
-  { n: 1, title: "Walk into a store", desc: "Any merchant on the Loadit network." },
+  { n: 1, title: "Walk into a store", desc: "Any counter on the Loadit network — starting with MoneyGram locations at launch." },
   { n: 2, title: "Scan the QR", desc: "Your wallet meets the rail in one tap." },
-  { n: 3, title: "Pay with cash or card", desc: "The merchant still settles in familiar fiat." },
+  { n: 3, title: "Pay with cash or card", desc: "The counter still settles in familiar fiat." },
   { n: 4, title: "AI routes the transaction", desc: "HQ finds the cheapest, fastest path." },
-  { n: 5, title: "Crypto arrives", desc: "On-chain value lands in seconds." },
+  { n: 5, title: "Crypto arrives", desc: "On-chain value lands in your own wallet." },
   { n: 6, title: "Done", desc: "No bank account. No friction. No borders." },
 ] as const;
 
@@ -211,17 +211,17 @@ export const SECURITY_PILLARS = [
 
 /** Section 9 — roadmap. */
 export const ROADMAP = [
-  { year: "2025", title: "Loadit Launch", desc: "Unified Rail MVP live with pilot merchants." },
-  { year: "2026", title: "Texas Expansion", desc: "Regional merchant network and ATM scanner rollout." },
+  { year: "2025", title: "Rail Built", desc: "Unified Rail MVP complete — app built for iOS and Android." },
+  { year: "2026", title: "MoneyGram Cash-In", desc: "Partnership signed. Cash-in certification in progress — launch on completion, then Texas merchant rollout." },
   { year: "2027", title: "National Expansion", desc: "Coast-to-coast rail coverage and partners." },
   { year: "2028", title: "Global Stablecoin Rails", desc: "Cross-border settlement across dollar networks." },
   { year: "2030+", title: "Universal Value Layer", desc: "Cash, crypto, and energy on one protocol." },
 ] as const;
 
-/** Section 10 — investor metrics. */
+/** Section 10 — investor metrics. Modeled targets, not live production stats. */
 export const METRICS = [
-  { value: 86, suffix: "%", label: "Lower settlement fees", sub: "$3.20 → $0.45 per transaction" },
+  { value: 86, suffix: "%", label: "Lower settlement fees", sub: "Modeled: $3.20 → $0.45 per transaction" },
   { value: 8, suffix: "+", label: "Networks arbitrated", sub: "L1s, L2s, Lightning & banks" },
   { value: 6, suffix: "", label: "Core patents pending", sub: "Routing, temporal, quantum, offline" },
-  { value: 2, suffix: "s", label: "Median settlement", sub: "Cash to on-chain value" },
+  { value: 2, suffix: "s", label: "Target settlement", sub: "Design target: cash to on-chain value" },
 ] as const;

@@ -72,6 +72,18 @@ export function Hero() {
           {SITE.description}
         </motion.p>
 
+        {/* Honest status: partnership real, cash-in not yet live */}
+        <motion.a
+          href="/blog/loadit-moneygram"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.9, delay: 0.56 }}
+          className="mt-5 inline-flex items-center gap-2 rounded-full border border-rail/30 bg-rail/10 px-4 py-2 font-mono text-[0.65rem] uppercase tracking-[0.18em] text-rail-400 transition-colors hover:bg-rail/15"
+        >
+          <span className="h-1.5 w-1.5 rounded-full bg-rail-400" />
+          MoneyGram partnership signed · Cash-in certification in progress
+        </motion.a>
+
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
