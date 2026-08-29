@@ -11,7 +11,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "npx --yes tsx --test --test-concurrency=1 lib/*.test.ts"
+    "test": "npx --yes tsx --test --test-concurrency=1 lib/*.test.ts lib/rail/*.test.ts"
   },
   "dependencies": {
     "@noble/post-quantum": "^0.7.0",
