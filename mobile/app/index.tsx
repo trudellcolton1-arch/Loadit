@@ -9,7 +9,7 @@ import { Redirect, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@/lib/authContext";
 import { routeIntent, type IntentResult } from "@/lib/api";
-import { isFounder } from "@/lib/config";
+import { isFounder, isRailOwner } from "@/lib/config";
 import { useTheme, rgba, type Theme } from "@/lib/theme";
 import { Mark } from "@/components/Mark";
 
@@ -33,7 +33,7 @@ function initials(email?: string, name?: string): string {
 }
 
 export default function Home() {
-  const { session, ready, signOut } = useAuth();
+  const { session, ready, hylaqStatus, signOut } = useAuth();
   const { theme: t } = useTheme();
   const styles = useMemo(() => makeStyles(t), [t]);
   const router = useRouter();
@@ -42,6 +42,14 @@ export default function Home() {
   const [result, setResult] = useState<IntentResult | null>(null);
 
   if (ready && !session) return <Redirect href="/login" />;
+
+  // Only a server-VERIFIED, handle-linked Hylaq session counts as signed in.
+  // A stale or unlinked session must never surface gated tiles or a profile.
+  const linkedHylaq = session?.kind === "hylaq" && hylaqStatus === "linked";
+  // While the probe is in flight keep the avatar (no sign-in flash for a real
+  // account), but gated tiles stay hidden until "linked" is confirmed.
+  const showProfileControl =
+    session?.kind === "hylaq" && (hylaqStatus === "linked" || hylaqStatus === "checking");
 
   const run = async (message: string) => {
     const q = message.trim();
@@ -70,16 +78,25 @@ export default function Home() {
               <TouchableOpacity onPress={() => router.push("/appearance")} hitSlop={8}>
                 <Feather name="droplet" size={19} color={t.faint} />
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => router.push("/profile")} onLongPress={signOut}>
-                <View style={styles.avatar}>
-                  <Text style={styles.avatarText}>{initials(session?.email, session?.name)}</Text>
-                </View>
-              </TouchableOpacity>
+              {showProfileControl ? (
+                <TouchableOpacity onPress={() => router.push("/profile")} onLongPress={signOut}>
+                  <View style={styles.avatar}>
+                    <Text style={styles.avatarText}>{initials(session?.email, session?.name)}</Text>
+                  </View>
+                </TouchableOpacity>
+              ) : (
+                /* signed out, guest, or unlinked — an obvious way in, never a
+                   fake profile */
+                <TouchableOpacity style={styles.signInPill} onPress={() => router.push("/login")} hitSlop={6}>
+                  <Feather name="log-in" size={14} color={t.onAccent} />
+                  <Text style={styles.signInPillText}>Sign in</Text>
+                </TouchableOpacity>
+              )}
             </View>
           </View>
 
           {/* hero */}
-          <Text style={styles.greeting}>{greeting()}{session?.name ? `, ${session.name.split(" ")[0]}` : ""}</Text>
+          <Text style={styles.greeting}>{greeting()}{showProfileControl && session?.name ? `, ${session.name.split(" ")[0]}` : ""}</Text>
           <Text style={styles.h1}>Just say it.</Text>
 
           {/* intent input */}
@@ -138,7 +155,7 @@ export default function Home() {
               start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
               style={styles.loadCard}
             >
-              <Text style={[styles.microlabel, { color: t.accentText }]}>LOAD</Text>
+              <Text style={[styles.microlabel, { color: t.accentText }]}>LOADIT</Text>
               <Text style={styles.loadTitle}>Cash or card → crypto</Text>
               <Text style={styles.loadSub}>
                 Bitcoin, Solana, Ethereum, USDC. Best price across licensed partners — proven.
@@ -171,8 +188,25 @@ export default function Home() {
             <Feather name="chevron-right" size={18} color={t.faint} />
           </TouchableOpacity>
 
-          {/* founder practice */}
-          {isFounder(session?.email) && (
+          {/* rail runtime — the owner's VERIFIED, handle-linked Hylaq account
+              ONLY. Guest, stale, or unlinked sessions never see this (the
+              server enforces the same gate on /api/rail). */}
+          {linkedHylaq && isRailOwner(session?.email) && (
+            <TouchableOpacity style={styles.practiceBanner} activeOpacity={0.85} onPress={() => router.push("/rail")}>
+              <View style={styles.practiceIcon}>
+                <Feather name="cpu" size={16} color={t.warn} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.mgTitle}>Rail</Text>
+                <Text style={styles.mgSub}>Owner only · one machine: quote → door → payout · cert in flight</Text>
+              </View>
+              <Feather name="chevron-right" size={18} color={t.faint} />
+            </TouchableOpacity>
+          )}
+
+          {/* founder practice — requires a VERIFIED, handle-linked Hylaq
+              founder account; stale or unlinked sessions don't qualify */}
+          {linkedHylaq && isFounder(session?.email) && (
             <TouchableOpacity style={styles.practiceBanner} activeOpacity={0.85} onPress={() => router.push("/practice")}>
               <View style={styles.practiceIcon}>
                 <Feather name="play" size={16} color={t.warn} />
@@ -222,6 +256,11 @@ const makeStyles = (t: Theme) =>
       backgroundColor: t.surface, borderColor: t.border, borderWidth: 1,
     },
     avatarText: { color: t.dim, fontSize: 12, fontWeight: "700" },
+    signInPill: {
+      flexDirection: "row", alignItems: "center", gap: 6,
+      backgroundColor: t.accent, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 8,
+    },
+    signInPillText: { color: t.onAccent, fontWeight: "700", fontSize: 13 },
     greeting: { color: t.faint, fontSize: 13, fontWeight: "500", marginTop: 24 },
     h1: { color: t.text, fontSize: 32, fontWeight: "800", letterSpacing: -1, marginTop: 4 },
     inputRow: {

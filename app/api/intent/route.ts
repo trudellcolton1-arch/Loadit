@@ -11,6 +11,19 @@ import { limit } from "@/lib/ratelimit";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+/** Public planning endpoint, called by the Loadit app (native fetch has no
+ *  origin; the Expo web preview runs cross-origin). No credentials, nothing
+ *  sensitive — CORS-open like /api/rail. */
+const CORS_HEADERS: Record<string, string> = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+};
+
+export function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: CORS_HEADERS });
+}
+
 /**
  * AI INTENT ROUTER — natural language → real route.
  *
@@ -28,11 +41,11 @@ export async function POST(req: Request) {
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ ok: false, reason: "bad_request" }, { status: 400 });
+    return NextResponse.json({ ok: false, reason: "bad_request" }, { status: 400, headers: CORS_HEADERS });
   }
   const message = (body.message || "").trim().slice(0, 2000);
   if (!message) {
-    return NextResponse.json({ ok: false, reason: "empty" }, { status: 422 });
+    return NextResponse.json({ ok: false, reason: "empty" }, { status: 422, headers: CORS_HEADERS });
   }
 
   const key = process.env.OPENAI_API_KEY;
@@ -52,13 +65,16 @@ export async function POST(req: Request) {
     }),
   ]);
 
-  return NextResponse.json({
-    ok: true,
-    ai: aiParsed,
-    fees_live: routed.fees_live,
-    intent,
-    route: routed.route,
-    hq: live ? toWire(live) : undefined,
-    explanation: explainRoute(intent, routed.result),
-  });
+  return NextResponse.json(
+    {
+      ok: true,
+      ai: aiParsed,
+      fees_live: routed.fees_live,
+      intent,
+      route: routed.route,
+      hq: live ? toWire(live) : undefined,
+      explanation: explainRoute(intent, routed.result),
+    },
+    { headers: CORS_HEADERS }
+  );
 }

@@ -1,3 +1,4 @@
+import { Platform } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import * as AuthSession from "expo-auth-session";
 import * as WebBrowser from "expo-web-browser";
@@ -6,6 +7,43 @@ import { API_BASE, HYLAQ } from "./config";
 WebBrowser.maybeCompleteAuthSession();
 
 const SESSION_KEY = "loadit_session";
+
+/* SecureStore has no web implementation — fall back to localStorage so the
+ * Expo web build (dev/testing) keeps a session too. Native uses SecureStore. */
+async function storageGet(key: string): Promise<string | null> {
+  if (Platform.OS === "web") {
+    try {
+      return globalThis.localStorage?.getItem(key) ?? null;
+    } catch {
+      return null;
+    }
+  }
+  return SecureStore.getItemAsync(key);
+}
+
+async function storageSet(key: string, value: string): Promise<void> {
+  if (Platform.OS === "web") {
+    try {
+      globalThis.localStorage?.setItem(key, value);
+    } catch {
+      /* session just won't persist */
+    }
+    return;
+  }
+  await SecureStore.setItemAsync(key, value);
+}
+
+async function storageDelete(key: string): Promise<void> {
+  if (Platform.OS === "web") {
+    try {
+      globalThis.localStorage?.removeItem(key);
+    } catch {
+      /* nothing to remove */
+    }
+    return;
+  }
+  await SecureStore.deleteItemAsync(key);
+}
 
 export interface Session {
   kind: "hylaq" | "guest";
@@ -17,7 +55,7 @@ export interface Session {
 
 export async function loadSession(): Promise<Session | null> {
   try {
-    const raw = await SecureStore.getItemAsync(SESSION_KEY);
+    const raw = await storageGet(SESSION_KEY);
     return raw ? (JSON.parse(raw) as Session) : null;
   } catch {
     return null;
@@ -25,11 +63,11 @@ export async function loadSession(): Promise<Session | null> {
 }
 
 async function saveSession(s: Session) {
-  await SecureStore.setItemAsync(SESSION_KEY, JSON.stringify(s));
+  await storageSet(SESSION_KEY, JSON.stringify(s));
 }
 
 export async function signOut() {
-  await SecureStore.deleteItemAsync(SESSION_KEY);
+  await storageDelete(SESSION_KEY);
 }
 
 /** Whether Hylaq SSO has been configured (issuer + clientId set in app.json). */
@@ -133,4 +171,49 @@ export async function signInGuest(): Promise<Session> {
   const session: Session = { kind: "guest" };
   await saveSession(session);
   return session;
+}
+
+/**
+ * What the backend says a stored Hylaq session really is:
+ *
+ * - "linked":   token verified AND an @handle is linked — the only state that
+ *               may show gated surfaces (Rail, Practice run).
+ * - "unlinked": token verified but no @handle — signed in, but gated surfaces
+ *               stay hidden and the profile offers sign-in / create-account.
+ * - "dead":     the backend explicitly says the token resolves to no Hylaq
+ *               account (logged out of Hylaq / revoked / expired) — the stale
+ *               session must be cleared.
+ * - "unknown":  network or server trouble — never sign anyone out over a
+ *               flaky connection, but gated surfaces stay hidden (fail closed).
+ */
+export type HylaqProbe = "linked" | "unlinked" | "dead" | "unknown";
+
+export async function probeHylaqSession(s: Session): Promise<HylaqProbe> {
+  if (s.kind !== "hylaq" || !s.accessToken) return "dead";
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    try {
+      const res = await fetch(`${API_BASE}/api/handle/me`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: s.accessToken }),
+        signal: controller.signal,
+      });
+      if (!res.ok) return "unknown"; // backend hiccup ≠ signed out
+      const r = (await res.json()) as { ok?: boolean; linked?: boolean; reason?: string };
+      if (r.ok === true && r.linked === true) return "linked";
+      if (r.ok === true && r.linked === false) {
+        // "no_handle" = alive token, verified email, just no @handle yet.
+        if (r.reason === "no_handle") return "unlinked";
+        // "unverified"/"no_token" = token resolves to no Hylaq account.
+        if (r.reason === "unverified" || r.reason === "no_token") return "dead";
+      }
+      return "unknown";
+    } finally {
+      clearTimeout(timeout);
+    }
+  } catch {
+    return "unknown";
+  }
 }

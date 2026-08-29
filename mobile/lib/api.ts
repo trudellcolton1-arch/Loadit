@@ -261,6 +261,116 @@ export function preferredProvider(asset: string): OnrampProvider {
   return ["BTC", "SOL", "XRP"].includes(asset.toUpperCase()) ? "coinbase" : "stripe";
 }
 
+/* ---------- rail runtime (owner-gated; server enforces the email gate) ---------- */
+
+export type RailMode = "live" | "sim";
+
+export interface RailRouteLeg {
+  kind: "intake" | "convert" | "payout";
+  via: string;
+  detail: string;
+}
+
+export interface RailQuote {
+  quoteId: string;
+  amountUsd: number;
+  loaditFeeUsd: number;
+  ttlMs: number;
+  lockedAt: number;
+  expiresAt: number;
+  healed: boolean;
+  route: {
+    routeId: string;
+    doorId: string;
+    doorLabel: string;
+    score: number;
+    feeUsd: number;
+    etaSeconds: number;
+    confirmable: boolean;
+    settlement: string;
+    legs: RailRouteLeg[];
+  };
+}
+
+export interface RailPayment {
+  id: string;
+  state:
+    | "quoted"
+    | "intake_pending"
+    | "intake_confirmed"
+    | "converting"
+    | "paying_out"
+    | "settled"
+    | "failed"
+    | "healing";
+  healCount: number;
+  lastError: string | null;
+  intent: { amountUsd: number; outcome: { asset: string; wallet: string } };
+  quote: RailQuote;
+  quoteCount: number;
+  intake: {
+    internalRef: string;
+    doorId: string;
+    status: string;
+    partnerTxId: string | null;
+    instructions: string | null;
+  } | null;
+  receipt: {
+    receiptRef: string;
+    amountUsd: number;
+    deliveredTo: string;
+    replayed: boolean;
+    at: string;
+  } | null;
+  history: { at: string; from: string | null; to: string; note?: string }[];
+}
+
+export interface RailResponse {
+  /** HTTP status — 401/403 mean the gate refused this account. */
+  status: number;
+  ok?: boolean;
+  reason?: string;
+  message?: string;
+  payment?: RailPayment;
+  mode?: RailMode;
+  simulated?: boolean;
+  moneygram_certification?: "CLEARED" | "IN_FLIGHT";
+  notice?: string;
+  payouts_recorded?: number;
+}
+
+/**
+ * One rail action against the authenticated /api/rail route. The Hylaq access
+ * token is the identity — the server verifies it and refuses any account
+ * that is not the rail owner (401/403), regardless of what the UI shows.
+ */
+export async function railAction(
+  token: string | undefined,
+  body: {
+    action: "create" | "get" | "intake" | "confirm" | "settle" | "heal" | "kill_pipe";
+    mode: RailMode;
+    paymentId?: string;
+    intent?: { amountUsd: number; outcome: { asset: string; wallet: string } };
+    pipe?: "payout" | "convert";
+  }
+): Promise<RailResponse> {
+  const res = await fetch(`${API_BASE}/api/rail`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(body),
+  });
+  let json: Omit<RailResponse, "status"> = {};
+  try {
+    json = (await res.json()) as Omit<RailResponse, "status">;
+  } catch {
+    /* non-JSON error body */
+  }
+  return { status: res.status, ...json };
+}
+
 /* ---------- founder practice run (MoneyGram TESTNET sandbox) ---------- */
 
 export interface MgSandboxDeposit {
