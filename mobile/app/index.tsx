@@ -9,7 +9,7 @@ import { Redirect, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@/lib/authContext";
 import { routeIntent, type IntentResult } from "@/lib/api";
-import { isFounder } from "@/lib/config";
+import { isFounder, isRailOwner } from "@/lib/config";
 import { useTheme, rgba, type Theme } from "@/lib/theme";
 import { Mark } from "@/components/Mark";
 
@@ -170,6 +170,20 @@ export default function Home() {
             </View>
             <Feather name="chevron-right" size={18} color={t.faint} />
           </TouchableOpacity>
+
+          {/* rail runtime — the owner's Hylaq account only (server enforces too) */}
+          {session?.kind === "hylaq" && isRailOwner(session.email) && (
+            <TouchableOpacity style={styles.practiceBanner} activeOpacity={0.85} onPress={() => router.push("/rail")}>
+              <View style={styles.practiceIcon}>
+                <Feather name="cpu" size={16} color={t.warn} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.mgTitle}>Rail</Text>
+                <Text style={styles.mgSub}>Owner only · one machine: quote → door → payout · cert in flight</Text>
+              </View>
+              <Feather name="chevron-right" size={18} color={t.faint} />
+            </TouchableOpacity>
+          )}
 
           {/* founder practice */}
           {isFounder(session?.email) && (

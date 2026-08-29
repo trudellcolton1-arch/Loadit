@@ -1,3 +1,4 @@
+import { Platform } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import * as AuthSession from "expo-auth-session";
 import * as WebBrowser from "expo-web-browser";
@@ -6,6 +7,43 @@ import { API_BASE, HYLAQ } from "./config";
 WebBrowser.maybeCompleteAuthSession();
 
 const SESSION_KEY = "loadit_session";
+
+/* SecureStore has no web implementation — fall back to localStorage so the
+ * Expo web build (dev/testing) keeps a session too. Native uses SecureStore. */
+async function storageGet(key: string): Promise<string | null> {
+  if (Platform.OS === "web") {
+    try {
+      return globalThis.localStorage?.getItem(key) ?? null;
+    } catch {
+      return null;
+    }
+  }
+  return SecureStore.getItemAsync(key);
+}
+
+async function storageSet(key: string, value: string): Promise<void> {
+  if (Platform.OS === "web") {
+    try {
+      globalThis.localStorage?.setItem(key, value);
+    } catch {
+      /* session just won't persist */
+    }
+    return;
+  }
+  await SecureStore.setItemAsync(key, value);
+}
+
+async function storageDelete(key: string): Promise<void> {
+  if (Platform.OS === "web") {
+    try {
+      globalThis.localStorage?.removeItem(key);
+    } catch {
+      /* nothing to remove */
+    }
+    return;
+  }
+  await SecureStore.deleteItemAsync(key);
+}
 
 export interface Session {
   kind: "hylaq" | "guest";
@@ -17,7 +55,7 @@ export interface Session {
 
 export async function loadSession(): Promise<Session | null> {
   try {
-    const raw = await SecureStore.getItemAsync(SESSION_KEY);
+    const raw = await storageGet(SESSION_KEY);
     return raw ? (JSON.parse(raw) as Session) : null;
   } catch {
     return null;
@@ -25,11 +63,11 @@ export async function loadSession(): Promise<Session | null> {
 }
 
 async function saveSession(s: Session) {
-  await SecureStore.setItemAsync(SESSION_KEY, JSON.stringify(s));
+  await storageSet(SESSION_KEY, JSON.stringify(s));
 }
 
 export async function signOut() {
-  await SecureStore.deleteItemAsync(SESSION_KEY);
+  await storageDelete(SESSION_KEY);
 }
 
 /** Whether Hylaq SSO has been configured (issuer + clientId set in app.json). */
