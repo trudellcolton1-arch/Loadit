@@ -116,13 +116,25 @@ export default function Home() {
                   {result.route.network_name} · settles {result.route.eta} · fee {money(result.route.loadit_fee_usd)}
                 </Text>
               </View>
-              <TouchableOpacity
-                style={styles.cta}
-                onPress={() => router.push({ pathname: "/buy", params: { asset: result.intent.asset, amount: String(result.intent.amount_usd) } })}
-              >
-                <Text style={styles.ctaText}>Buy {result.intent.asset} now</Text>
-                <Feather name="chevron-right" size={16} color={t.onAccent} />
-              </TouchableOpacity>
+              {/* Cash intents for the rail owner continue on the rail (server-gated):
+                  HQ locks the quote at the MoneyGram door on the cash screen. */}
+              {session?.kind === "hylaq" && isRailOwner(session.email) && result.intent.payment_method === "Cash" ? (
+                <TouchableOpacity
+                  style={styles.cta}
+                  onPress={() => router.push({ pathname: "/moneygram", params: { asset: result.intent.asset, amount: String(result.intent.amount_usd) } })}
+                >
+                  <Text style={styles.ctaText}>Continue — cash at MoneyGram</Text>
+                  <Feather name="chevron-right" size={16} color={t.onAccent} />
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  style={styles.cta}
+                  onPress={() => router.push({ pathname: "/buy", params: { asset: result.intent.asset, amount: String(result.intent.amount_usd) } })}
+                >
+                  <Text style={styles.ctaText}>Buy {result.intent.asset} now</Text>
+                  <Feather name="chevron-right" size={16} color={t.onAccent} />
+                </TouchableOpacity>
+              )}
               <TouchableOpacity
                 onPress={() => router.push({ pathname: "/quote", params: { asset: result.intent.asset, amount: String(result.intent.amount_usd), payMethod: result.intent.payment_method } })}
               >
@@ -138,7 +150,7 @@ export default function Home() {
               start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
               style={styles.loadCard}
             >
-              <Text style={[styles.microlabel, { color: t.accentText }]}>LOAD</Text>
+              <Text style={[styles.microlabel, { color: t.accentText }]}>LOADIT</Text>
               <Text style={styles.loadTitle}>Cash or card → crypto</Text>
               <Text style={styles.loadSub}>
                 Bitcoin, Solana, Ethereum, USDC. Best price across licensed partners — proven.
@@ -170,20 +182,6 @@ export default function Home() {
             </View>
             <Feather name="chevron-right" size={18} color={t.faint} />
           </TouchableOpacity>
-
-          {/* rail runtime — the owner's Hylaq account only (server enforces too) */}
-          {session?.kind === "hylaq" && isRailOwner(session.email) && (
-            <TouchableOpacity style={styles.practiceBanner} activeOpacity={0.85} onPress={() => router.push("/rail")}>
-              <View style={styles.practiceIcon}>
-                <Feather name="cpu" size={16} color={t.warn} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.mgTitle}>Rail</Text>
-                <Text style={styles.mgSub}>Owner only · one machine: quote → door → payout · cert in flight</Text>
-              </View>
-              <Feather name="chevron-right" size={18} color={t.faint} />
-            </TouchableOpacity>
-          )}
 
           {/* founder practice */}
           {isFounder(session?.email) && (

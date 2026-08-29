@@ -9,17 +9,25 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { WebView } from "react-native-webview";
 import { useAuth } from "@/lib/authContext";
 import { getOnramp, getRoute, preferredProvider } from "@/lib/api";
+import { isRailOwner } from "@/lib/config";
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useTheme, rgba, type Theme } from "@/lib/theme";
 import { Mark } from "@/components/Mark";
+import { RailFlow } from "@/components/RailFlow";
 
 /**
- * LOAD — the signature stepped flow:
- * Payment Method → Amount + Cryptocurrency → Wallet → licensed checkout → Success.
+ * LOADIT's signature stepped cash/card → crypto flow:
+ * Payment Method → Amount + Cryptocurrency → Wallet → checkout → Success.
  * Clean card UI; every accent follows the user's chosen theme color.
+ *
+ * Cash for the rail owner's account runs on the rail runtime (lib/rail via
+ * /api/rail): HQ locks a scored quote, MoneyGram cash is door one, and the
+ * confirm stays honestly refused while MoneyGram certification is in flight.
+ * Every other account keeps today's licensed-provider checkout — the server
+ * enforces that gate, not this screen.
  */
 
-type Step = "method" | "amount" | "wallet" | "success" | "submitted";
+type Step = "method" | "amount" | "wallet" | "rail" | "success" | "submitted";
 
 // URL fragments providers redirect to when a payment completes / is cancelled.
 const SUCCESS_HINTS = ["success", "complete", "completed", "confirmed", "thank", "return"];
@@ -58,10 +66,16 @@ export default function Load() {
 
   const amt = Math.max(1, parseFloat(amount) || 0);
   const fee = Math.round(Math.max(1, amt * 0.0075) * 100) / 100;
+  // Cash through the rail runtime — owner's account only (server-gated too).
+  const railCash = session?.kind === "hylaq" && isRailOwner(session.email) && method === "Cash";
 
   const startCheckout = async () => {
     if (!wallet.trim()) {
       Alert.alert("Wallet needed", "Paste the wallet address where your crypto should land. Loadit is non-custodial — it goes straight to you.");
+      return;
+    }
+    if (railCash) {
+      setStep("rail");
       return;
     }
     setBusy(true);
@@ -115,7 +129,11 @@ export default function Load() {
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           {step !== "success" && step !== "submitted" && (
             <TouchableOpacity
-              onPress={() => (step === "method" ? router.back() : setStep(step === "wallet" ? "amount" : "method"))}
+              onPress={() =>
+                step === "method"
+                  ? router.back()
+                  : setStep(step === "rail" ? "wallet" : step === "wallet" ? "amount" : "method")
+              }
             >
               <Text style={styles.cancel}>{step === "method" ? "Cancel" : "← Back"}</Text>
             </TouchableOpacity>
@@ -218,11 +236,22 @@ export default function Load() {
                 </Text>
               </View>
               <TouchableOpacity style={styles.cta} onPress={startCheckout} disabled={busy}>
-                {busy ? <ActivityIndicator color={t.buttonText} /> : <Text style={styles.ctaText}>Continue</Text>}
+                {busy ? <ActivityIndicator color={t.buttonText} /> : (
+                  <Text style={styles.ctaText}>{railCash ? "Continue — HQ locks the route" : "Continue"}</Text>
+                )}
               </TouchableOpacity>
               <Text style={styles.legal}>
-                Checkout, KYC and delivery are completed by {provider === "coinbase" ? "Coinbase" : "Stripe"}, a licensed provider.
+                {railCash
+                  ? "Cash runs on the Loadit rail: HQ scores the doors and MoneyGram is the licensed cash leg. MoneyGram cash-in certification is still in flight — not live yet."
+                  : `Checkout, KYC and delivery are completed by ${provider === "coinbase" ? "Coinbase" : "Stripe"}, a licensed provider.`}
               </Text>
+            </>
+          )}
+
+          {step === "rail" && (
+            <>
+              <Text style={styles.h1}>Your route</Text>
+              <RailFlow amountUsd={amt} asset={coin} wallet={wallet.trim()} />
             </>
           )}
 

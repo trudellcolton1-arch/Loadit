@@ -8,6 +8,7 @@ import { Redirect, useLocalSearchParams, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@/lib/authContext";
 import { getRoute, type HQRouteQuote } from "@/lib/api";
+import { isRailOwner } from "@/lib/config";
 import { useTheme, rgba, type Theme } from "@/lib/theme";
 
 /**
@@ -50,6 +51,11 @@ export default function Quote() {
   }, [amount, asset, payMethod]);
 
   if (ready && !session) return <Redirect href="/login" />;
+
+  // Cash intents continue on the rail for the owner's account (server-gated):
+  // HQ locks the quote at the MoneyGram door on the cash → crypto screen.
+  const railCash =
+    session?.kind === "hylaq" && isRailOwner(session.email) && payMethod.toLowerCase() === "cash";
 
   const best = quote?.best;
   const others = (quote?.quotes || []).filter((q) => q.provider !== best?.provider);
@@ -125,11 +131,23 @@ export default function Quote() {
               )}
               <TouchableOpacity
                 style={styles.cta}
-                onPress={() => router.push({ pathname: "/buy", params: { asset, amount: String(amount) } })}
+                onPress={() =>
+                  railCash
+                    ? router.push({ pathname: "/moneygram", params: { asset, amount: String(amount) } })
+                    : router.push({ pathname: "/buy", params: { asset, amount: String(amount) } })
+                }
               >
-                <Text style={styles.ctaText}>Confirm — buy {asset}</Text>
+                <Text style={styles.ctaText}>
+                  {railCash ? "Continue — cash at MoneyGram" : `Confirm — buy ${asset}`}
+                </Text>
                 <Feather name="chevron-right" size={16} color={t.onAccent} />
               </TouchableOpacity>
+              {railCash && (
+                <Text style={styles.railNote}>
+                  HQ locks the route on the next screen — MoneyGram is door one. Cash-in
+                  certification is still in flight, not live.
+                </Text>
+              )}
             </LinearGradient>
 
             {/* also checked */}
@@ -223,6 +241,7 @@ const makeStyles = (t: Theme) =>
     statVal: { color: t.text, fontWeight: "700", fontVariant: ["tabular-nums"] },
     savingsRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 13 },
     savings: { color: t.accentText, fontSize: 13, fontWeight: "700" },
+    railNote: { color: t.dim, fontSize: 11, lineHeight: 16, marginTop: 10, textAlign: "center" },
     cta: {
       flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6,
       backgroundColor: t.accent, borderRadius: 18, paddingVertical: 16, marginTop: 17,

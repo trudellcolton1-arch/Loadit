@@ -3,10 +3,12 @@ import {
   View, Text, TextInput, TouchableOpacity, ActivityIndicator,
   ScrollView, StyleSheet, KeyboardAvoidingView, Platform, Image,
 } from "react-native";
-import { Redirect } from "expo-router";
+import { Redirect, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@/lib/authContext";
 import { getMoneyGramPlan, type MoneyGramPlan } from "@/lib/api";
+import { isRailOwner } from "@/lib/config";
+import { RailFlow } from "@/components/RailFlow";
 import { useTheme, type Theme } from "@/lib/theme";
 
 /**
@@ -16,6 +18,11 @@ import { useTheme, type Theme } from "@/lib/theme";
  * licensed leg, does the KYC) → HQ swaps into the chosen asset → the user's
  * own wallet. Shows the full grounded route; the swap executor and live anchor
  * are wired server-side.
+ *
+ * For the rail owner's account, "See my route" also runs the rail runtime
+ * (lib/rail via /api/rail): HQ locks a scored TTL quote at the MoneyGram door
+ * and the intake stays honestly refusal-gated while certification is in
+ * flight. Every other account sees the plan only — the server enforces it.
  */
 
 const ASSETS = ["BTC", "ETH", "SOL", "USDC"] as const;
@@ -26,20 +33,37 @@ export default function MoneyGram() {
   const { session, ready } = useAuth();
   const { theme: t } = useTheme();
   const styles = useMemo(() => makeStyles(t), [t]);
-  const [asset, setAsset] = useState<(typeof ASSETS)[number]>("BTC");
-  const [amount, setAmount] = useState(100);
+  const params = useLocalSearchParams<{ asset?: string; amount?: string }>();
+  const paramAsset = (params.asset || "").toString().toUpperCase();
+  const paramAmount = parseFloat(String(params.amount));
+  const [asset, setAsset] = useState<(typeof ASSETS)[number]>(
+    (ASSETS as readonly string[]).includes(paramAsset) ? (paramAsset as (typeof ASSETS)[number]) : "BTC"
+  );
+  const [amount, setAmount] = useState(
+    Number.isFinite(paramAmount) && paramAmount >= 1 ? Math.round(paramAmount) : 100
+  );
   const [wallet, setWallet] = useState("");
   const [plan, setPlan] = useState<MoneyGramPlan | null>(null);
   const [loading, setLoading] = useState(false);
+  const [railKey, setRailKey] = useState(0);
+  const [railOn, setRailOn] = useState(false);
 
   if (ready && !session) return <Redirect href="/login" />;
+
+  const railEligible = session?.kind === "hylaq" && isRailOwner(session.email);
 
   const preview = async () => {
     if (loading) return;
     setLoading(true);
+    setRailOn(false);
     try {
       const p = await getMoneyGramPlan(amount, asset, wallet.trim());
       if (p.ok) setPlan(p);
+      if (railEligible && wallet.trim()) {
+        // The rail locks the quote for this exact intent — remount per run.
+        setRailKey((k) => k + 1);
+        setRailOn(true);
+      }
     } finally {
       setLoading(false);
     }
@@ -88,8 +112,16 @@ export default function MoneyGram() {
           />
 
           <TouchableOpacity style={styles.cta} onPress={preview} disabled={loading}>
-            {loading ? <ActivityIndicator color={t.buttonText} /> : <Text style={styles.ctaText}>See my route</Text>}
+            {loading ? <ActivityIndicator color={t.buttonText} /> : (
+              <Text style={styles.ctaText}>{railEligible ? "See my route — HQ locks it" : "See my route"}</Text>
+            )}
           </TouchableOpacity>
+          {railEligible && !wallet.trim() && (
+            <Text style={styles.swapNote}>
+              Paste your wallet to lock the route — the rail is non-custodial and needs the
+              destination you control.
+            </Text>
+          )}
 
           {plan && (
             <View style={styles.planCard}>
@@ -120,6 +152,10 @@ export default function MoneyGram() {
 
               <Text style={styles.swapNote}>{plan.swap.note}</Text>
             </View>
+          )}
+
+          {railOn && railEligible && wallet.trim() !== "" && (
+            <RailFlow key={railKey} amountUsd={amount} asset={asset} wallet={wallet.trim()} />
           )}
 
           <Text style={styles.legal}>
