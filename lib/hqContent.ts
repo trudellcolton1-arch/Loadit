@@ -13,10 +13,37 @@ import { unstable_cache } from "next/cache";
  *
  * Both helpers are ISR-cached (10 min) and never throw — a DB hiccup or a
  * missing connection string renders as "no pages", never a 500.
+ *
+ * HARD ALLOWLIST: only the slugs in HQ_ALLOWED_SLUGS may render at /p/<slug>
+ * or appear in the sitemap. HQ keeps write access to its content table, so a
+ * republish of generic SEO junk must not resurface here — anything outside
+ * the allowlist is treated as not-found/omitted even if its DB row says
+ * status = 'published'.
  */
 
 const DOMAINS = ["loadit.net", "www.loadit.net"];
 const REVALIDATE_S = 600;
+
+/** The only HQ slugs Loadit will serve. Curated by hand; edit deliberately. */
+export const HQ_ALLOWED_SLUGS: readonly string[] = [
+  "how-to-buy-crypto-with-cash-at-a-moneygram-near-me",
+  "convert-cash-to-usdc-at-moneygram-locations-full-guide",
+  "moneygram-to-crypto-wallet-without-an-exchange-account",
+  "non-custodial-app-to-convert-cash-to-bitcoin-without-kyc-delays",
+  "send-crypto-to-family-overseas-without-custodial-risk",
+];
+
+const ALLOWED_SLUG_SET = new Set(HQ_ALLOWED_SLUGS);
+
+/** True only for the hand-curated slugs (after trim + lowercase). */
+export function isAllowedHqSlug(slug: string): boolean {
+  return ALLOWED_SLUG_SET.has((slug || "").trim().toLowerCase());
+}
+
+/** Drop any rows outside the allowlist, whatever the DB claims. */
+export function filterAllowedHqPages<T extends { slug: string }>(pages: T[]): T[] {
+  return pages.filter((p) => isAllowedHqSlug(p.slug));
+}
 
 function contentDbUrl(): string | undefined {
   return process.env.HQ_CONTENT_DATABASE_URL || process.env.HYLAQ_DATABASE_URL;
@@ -108,9 +135,11 @@ function toFaq(v: unknown): HqFaq[] {
 }
 
 const getHqPageUncached = async (slug: string): Promise<HqPage | null> => {
-  if (!contentDbConfigured()) return null;
   const clean = (slug || "").trim().toLowerCase();
-  if (!clean) return null;
+  // Allowlist first: a non-curated slug is notFound before we even look at
+  // the DB, so a junk republish by HQ can never render.
+  if (!clean || !isAllowedHqSlug(clean)) return null;
+  if (!contentDbConfigured()) return null;
   try {
     const rows = await contentQuery<Record<string, unknown>>(
       `select slug, title,
@@ -141,7 +170,7 @@ const getHqPageUncached = async (slug: string): Promise<HqPage | null> => {
   }
 };
 
-/** One published HQ page for this domain, by slug. Cached 10 min. */
+/** One published, allowlisted HQ page for this domain, by slug. Cached 10 min. */
 export const getHqPage = unstable_cache(getHqPageUncached, ["hq-content-page"], {
   revalidate: REVALIDATE_S,
 });
@@ -152,24 +181,28 @@ const listHqPagesUncached = async (): Promise<HqPageSummary[]> => {
     const rows = await contentQuery<Record<string, unknown>>(
       `select slug, title, published_at as "publishedAt"
        from hq_content_page
-       where status = 'published' and domain = any($1)
+       where status = 'published' and domain = any($1) and slug = any($2)
        order by published_at desc nulls last
        limit 500`,
-      [DOMAINS]
+      [DOMAINS, [...HQ_ALLOWED_SLUGS]]
     );
-    return rows
-      .filter((r) => r.slug)
-      .map((r) => ({
-        slug: String(r.slug),
-        title: String(r.title || r.slug),
-        publishedAt: r.publishedAt ? String(r.publishedAt) : null,
-      }));
+    // Filter again in code: the sitemap allowlist must hold even if the SQL
+    // above is ever loosened or the DB returns unexpected rows.
+    return filterAllowedHqPages(
+      rows
+        .filter((r) => r.slug)
+        .map((r) => ({
+          slug: String(r.slug),
+          title: String(r.title || r.slug),
+          publishedAt: r.publishedAt ? String(r.publishedAt) : null,
+        }))
+    );
   } catch {
     return []; // sitemap must build even if the DB is unreachable
   }
 };
 
-/** All published HQ pages for this domain (for the sitemap). Cached 10 min. */
+/** Published, allowlisted HQ pages for this domain (for the sitemap). Cached 10 min. */
 export const listHqPages = unstable_cache(listHqPagesUncached, ["hq-content-list"], {
   revalidate: REVALIDATE_S,
 });
