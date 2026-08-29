@@ -172,3 +172,36 @@ export async function signInGuest(): Promise<Session> {
   await saveSession(session);
   return session;
 }
+
+/**
+ * True only when the backend EXPLICITLY says this stored Hylaq token no longer
+ * resolves to an account (logged out of Hylaq / token revoked or expired).
+ * A stale session must not keep gated surfaces (Rail, Practice run) visible.
+ * Network or server trouble returns false — never sign someone out over a
+ * flaky connection.
+ */
+export async function hylaqSessionDead(s: Session): Promise<boolean> {
+  if (s.kind !== "hylaq") return false;
+  if (!s.accessToken) return true;
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    try {
+      const res = await fetch(`${API_BASE}/api/handle/me`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: s.accessToken }),
+        signal: controller.signal,
+      });
+      if (!res.ok) return false; // backend hiccup ≠ signed out
+      const r = (await res.json()) as { ok?: boolean; linked?: boolean; reason?: string };
+      // "unverified" = token resolves to no Hylaq account. "no_handle" means
+      // the token is alive (email verified) — that session stays.
+      return r.ok === true && r.linked === false && (r.reason === "unverified" || r.reason === "no_token");
+    } finally {
+      clearTimeout(timeout);
+    }
+  } catch {
+    return false;
+  }
+}

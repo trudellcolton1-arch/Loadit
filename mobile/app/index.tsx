@@ -70,11 +70,19 @@ export default function Home() {
               <TouchableOpacity onPress={() => router.push("/appearance")} hitSlop={8}>
                 <Feather name="droplet" size={19} color={t.faint} />
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => router.push("/profile")} onLongPress={signOut}>
-                <View style={styles.avatar}>
-                  <Text style={styles.avatarText}>{initials(session?.email, session?.name)}</Text>
-                </View>
-              </TouchableOpacity>
+              {session?.kind === "hylaq" ? (
+                <TouchableOpacity onPress={() => router.push("/profile")} onLongPress={signOut}>
+                  <View style={styles.avatar}>
+                    <Text style={styles.avatarText}>{initials(session?.email, session?.name)}</Text>
+                  </View>
+                </TouchableOpacity>
+              ) : (
+                /* signed out (guest) — an obvious way in, no hunting */
+                <TouchableOpacity style={styles.signInPill} onPress={() => router.push("/login")} hitSlop={6}>
+                  <Feather name="log-in" size={14} color={t.onAccent} />
+                  <Text style={styles.signInPillText}>Sign in</Text>
+                </TouchableOpacity>
+              )}
             </View>
           </View>
 
@@ -116,25 +124,13 @@ export default function Home() {
                   {result.route.network_name} · settles {result.route.eta} · fee {money(result.route.loadit_fee_usd)}
                 </Text>
               </View>
-              {/* Cash intents for the rail owner continue on the rail (server-gated):
-                  HQ locks the quote at the MoneyGram door on the cash screen. */}
-              {session?.kind === "hylaq" && isRailOwner(session.email) && result.intent.payment_method === "Cash" ? (
-                <TouchableOpacity
-                  style={styles.cta}
-                  onPress={() => router.push({ pathname: "/moneygram", params: { asset: result.intent.asset, amount: String(result.intent.amount_usd) } })}
-                >
-                  <Text style={styles.ctaText}>Continue — cash at MoneyGram</Text>
-                  <Feather name="chevron-right" size={16} color={t.onAccent} />
-                </TouchableOpacity>
-              ) : (
-                <TouchableOpacity
-                  style={styles.cta}
-                  onPress={() => router.push({ pathname: "/buy", params: { asset: result.intent.asset, amount: String(result.intent.amount_usd) } })}
-                >
-                  <Text style={styles.ctaText}>Buy {result.intent.asset} now</Text>
-                  <Feather name="chevron-right" size={16} color={t.onAccent} />
-                </TouchableOpacity>
-              )}
+              <TouchableOpacity
+                style={styles.cta}
+                onPress={() => router.push({ pathname: "/buy", params: { asset: result.intent.asset, amount: String(result.intent.amount_usd) } })}
+              >
+                <Text style={styles.ctaText}>Buy {result.intent.asset} now</Text>
+                <Feather name="chevron-right" size={16} color={t.onAccent} />
+              </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => router.push({ pathname: "/quote", params: { asset: result.intent.asset, amount: String(result.intent.amount_usd), payMethod: result.intent.payment_method } })}
               >
@@ -183,8 +179,23 @@ export default function Home() {
             <Feather name="chevron-right" size={18} color={t.faint} />
           </TouchableOpacity>
 
-          {/* founder practice */}
-          {isFounder(session?.email) && (
+          {/* rail runtime — the owner's signed-in Hylaq account ONLY. A guest or
+              signed-out state never sees this (server enforces the same gate). */}
+          {session?.kind === "hylaq" && isRailOwner(session.email) && (
+            <TouchableOpacity style={styles.practiceBanner} activeOpacity={0.85} onPress={() => router.push("/rail")}>
+              <View style={styles.practiceIcon}>
+                <Feather name="cpu" size={16} color={t.warn} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.mgTitle}>Rail</Text>
+                <Text style={styles.mgSub}>Owner only · one machine: quote → door → payout · cert in flight</Text>
+              </View>
+              <Feather name="chevron-right" size={18} color={t.faint} />
+            </TouchableOpacity>
+          )}
+
+          {/* founder practice — requires a signed-in Hylaq founder account */}
+          {session?.kind === "hylaq" && isFounder(session.email) && (
             <TouchableOpacity style={styles.practiceBanner} activeOpacity={0.85} onPress={() => router.push("/practice")}>
               <View style={styles.practiceIcon}>
                 <Feather name="play" size={16} color={t.warn} />
@@ -234,6 +245,11 @@ const makeStyles = (t: Theme) =>
       backgroundColor: t.surface, borderColor: t.border, borderWidth: 1,
     },
     avatarText: { color: t.dim, fontSize: 12, fontWeight: "700" },
+    signInPill: {
+      flexDirection: "row", alignItems: "center", gap: 6,
+      backgroundColor: t.accent, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 8,
+    },
+    signInPillText: { color: t.onAccent, fontWeight: "700", fontSize: 13 },
     greeting: { color: t.faint, fontSize: 13, fontWeight: "500", marginTop: 24 },
     h1: { color: t.text, fontSize: 32, fontWeight: "800", letterSpacing: -1, marginTop: 4 },
     inputRow: {

@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  View, Text, TouchableOpacity, ActivityIndicator, ScrollView, StyleSheet, Image, Share,
+  View, Text, TouchableOpacity, ActivityIndicator, ScrollView, StyleSheet, Image, Share, Linking,
 } from "react-native";
 import { Redirect, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@/lib/authContext";
 import { getMyHandle, type HandleProfile } from "@/lib/api";
 import { getWalletBalance, type WalletBalance } from "@/lib/hylaqWallet";
-import { API_BASE } from "@/lib/config";
+import { API_BASE, HYLAQ } from "@/lib/config";
 import { useTheme, type Theme } from "@/lib/theme";
 import { HandleAvatar } from "@/components/HandleAvatar";
 
@@ -22,6 +22,9 @@ import { HandleAvatar } from "@/components/HandleAvatar";
 
 const short = (a?: string | null) => (a && a.length > 16 ? `${a.slice(0, 8)}…${a.slice(-6)}` : a || "");
 
+/** Where handles are claimed — Hylaq's own site. */
+const HYLAQ_WEB = (HYLAQ.issuer || "https://www.hylaq.com").replace(/\/$/, "");
+
 export default function Profile() {
   const { session, ready } = useAuth();
   const { theme: t } = useTheme();
@@ -32,9 +35,11 @@ export default function Profile() {
   const [balance, setBalance] = useState<WalletBalance | null>(null);
   const [receiveNet, setReceiveNet] = useState("");
 
+  const signedIn = session?.kind === "hylaq";
+
   useEffect(() => {
     if (!ready) return;
-    if (!session) return;
+    if (!session || session.kind !== "hylaq") return;
     (async () => {
       try {
         const r = await getMyHandle(session.accessToken);
@@ -72,14 +77,32 @@ export default function Profile() {
     <SafeAreaView style={styles.wrap} edges={["bottom"]}>
       <ScrollView contentContainerStyle={styles.scroll}>
         <View style={styles.hero}>
-          {state === "linked" && profile ? (
+          {signedIn && state === "linked" && profile ? (
             <HandleAvatar handle={profile.handle} avatarUrl={profile.avatarUrl} size={96} />
           ) : (
             <Image source={require("../assets/hylaq-logo.png")} style={styles.logo} />
           )}
-          {state === "loading" && <ActivityIndicator color={t.accentText} style={{ marginTop: 18 }} />}
 
-          {state === "linked" && profile && (
+          {/* signed out (guest) — a real way in, never a dead end */}
+          {!signedIn && (
+            <>
+              <Text style={styles.handle}>You&apos;re signed out</Text>
+              <Text style={styles.sub}>
+                Your Hylaq account is your Loadit identity. Sign in to see your @handle,
+                balance and wallet addresses — or claim a new @handle first.
+              </Text>
+              <TouchableOpacity style={styles.primaryBtn} onPress={() => router.push("/login")}>
+                <Text style={styles.primaryBtnText}>Sign in with Hylaq</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.secondaryBtn} onPress={() => Linking.openURL(HYLAQ_WEB)}>
+                <Text style={styles.secondaryBtnText}>New here? Claim your @handle on Hylaq →</Text>
+              </TouchableOpacity>
+            </>
+          )}
+
+          {signedIn && state === "loading" && <ActivityIndicator color={t.accentText} style={{ marginTop: 18 }} />}
+
+          {signedIn && state === "linked" && profile && (
             <>
               {profile.displayName && <Text style={styles.displayName}>{profile.displayName}</Text>}
               <Text style={profile.displayName ? styles.handleSmall : styles.handle}>@{profile.handle}</Text>
@@ -102,22 +125,25 @@ export default function Profile() {
             </>
           )}
 
-          {state === "unlinked" && (
+          {signedIn && state === "unlinked" && (
             <>
               <Text style={styles.handle}>No handle yet</Text>
               <Text style={styles.sub}>
                 Claim your @handle on Hylaq and it appears here automatically — then anyone can pay
                 you by name.
               </Text>
+              <TouchableOpacity style={styles.primaryBtn} onPress={() => Linking.openURL(HYLAQ_WEB)}>
+                <Text style={styles.primaryBtnText}>Claim your @handle on Hylaq</Text>
+              </TouchableOpacity>
             </>
           )}
 
-          {state === "error" && (
+          {signedIn && state === "error" && (
             <Text style={styles.sub}>Couldn&apos;t reach Hylaq right now. Pull back and try again.</Text>
           )}
         </View>
 
-        {state === "linked" && profile && (
+        {signedIn && state === "linked" && profile && (
           <>
             {balance && balance.hasWallet && (
               <View style={styles.balanceCard}>
@@ -216,6 +242,17 @@ const makeStyles = (t: Theme) =>
     typeBadgeText: { color: t.dim, fontSize: 10, fontWeight: "700", letterSpacing: 1 },
     share: { marginTop: 16, backgroundColor: t.button, borderRadius: 999, paddingVertical: 12, paddingHorizontal: 24 },
     shareText: { color: t.buttonText, fontWeight: "700", fontSize: 14 },
+    primaryBtn: {
+      marginTop: 20, alignSelf: "stretch", backgroundColor: t.button, borderRadius: 18,
+      paddingVertical: 15, alignItems: "center", marginHorizontal: 8,
+      shadowColor: t.accent, shadowOpacity: 0.35, shadowRadius: 14, shadowOffset: { width: 0, height: 5 }, elevation: 5,
+    },
+    primaryBtnText: { color: t.buttonText, fontWeight: "700", fontSize: 15 },
+    secondaryBtn: {
+      marginTop: 10, alignSelf: "stretch", borderColor: t.border, borderWidth: 1, borderRadius: 18,
+      paddingVertical: 14, alignItems: "center", marginHorizontal: 8,
+    },
+    secondaryBtnText: { color: t.text, fontWeight: "600", fontSize: 14 },
     card: { backgroundColor: t.card, borderColor: t.border, borderWidth: 1, borderRadius: 18, padding: 16, marginTop: 14 },
     label: { color: t.faint, fontSize: 10, letterSpacing: 1, textTransform: "uppercase" },
     value: { color: t.text, fontSize: 18, fontWeight: "700", marginTop: 6 },
