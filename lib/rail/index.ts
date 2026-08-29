@@ -13,6 +13,7 @@
 export * from "./types";
 export * from "./errors";
 export * from "./healPolicy";
+export { driveToDeadPayout, SIMULATED_DEAD_PAYOUT } from "./demoHeal";
 export * from "./ids";
 export * from "./stateMachine";
 export * from "./idempotency";

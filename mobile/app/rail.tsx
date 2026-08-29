@@ -52,7 +52,7 @@ export default function Rail() {
   const { theme: t } = useTheme();
   const styles = useMemo(() => makeStyles(t), [t]);
 
-  const [mode, setMode] = useState<RailMode>("live");
+  const [mode, setMode] = useState<RailMode>("sim");
   const [asset, setAsset] = useState<(typeof ASSETS)[number]>("USDC");
   const [amount, setAmount] = useState(150);
   const [wallet, setWallet] = useState("");
@@ -62,6 +62,7 @@ export default function Rail() {
   const [err, setErr] = useState<string | null>(null);
   const [gate, setGate] = useState<string | null>(null);
   const [killPayout, setKillPayout] = useState(false);
+  const [narration, setNarration] = useState<string | null>(null);
   const [, setTick] = useState(0);
 
   // 1s re-render for the quote TTL countdown.
@@ -133,6 +134,72 @@ export default function Rail() {
   const confirmIntake = () => payment && act({ action: "confirm", mode, paymentId: payment.id });
   const heal = () => payment && act({ action: "heal", mode, paymentId: payment.id });
 
+  const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+  const watchSelfHeal = async () => {
+    if (mode !== "sim") {
+      setErr("Switch to Test the machine — Heal is a simulated dead-pipe recover, not the MoneyGram cert refuse.");
+      return;
+    }
+    setNarration("Quoted — this payment id will not change.");
+    const created = await act({
+      action: "create",
+      mode: "sim",
+      intent: { amountUsd: amount, outcome: { asset, wallet: wallet.trim() || "wallet-you-control" } },
+    });
+    const id = created?.payment?.id;
+    if (!id) return;
+    await sleep(400);
+    setNarration("Intake pending (simulated).");
+    await act({ action: "intake", mode: "sim", paymentId: id });
+    await sleep(400);
+    setNarration("Intake confirmed. Killing the payout pipe.");
+    await act({ action: "confirm", mode: "sim", paymentId: id });
+    await act({ action: "kill_pipe", mode: "sim", paymentId: id, pipe: "payout" });
+    await sleep(400);
+    setNarration("Failed — same payment id. Healing next.");
+    await act({ action: "settle", mode: "sim", paymentId: id });
+    await sleep(1200);
+    setNarration("Healing under the same payment id.");
+    const healed = await act({ action: "heal", mode: "sim", paymentId: id });
+    if (healed?.ok && healed.payment) {
+      setNarration(`Healed — quote is now ${healed.payment.quote.quoteId}. Finishing payout.`);
+    }
+    await sleep(500);
+    await act({ action: "settle", mode: "sim", paymentId: id });
+    setNarration("Settled. One payout — Heal did not pay twice.");
+  };
+
+  const breakPipe = async () => {
+    if (mode !== "sim") {
+      setErr("Break pipe is simulated only. Switch to Test the machine.");
+      return;
+    }
+    let id = payment && payment.state !== "settled" && payment.state !== "failed" ? payment.id : null;
+    if (!id) {
+      const created = await act({
+        action: "create",
+        mode: "sim",
+        intent: { amountUsd: amount, outcome: { asset, wallet: wallet.trim() || "wallet-you-control" } },
+      });
+      id = created?.payment?.id ?? null;
+    }
+    if (!id) return;
+    if (!payment || payment.state === "quoted") await act({ action: "intake", mode: "sim", paymentId: id });
+    const afterIntake = await act({ action: "get", mode: "sim", paymentId: id });
+    if (afterIntake?.payment?.state === "intake_pending") {
+      await act({ action: "confirm", mode: "sim", paymentId: id });
+    }
+    await act({ action: "kill_pipe", mode: "sim", paymentId: id, pipe: "payout" });
+    await act({ action: "settle", mode: "sim", paymentId: id });
+    setNarration("Pipe died (simulated). Same payment id — Heal runs next, or press Heal.");
+    await sleep(1600);
+    const healed = await act({ action: "heal", mode: "sim", paymentId: id });
+    if (healed?.ok && healed.payment) {
+      setNarration(`Healed — quote ${healed.payment.quote.quoteId}. Payment ${id} unchanged. Press Convert + pay out.`);
+    }
+  };
+
   const settle = async () => {
     if (!payment) return;
     if (mode === "sim" && killPayout) {
@@ -148,6 +215,7 @@ export default function Rail() {
     setMeta(null);
     setErr(null);
     setGate(null);
+    setNarration(null);
   };
 
   const ttlLeft = payment ? Math.max(0, Math.ceil((payment.quote.expiresAt - Date.now()) / 1000)) : 0;
@@ -172,9 +240,9 @@ export default function Rail() {
           )}
         </View>
         <Text style={styles.sub}>
-          Say what goes in and what should come out. No chains, no pickers — HQ scores every door on
-          fee, speed, liquidity, risk and certification, locks a quote, and drives one payment id end
-          to end. Non-custodial: it lands in a wallet you control.
+          To see Heal: stay on Test the machine (simulated). Break the payout pipe, then Heal — same
+          payment id, new quote, the strip moves. MoneyGram door is the cert-in-flight refuse; Heal
+          will not clear that gate.
         </Text>
 
         {/* mode toggle */}
@@ -186,12 +254,12 @@ export default function Rail() {
             <Text style={[styles.chipText, mode === "live" && styles.chipTextOn]}>MoneyGram door</Text>
             <Text style={styles.modeChipSub}>cert in flight</Text>
           </TouchableOpacity>
-          <TouchableOpacity
+            <TouchableOpacity
             style={[styles.modeChip, mode === "sim" && styles.modeChipOn]}
             onPress={() => switchMode("sim")}
           >
             <Text style={[styles.chipText, mode === "sim" && styles.chipTextOn]}>Test the machine</Text>
-            <Text style={styles.modeChipSub}>simulated money</Text>
+            <Text style={styles.modeChipSub}>simulated — watch Heal here</Text>
           </TouchableOpacity>
         </View>
 
@@ -223,16 +291,35 @@ export default function Rail() {
           autoCorrect={false}
         />
 
-        <TouchableOpacity style={styles.cta} onPress={lockQuote} disabled={busy}>
-          {busy && !payment ? <ActivityIndicator color={t.onAccent} /> : (
-            <>
-              <Text style={styles.ctaText}>Lock quote — HQ scores the route</Text>
-              <Feather name="chevron-right" size={16} color={t.onAccent} />
-            </>
-          )}
-        </TouchableOpacity>
+        {mode === "sim" ? (
+          <View style={styles.btnRow}>
+            <StepBtn styles={styles} t={t} disabled={busy} onPress={watchSelfHeal} label="Watch self-heal (simulated)" warn />
+            <StepBtn styles={styles} t={t} disabled={busy} onPress={breakPipe} label="Break the payout pipe" warn />
+          </View>
+        ) : (
+          <TouchableOpacity style={styles.cta} onPress={lockQuote} disabled={busy}>
+            {busy && !payment ? <ActivityIndicator color={t.onAccent} /> : (
+              <>
+                <Text style={styles.ctaText}>Lock quote — HQ scores the route</Text>
+                <Feather name="chevron-right" size={16} color={t.onAccent} />
+              </>
+            )}
+          </TouchableOpacity>
+        )}
+
+        {mode === "sim" && (
+          <TouchableOpacity style={[styles.cta, { marginTop: 10 }]} onPress={lockQuote} disabled={busy}>
+            {busy && !payment ? <ActivityIndicator color={t.onAccent} /> : (
+              <>
+                <Text style={styles.ctaText}>Lock quote — then step it yourself</Text>
+                <Feather name="chevron-right" size={16} color={t.onAccent} />
+              </>
+            )}
+          </TouchableOpacity>
+        )}
 
         {err && <Text style={styles.err}>{err}</Text>}
+        {narration && !payment && <Text style={styles.narration}>{narration}</Text>}
 
         {payment && (
           <>
@@ -261,7 +348,14 @@ export default function Rail() {
               {(payment.state === "failed" || payment.state === "healing") && (
                 <View style={[styles.stateChip, styles.stateChipFailed]}>
                   <Text style={[styles.stateChipText, { color: t.warn }]}>
-                    {STATE_LABEL[payment.state]}{payment.healCount > 0 ? ` · heals ${payment.healCount}` : ""}
+                    {STATE_LABEL[payment.state]}
+                  </Text>
+                </View>
+              )}
+              {payment.healCount > 0 && (
+                <View style={[styles.stateChip, styles.stateChipHealed]}>
+                  <Text style={[styles.stateChipText, { color: t.warn }]}>
+                    healed ×{payment.healCount} · same id
                   </Text>
                 </View>
               )}
@@ -322,6 +416,8 @@ export default function Rail() {
               </View>
             )}
 
+            {narration && <Text style={styles.narration}>{narration}</Text>}
+
             {/* step buttons */}
             <View style={styles.btnRow}>
               <StepBtn styles={styles} t={t} disabled={payment.state !== "quoted" || busy} onPress={beginIntake} label="Begin intake" />
@@ -340,7 +436,7 @@ export default function Rail() {
                   onValueChange={setKillPayout}
                   trackColor={{ true: rgba(t.warn, 0.5), false: t.border }}
                 />
-                <Text style={styles.killText}>Kill the payout pipe on the next step (test heal)</Text>
+                <Text style={styles.killText}>Kill the payout pipe on the next convert (manual path)</Text>
               </View>
             )}
 
@@ -443,6 +539,8 @@ const makeStyles = (t: Theme) =>
     stateChipDone: { backgroundColor: t.card },
     stateChipActive: { borderColor: t.accent, backgroundColor: t.accentSoft },
     stateChipFailed: { borderColor: rgba(t.warn, 0.5), backgroundColor: rgba(t.warn, 0.08) },
+    stateChipHealed: { borderColor: rgba(t.warn, 0.45), backgroundColor: rgba(t.warn, 0.12) },
+    narration: { color: t.warn, fontSize: 13, lineHeight: 19, marginTop: 12, fontFamily: "Courier" },
     stateChipText: { color: t.faint, fontSize: 10, fontWeight: "700", letterSpacing: 0.5 },
     hero: {
       marginTop: 14, borderRadius: 24, padding: 20,
