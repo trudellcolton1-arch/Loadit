@@ -340,11 +340,11 @@ export default function Rail() {
                   {payment.receipt.replayed ? " · receipt replayed on retry (idempotent — paid once)" : ""}
                 </Text>
                 <Text style={styles.mono}>receipt {payment.receipt.receiptRef}</Text>
-                {typeof meta?.payouts_recorded === "number" && (
-                  <Text style={styles.meta}>
-                    Payouts recorded for this machine: {meta.payouts_recorded} — a heal can never pay twice.
-                  </Text>
-                )}
+                <Text style={styles.meta}>
+                  This payment paid out exactly once
+                  {payment.healCount > 0 ? ` across ${payment.healCount} heal${payment.healCount === 1 ? "" : "s"}` : ""} —
+                  a retry replays this receipt instead of paying again.
+                </Text>
               </View>
             )}
           </>
