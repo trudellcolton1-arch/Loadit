@@ -48,7 +48,7 @@ const HAPPY_PATH: RailPayment["state"][] = [
 ];
 
 export default function Rail() {
-  const { session, ready } = useAuth();
+  const { session, ready, hylaqStatus } = useAuth();
   const { theme: t } = useTheme();
   const styles = useMemo(() => makeStyles(t), [t]);
 
@@ -72,8 +72,18 @@ export default function Rail() {
 
   if (ready && !session) return <Redirect href="/login" />;
   // Client-side visibility gate — the SERVER enforces the same allowlist on
-  // every /api/rail call, so this redirect is UX, not security.
-  if (ready && session && !(session.kind === "hylaq" && isRailOwner(session.email))) {
+  // every /api/rail call, so this redirect is UX, not security. A stale or
+  // unlinked Hylaq session doesn't qualify ("checking" is tolerated so the
+  // screen doesn't bounce while the probe is in flight).
+  if (
+    ready &&
+    session &&
+    !(
+      session.kind === "hylaq" &&
+      isRailOwner(session.email) &&
+      (hylaqStatus === "linked" || hylaqStatus === "checking")
+    )
+  ) {
     return <Redirect href="/" />;
   }
 

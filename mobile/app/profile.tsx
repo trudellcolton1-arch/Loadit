@@ -26,7 +26,7 @@ const short = (a?: string | null) => (a && a.length > 16 ? `${a.slice(0, 8)}…$
 const HYLAQ_WEB = (HYLAQ.issuer || "https://www.hylaq.com").replace(/\/$/, "");
 
 export default function Profile() {
-  const { session, ready } = useAuth();
+  const { session, ready, signOut } = useAuth();
   const { theme: t } = useTheme();
   const styles = useMemo(() => makeStyles(t), [t]);
   const router = useRouter();
@@ -125,21 +125,32 @@ export default function Profile() {
             </>
           )}
 
+          {/* signed in but no linked @handle (or a stale token the backend
+              couldn't match to a handle) — never a dead end: a real Sign in
+              plus a Create account path, and Sign out below to clear it. */}
           {signedIn && state === "unlinked" && (
             <>
               <Text style={styles.handle}>No handle yet</Text>
               <Text style={styles.sub}>
-                Claim your @handle on Hylaq and it appears here automatically — then anyone can pay
-                you by name.
+                This session isn&apos;t linked to a Hylaq @handle. Sign in again with the account
+                that holds your @handle — or create one and it appears here automatically.
               </Text>
-              <TouchableOpacity style={styles.primaryBtn} onPress={() => Linking.openURL(HYLAQ_WEB)}>
-                <Text style={styles.primaryBtnText}>Claim your @handle on Hylaq</Text>
+              <TouchableOpacity style={styles.primaryBtn} onPress={() => router.push("/login")}>
+                <Text style={styles.primaryBtnText}>Sign in with Hylaq</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.secondaryBtn} onPress={() => Linking.openURL(HYLAQ_WEB)}>
+                <Text style={styles.secondaryBtnText}>Create account — claim your @handle on Hylaq →</Text>
               </TouchableOpacity>
             </>
           )}
 
           {signedIn && state === "error" && (
-            <Text style={styles.sub}>Couldn&apos;t reach Hylaq right now. Pull back and try again.</Text>
+            <>
+              <Text style={styles.sub}>Couldn&apos;t reach Hylaq right now. Pull back and try again.</Text>
+              <TouchableOpacity style={styles.primaryBtn} onPress={() => router.push("/login")}>
+                <Text style={styles.primaryBtnText}>Sign in with Hylaq</Text>
+              </TouchableOpacity>
+            </>
           )}
         </View>
 
@@ -215,6 +226,20 @@ export default function Profile() {
           </>
         )}
 
+        {/* any session (linked, unlinked, or guest) can be cleared here — the
+            escape hatch for a stale token that won't verify */}
+        {session && (
+          <TouchableOpacity
+            style={styles.signOutBtn}
+            onPress={async () => {
+              await signOut();
+              router.replace("/login");
+            }}
+          >
+            <Text style={styles.signOutText}>Sign out</Text>
+          </TouchableOpacity>
+        )}
+
         <TouchableOpacity onPress={() => router.back()}>
           <Text style={styles.back}>Back</Text>
         </TouchableOpacity>
@@ -280,5 +305,10 @@ const makeStyles = (t: Theme) =>
     receiveShare: { marginTop: 12, backgroundColor: t.button, borderRadius: 999, paddingVertical: 12, paddingHorizontal: 22 },
     receiveShareText: { color: t.buttonText, fontWeight: "700", fontSize: 13 },
     themeNote: { color: t.faint, fontSize: 12, textAlign: "center", marginTop: 16 },
+    signOutBtn: {
+      marginTop: 24, alignSelf: "center", borderColor: t.border, borderWidth: 1,
+      borderRadius: 999, paddingVertical: 11, paddingHorizontal: 28,
+    },
+    signOutText: { color: t.warn, fontWeight: "700", fontSize: 13 },
     back: { color: t.faint, textAlign: "center", marginTop: 22, fontSize: 14 },
   });

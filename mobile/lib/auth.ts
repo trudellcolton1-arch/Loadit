@@ -174,15 +174,22 @@ export async function signInGuest(): Promise<Session> {
 }
 
 /**
- * True only when the backend EXPLICITLY says this stored Hylaq token no longer
- * resolves to an account (logged out of Hylaq / token revoked or expired).
- * A stale session must not keep gated surfaces (Rail, Practice run) visible.
- * Network or server trouble returns false — never sign someone out over a
- * flaky connection.
+ * What the backend says a stored Hylaq session really is:
+ *
+ * - "linked":   token verified AND an @handle is linked — the only state that
+ *               may show gated surfaces (Rail, Practice run).
+ * - "unlinked": token verified but no @handle — signed in, but gated surfaces
+ *               stay hidden and the profile offers sign-in / create-account.
+ * - "dead":     the backend explicitly says the token resolves to no Hylaq
+ *               account (logged out of Hylaq / revoked / expired) — the stale
+ *               session must be cleared.
+ * - "unknown":  network or server trouble — never sign anyone out over a
+ *               flaky connection, but gated surfaces stay hidden (fail closed).
  */
-export async function hylaqSessionDead(s: Session): Promise<boolean> {
-  if (s.kind !== "hylaq") return false;
-  if (!s.accessToken) return true;
+export type HylaqProbe = "linked" | "unlinked" | "dead" | "unknown";
+
+export async function probeHylaqSession(s: Session): Promise<HylaqProbe> {
+  if (s.kind !== "hylaq" || !s.accessToken) return "dead";
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 8000);
@@ -193,15 +200,20 @@ export async function hylaqSessionDead(s: Session): Promise<boolean> {
         body: JSON.stringify({ token: s.accessToken }),
         signal: controller.signal,
       });
-      if (!res.ok) return false; // backend hiccup ≠ signed out
+      if (!res.ok) return "unknown"; // backend hiccup ≠ signed out
       const r = (await res.json()) as { ok?: boolean; linked?: boolean; reason?: string };
-      // "unverified" = token resolves to no Hylaq account. "no_handle" means
-      // the token is alive (email verified) — that session stays.
-      return r.ok === true && r.linked === false && (r.reason === "unverified" || r.reason === "no_token");
+      if (r.ok === true && r.linked === true) return "linked";
+      if (r.ok === true && r.linked === false) {
+        // "no_handle" = alive token, verified email, just no @handle yet.
+        if (r.reason === "no_handle") return "unlinked";
+        // "unverified"/"no_token" = token resolves to no Hylaq account.
+        if (r.reason === "unverified" || r.reason === "no_token") return "dead";
+      }
+      return "unknown";
     } finally {
       clearTimeout(timeout);
     }
   } catch {
-    return false;
+    return "unknown";
   }
 }
