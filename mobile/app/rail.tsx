@@ -98,9 +98,12 @@ export default function Rail() {
       if (!r.ok) {
         if (r.reason === "certification_gate") {
           setGate(r.message || "Certification is in flight — cash confirm refused.");
-          // Refresh the record so the state strip stays truthful.
-          const g = await railAction(session?.accessToken, { action: "get", mode: body.mode, paymentId: body.paymentId });
-          if (g.payment) setPayment(g.payment);
+          // Payment is on the 409 body when the machine already has it; fall
+          // back to a get so the state strip stays truthful either way.
+          if (!r.payment && body.paymentId) {
+            const g = await railAction(session?.accessToken, { action: "get", mode: body.mode, paymentId: body.paymentId });
+            if (g.payment) setPayment(g.payment);
+          }
         } else if (r.status === 401 || r.status === 403) {
           setErr("This account is not authorized for the rail.");
         } else {
@@ -327,7 +330,7 @@ export default function Rail() {
                 label={mode === "live" ? "Confirm cash (will refuse)" : "Confirm intake (simulated)"}
               />
               <StepBtn styles={styles} t={t} disabled={!canSettle || busy} onPress={settle} label="Convert + pay out" />
-              <StepBtn styles={styles} t={t} disabled={payment.state !== "failed" || busy} onPress={heal} label="Heal — same payment id" warn />
+              <StepBtn styles={styles} t={t} disabled={busy} onPress={heal} label="Heal — same payment id" warn />
             </View>
 
             {mode === "sim" && (

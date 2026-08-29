@@ -4,7 +4,7 @@ import { RailRuntime } from "./runtime";
 import { FixtureDoor } from "./doors/fixture";
 import { FixturePayoutExecutor, FixtureConvertExecutor } from "./executors";
 import { InvalidIntentError } from "./types";
-import { QuoteExpiredError } from "./errors";
+import { HealRefusedError, QuoteExpiredError } from "./errors";
 import { isInternalRef } from "./ids";
 
 const INTENT = {
@@ -96,6 +96,7 @@ test("dead pipe mid-pay: heal keeps the payment id and never double-pays", async
   assert.equal(payment.quote.healed, true);
   assert.equal(payment.quote.paymentId, paymentId);
   assert.equal(payment.quotes.length, 2);
+  assert.equal(payment.lastError, null, "successful heal must clear the stale error so the UI can show the new state");
   // Intake was NOT redone — the customer's money came in exactly once.
   assert.equal(payment.intake!.status, "confirmed");
 
@@ -206,5 +207,41 @@ test("uncertified door in the runtime: webhook confirm is refused, payment stays
     /IN FLIGHT/
   );
   assert.equal(payment.state, "intake_pending");
+  assert.equal(payout.ledger.length, 0);
+});
+
+test("heal after a cert-in-flight confirm refusal does not pretend success", async () => {
+  const gated = new FixtureDoor({
+    id: "fixture_gated",
+    label: "Fixture cash (cert in flight)",
+    certification: "IN_FLIGHT",
+  });
+  const payout = new FixturePayoutExecutor();
+  const convert = new FixtureConvertExecutor();
+  const runtime = new RailRuntime({ doors: [gated], payout, convert });
+
+  const payment = runtime.createPayment(INTENT);
+  const quoteId = payment.quote.quoteId;
+  await runtime.beginIntake(payment.id);
+  await assert.rejects(
+    runtime.handleWebhook("fixture_gated", {
+      internalRef: payment.intake!.internalRef,
+      type: "intake_confirmed",
+    }),
+    /IN FLIGHT/
+  );
+
+  await assert.rejects(runtime.heal(payment.id), (err: unknown) => {
+    assert.ok(err instanceof HealRefusedError);
+    assert.equal(err.refusal, "certification_gate");
+    assert.match(err.message, /Heal cannot recover/);
+    assert.match(err.message, /in flight/i);
+    return true;
+  });
+
+  assert.equal(payment.state, "intake_pending", "heal must not move a cert-blocked payment");
+  assert.equal(payment.healCount, 0);
+  assert.equal(payment.quote.quoteId, quoteId);
+  assert.equal(Boolean(payment.quote.healed), false);
   assert.equal(payout.ledger.length, 0);
 });

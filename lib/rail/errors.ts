@@ -57,3 +57,17 @@ export class DeadPipeError extends Error {
     this.name = "DeadPipeError";
   }
 }
+
+/**
+ * Raised when Heal is asked to run on a payment it cannot recover —
+ * a cert-in-flight confirm refusal, or any state that is not a failed
+ * payment. The payment is left untouched (same id, same quote, same error).
+ */
+export class HealRefusedError extends Error {
+  readonly refusal: "certification_gate" | "illegal_transition";
+  constructor(refusal: "certification_gate" | "illegal_transition", message: string) {
+    super(message);
+    this.name = "HealRefusedError";
+    this.refusal = refusal;
+  }
+}

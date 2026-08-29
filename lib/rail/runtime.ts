@@ -36,6 +36,7 @@ import {
 import { lockQuote, isQuoteExpired, type ScoreOptions } from "./scorer";
 import { stepKey } from "./idempotency";
 import { DeadPipeError, NoViableRouteError, QuoteExpiredError } from "./errors";
+import { healRefusal } from "./healPolicy";
 import { newPaymentId } from "./ids";
 
 export interface PaymentRecord {
@@ -231,6 +232,9 @@ export class RailRuntime {
    */
   async heal(paymentId: string): Promise<PaymentRecord> {
     const payment = this.getPayment(paymentId);
+    const refusal = healRefusal(payment);
+    if (refusal) throw refusal;
+
     this.transition(payment, "healing", `heal #${payment.healCount + 1}`);
     payment.healCount += 1;
 
@@ -254,6 +258,7 @@ export class RailRuntime {
         });
         payment.quote = quote;
         payment.quotes.push(quote);
+        payment.lastError = null;
         this.transition(payment, "converting", `healed quote ${quote.quoteId} — resuming after confirmed intake`);
       } else {
         // No customer money moved yet — full re-score across the remaining
@@ -269,6 +274,7 @@ export class RailRuntime {
         });
         payment.quote = quote;
         payment.quotes.push(quote);
+        payment.lastError = null;
         this.transition(payment, "quoted", `healed quote ${quote.quoteId} — re-scored remaining doors`);
       }
     } catch (err) {

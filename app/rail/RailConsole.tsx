@@ -314,8 +314,7 @@ export function RailConsole() {
             </button>
             <button
               onClick={heal}
-              disabled={payment.state !== "failed"}
-              className="rounded-lg border border-amber-400/40 px-3 py-1.5 text-xs text-amber-300 enabled:hover:border-amber-300 disabled:opacity-30"
+              className="rounded-lg border border-amber-400/40 px-3 py-1.5 text-xs text-amber-300 hover:border-amber-300"
             >
               Heal (same payment id)
             </button>

@@ -12,6 +12,7 @@
  */
 export * from "./types";
 export * from "./errors";
+export * from "./healPolicy";
 export * from "./ids";
 export * from "./stateMachine";
 export * from "./idempotency";
