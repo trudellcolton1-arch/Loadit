@@ -1,10 +1,11 @@
-# Loadit — Stellar SEP-1 info file (MoneyGram Ramps production whitelist)
-# SIGNING_KEY is used for SEP-10 client_domain verification: Loadit's server
-# co-signs the anchor's auth challenge with this key to prove the request came
-# from the loadit.net wallet (wallet-partner attribution).
-# Testnet copy: /.well-known/stellar-testnet.toml
+# Loadit — Stellar SEP-1 info file (MoneyGram Ramps onboarding, testnet phase)
+# Preserved copy of the testnet stellar.toml. Canonical /.well-known/stellar.toml
+# is the PUBLIC network file. SIGNING_KEY is used for SEP-10 client_domain
+# verification: Loadit's server co-signs the anchor's auth challenge with this
+# key to prove the request came from the loadit.net wallet (wallet-partner
+# attribution).
 VERSION = "2.1.0"
-NETWORK_PASSPHRASE = "Public Global Stellar Network ; September 2015"
+NETWORK_PASSPHRASE = "Test SDF Network ; September 2015"
 SIGNING_KEY = "GCNLOGNOEEROESV4RD6NRJZWYF7W4GHFJE7H2R4W35OYWY6QQ4SIF4CC"
 
 [DOCUMENTATION]

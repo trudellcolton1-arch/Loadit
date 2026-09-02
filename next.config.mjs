@@ -32,8 +32,15 @@ const nextConfig = {
       { source: "/:path*", headers: security },
       {
         // Stellar SEP-1 requires CORS + text/plain on the info file
-        // (MoneyGram Ramps onboarding reads this).
+        // (MoneyGram Ramps production whitelist reads the canonical file).
         source: "/.well-known/stellar.toml",
+        headers: [
+          { key: "Access-Control-Allow-Origin", value: "*" },
+          { key: "Content-Type", value: "text/plain; charset=utf-8" },
+        ],
+      },
+      {
+        source: "/.well-known/stellar-testnet.toml",
         headers: [
           { key: "Access-Control-Allow-Origin", value: "*" },
           { key: "Content-Type", value: "text/plain; charset=utf-8" },
