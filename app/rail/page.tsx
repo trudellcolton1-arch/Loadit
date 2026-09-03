@@ -13,7 +13,7 @@ import { RailConsole } from "./RailConsole";
 export const metadata: Metadata = {
   title: "Rail runtime — DEMO — Loadit",
   description:
-    "Demo console for the Loadit rail runtime: intent → HQ score → quote → door intake → convert → payout, with self-heal. Simulated doors only; MoneyGram cash-in certification is in flight.",
+    "Owner demo of the Loadit rail runtime: break a simulated pipe, then Heal under the same payment id. MoneyGram cash-in certification is in flight and is not the heal path.",
   alternates: { canonical: "/rail" },
   robots: { index: false, follow: false },
 };

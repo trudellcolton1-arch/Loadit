@@ -26,6 +26,7 @@ import { FixtureDoor } from "./doors/fixture";
 import { FixturePayoutExecutor, FixtureConvertExecutor } from "./executors";
 import {
   CertificationGateError,
+  HealRefusedError,
   IllegalTransitionError,
   NoViableRouteError,
   QuoteExpiredError,
@@ -187,8 +188,26 @@ function meta(mode: RailMode, rig: ModeRig) {
   };
 }
 
-function errorResult(mode: RailMode, rig: ModeRig, err: unknown): RailActionResult {
+function errorResult(
+  mode: RailMode,
+  rig: ModeRig,
+  err: unknown,
+  payment?: PaymentRecord
+): RailActionResult {
   const message = err instanceof Error ? err.message : String(err);
+  const withPayment = payment ? { payment: serializePayment(payment) } : {};
+  if (err instanceof HealRefusedError) {
+    return {
+      status: 409,
+      payload: {
+        ok: false,
+        reason: err.refusal,
+        message,
+        ...withPayment,
+        ...meta(mode, rig),
+      },
+    };
+  }
   if (err instanceof CertificationGateError) {
     return {
       status: 409,
@@ -196,6 +215,7 @@ function errorResult(mode: RailMode, rig: ModeRig, err: unknown): RailActionResu
         ok: false,
         reason: "certification_gate",
         message,
+        ...withPayment,
         ...meta(mode, rig),
       },
     };
@@ -204,16 +224,16 @@ function errorResult(mode: RailMode, rig: ModeRig, err: unknown): RailActionResu
     return { status: 400, payload: { ok: false, reason: "invalid_intent", message, ...meta(mode, rig) } };
   }
   if (err instanceof QuoteExpiredError) {
-    return { status: 409, payload: { ok: false, reason: "quote_expired", message, ...meta(mode, rig) } };
+    return { status: 409, payload: { ok: false, reason: "quote_expired", message, ...withPayment, ...meta(mode, rig) } };
   }
   if (err instanceof IllegalTransitionError) {
-    return { status: 409, payload: { ok: false, reason: "illegal_transition", message, ...meta(mode, rig) } };
+    return { status: 409, payload: { ok: false, reason: "illegal_transition", message, ...withPayment, ...meta(mode, rig) } };
   }
   if (err instanceof NoViableRouteError) {
-    return { status: 422, payload: { ok: false, reason: "no_viable_route", message, ...meta(mode, rig) } };
+    return { status: 422, payload: { ok: false, reason: "no_viable_route", message, ...withPayment, ...meta(mode, rig) } };
   }
   if (err instanceof StubDoorError) {
-    return { status: 409, payload: { ok: false, reason: "stub_door", message, ...meta(mode, rig) } };
+    return { status: 409, payload: { ok: false, reason: "stub_door", message, ...withPayment, ...meta(mode, rig) } };
   }
   if (/^unknown payment /.test(message)) {
     return { status: 404, payload: { ok: false, reason: "unknown_payment", message, ...meta(mode, rig) } };
@@ -297,6 +317,12 @@ export async function handleRailAction(body: RailActionRequest): Promise<RailAct
         };
     }
   } catch (err) {
-    return errorResult(mode, rig, err);
+    let payment: PaymentRecord | undefined;
+    try {
+      if (body.paymentId) payment = runtime.getPayment(String(body.paymentId));
+    } catch {
+      /* unknown payment — leave it off the error body */
+    }
+    return errorResult(mode, rig, err, payment);
   }
 }

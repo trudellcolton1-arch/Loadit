@@ -68,6 +68,33 @@ test("live mode: cash confirm is refused while certification is IN FLIGHT", asyn
   assert.equal(record.intake!.partnerTxId, null);
 });
 
+test("live mode: Heal on a cert-in-flight confirm refusal does not pretend success", async () => {
+  const created = await handleRailAction({ action: "create", mode: "live", intent: INTENT });
+  const paymentId = paymentOf(created.payload).id;
+  const quoteId = paymentOf(created.payload).quote.quoteId;
+
+  await handleRailAction({ action: "intake", mode: "live", paymentId });
+  const confirm = await handleRailAction({ action: "confirm", mode: "live", paymentId });
+  assert.equal(confirm.status, 409);
+  assert.equal(confirm.payload.reason, "certification_gate");
+
+  const healed = await handleRailAction({ action: "heal", mode: "live", paymentId });
+  assert.equal(healed.status, 409);
+  assert.equal(healed.payload.ok, false);
+  assert.equal(healed.payload.reason, "certification_gate");
+  assert.match(String(healed.payload.message), /Heal cannot recover/);
+  assert.match(String(healed.payload.message), /in flight/i);
+  assert.match(String(healed.payload.message), /new payment/i);
+
+  const record = paymentOf(healed.payload);
+  assert.equal(record.id, paymentId);
+  assert.equal(record.state, "intake_pending");
+  assert.equal(record.healCount, 0);
+  assert.equal(record.quote.quoteId, quoteId);
+  assert.equal(record.quote.healed, false);
+  assert.equal(healed.payload.moneygram_certification, "IN_FLIGHT");
+});
+
 test("live mode: pipe sabotage is not available", async () => {
   const created = await handleRailAction({ action: "create", mode: "live", intent: INTENT });
   const paymentId = paymentOf(created.payload).id;
@@ -92,16 +119,20 @@ test("sim mode: full flow — dead pipe mid-pay, heal keeps the payment id, one 
   await handleRailAction({ action: "kill_pipe", mode: "sim", paymentId, pipe: "payout" });
   const failed = await handleRailAction({ action: "settle", mode: "sim", paymentId });
   assert.equal(paymentOf(failed.payload).state, "failed");
+  assert.ok(paymentOf(failed.payload).lastError);
   assert.equal(failed.payload.payouts_recorded, 0);
 
   // Heal: SAME payment id, NEW quote, resume after the confirmed intake.
   const healed = await handleRailAction({ action: "heal", mode: "sim", paymentId });
+  assert.equal(healed.status, 200);
+  assert.equal(healed.payload.ok, true);
   const healedPayment = paymentOf(healed.payload);
   assert.equal(healedPayment.id, paymentId);
   assert.equal(healedPayment.healCount, 1);
   assert.equal(healedPayment.state, "converting");
   assert.equal(healedPayment.quote.healed, true);
   assert.notEqual(healedPayment.quote.quoteId, firstQuoteId);
+  assert.equal(healedPayment.lastError, null, "UI must not keep showing the pre-heal error");
 
   const settled = await handleRailAction({ action: "settle", mode: "sim", paymentId });
   const done = paymentOf(settled.payload);
