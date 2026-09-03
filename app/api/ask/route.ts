@@ -44,6 +44,9 @@ Be specific with concrete numbers as ESTIMATES (e.g. "~$0.45 vs ~$3.20 on legacy
 PHILOSOPHY
 The internet let information move globally; Loadit lets value move globally. The future isn't crypto or banks — it's interoperability. Users shouldn't care how value moves, only that it arrives.
 
+CURRENT STATUS (ground truth — never contradict this)
+Loadit has a SIGNED partnership with MoneyGram for cash-in, and the integration has passed end-to-end tests on MoneyGram's test network. Cash-in CERTIFICATION IS STILL IN PROGRESS: production cash-in is NOT live, and no customer cash is moving through the rail yet. Never state or imply that cash-in is live, that customer funds are settling in production, or that live production volume exists. When you walk through a route, present it as how the rail is designed to work or as a simulation/estimate — not as a live transaction. NEVER invent transaction IDs, hashes, receipts, or production statistics.
+
 CONSTRAINTS
 Loadit continuously optimizes cost, speed, security, compliance, liquidity, and reliability. Never guarantee specific fee reductions, returns, speeds, or performance. Always describe outcomes as estimates that depend on market and network conditions.
 
@@ -73,11 +76,11 @@ function canned(q: string): string {
   if (s.includes("invest") || s.includes("raise") || s.includes("fund"))
     return "Loadit is raising to build out the Unified Financial Rail. The moat is one patent-pending invention with 25 claims across routing, temporal settlement, quantum optimization, offline mode, and multi-reality input. See the Investors section, or ask about the technology.";
   if (s.includes("how") && (s.includes("work") || s.includes("route")))
-    return "Walk into a store, scan a QR, pay with cash or card. Loadit tokenizes it, verifies identity, and HQ routes the value — e.g. Cash → USDC → Solana → your asset → wallet — settling on-chain in ~2 seconds while the merchant still gets fiat.";
+    return "The designed flow: walk into a store, scan a QR, pay with cash or card. Loadit tokenizes it, verifies identity, and HQ routes the value — e.g. Cash → USDC → Solana → your asset → wallet — targeting on-chain settlement in ~2 seconds while the counter still gets fiat. Cash-in launches through our signed MoneyGram partnership once certification completes; it's not live in production yet.";
   if (s.includes("send") || s.includes("remit") || s.includes("transfer"))
-    return "Tell me the amount, asset, and destination and HQ will pick the optimal corridor. A $500 USDC transfer to Manila would likely route Debit → USDC → Solana (or Lightning for BTC), ~$0.45 fee, arriving in under 2 seconds.";
+    return "Tell me the amount, asset, and destination and HQ will model the optimal corridor. A $500 USDC transfer to Manila would likely route Debit → USDC → Solana (or Lightning for BTC), ~$0.45 estimated fee, arriving in under 2 seconds. These are simulated estimates — cash-in isn't live in production until MoneyGram certification completes.";
   if (s.includes("what is loadit") || s.includes("about loadit") || s.includes("who is loadit"))
-    return "Loadit is the world's first Universal Value Rail — it turns cash, cards, fiat, stablecoins, crypto, tokenized assets, and even energy credits into one another and routes them across 14+ networks for the cheapest, fastest, safest settlement, non-custodially. The HQ engine is the intelligence that picks every route.";
+    return "Loadit is the world's first Universal Value Rail — built to turn cash, cards, fiat, stablecoins, crypto, tokenized assets, and even energy credits into one another and route them across 14+ networks for the cheapest, fastest, safest settlement, non-custodially. The HQ engine is the intelligence that picks every route. MoneyGram partnership signed; cash-in certification in progress.";
   return "Loadit is the AI-powered financial rail: cash, cards, stablecoins, and crypto routed across 14 networks for the cheapest, fastest, safest settlement. Ask me about the patent, fees, how routing works, offline payments, energy settlement, security, or how a specific transfer would route.";
 }
 

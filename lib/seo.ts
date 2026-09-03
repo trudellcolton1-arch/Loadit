@@ -4,15 +4,19 @@ import { SITE } from "./constants";
 export const FAQS = [
   {
     q: "What is Loadit?",
-    a: "Loadit is an AI-powered financial rail that converts cash, cards, and fiat into stablecoins and crypto in seconds. Its patent-pending Unified Financial Rail uses its AI, HQ, to route every payment across the cheapest, fastest network available.",
+    a: "Loadit is an AI-powered financial rail built to convert cash, cards, and fiat into stablecoins and crypto. Its patent-pending Unified Financial Rail uses its AI, HQ, to route every payment across the cheapest, fastest network available. Cash-in launches through Loadit's signed MoneyGram partnership once certification completes.",
   },
   {
-    q: "How does Loadit turn cash into crypto?",
-    a: "A shopper pays with cash or card at a merchant on the Loadit network. The transaction is tokenized, identity-verified, and routed by HQ across L1s, L2s, Lightning, or banks — settling on-chain in seconds while the merchant still receives familiar fiat.",
+    q: "How will Loadit turn cash into crypto?",
+    a: "At launch, you pay cash at a MoneyGram counter. MoneyGram — the licensed money-transmitter — verifies your identity and converts the cash to USDC on Stellar, and HQ routes it into the asset you chose, delivered to a wallet you control. The partnership is signed and the integration has passed end-to-end tests on MoneyGram's test network; cash-in goes live when certification completes.",
+  },
+  {
+    q: "Is Loadit's cash-in live today?",
+    a: "Not yet. The MoneyGram partnership agreement is signed and the integration works end to end on MoneyGram's test network, but cash-in certification is still in progress. No customer cash is moving through the rail until it completes. Request access at loadit.net to be first in.",
   },
   {
     q: "How does HQ route payments?",
-    a: "HQ is Loadit's AI routing engine. It scores routes across legacy processors, blockchains, and liquidity pools in real time, choosing the optimal settlement path on every transaction — cutting fees by up to 86%.",
+    a: "HQ is Loadit's AI routing engine. It scores routes across legacy processors, blockchains, and liquidity pools, choosing the optimal settlement path on every transaction — cutting modeled fees by up to 86% versus legacy rails.",
   },
   {
     q: "Which networks does Loadit support?",
@@ -77,7 +81,7 @@ export function buildJsonLd() {
         applicationCategory: "FinanceApplication",
         url: `${SITE.url}/install`,
         description:
-          "The Loadit app turns cash and cards into Bitcoin, Solana, Ethereum, or USDC in seconds. Non-custodial, AI-routed, with HQ (an in-app AI money assistant), Pulse offline Bluetooth payments, send to any @handle or wallet, and a flat 0.75% fee.",
+          "The Loadit app is built to turn cash and cards into Bitcoin, Solana, Ethereum, or USDC. Non-custodial, AI-routed, with HQ (an in-app AI money assistant), Pulse offline Bluetooth payments, send to any @handle or wallet, and a flat 0.75% fee. MoneyGram cash-in launches when certification completes.",
         publisher: { "@id": `${SITE.url}/#organization` },
         offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
       },

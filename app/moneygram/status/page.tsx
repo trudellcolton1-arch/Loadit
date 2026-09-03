@@ -57,7 +57,8 @@ export default async function StatusPage() {
     { label: "Sandbox allowlisting", state: signingLive ? "done" : "pending" },
     { label: "SEP-10 authenticated", state: signingLive ? "done" : "pending" },
     { label: "SEP-24 deposit tested", state: sep24Live ? "done" : "pending" },
-    { label: "KYB + agreements", state: "pending" },
+    { label: "KYB + agreements signed", state: "done" },
+    { label: "Cash-in certification", state: "pending" },
     { label: "Production", state: "pending" },
   ];
 

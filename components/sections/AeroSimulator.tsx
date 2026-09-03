@@ -237,8 +237,9 @@ export function AeroSimulator() {
             transition={{ delay: 0.1 }}
             className="mt-5 max-w-2xl text-pretty text-white/55 sm:text-lg"
           >
-            Loadit automatically finds the fastest, cheapest, and most efficient
-            path for every transaction.
+            HQ is built to find the fastest, cheapest, and most efficient path
+            for every transaction. Explore it below — a full simulation with
+            modeled routes and fees. No customer funds move here.
           </motion.p>
 
           <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row">
@@ -289,13 +290,13 @@ export function AeroSimulator() {
           <div className="pointer-events-none absolute inset-x-0 top-0 flex items-center justify-between p-4 font-mono text-[0.6rem] uppercase tracking-[0.22em]">
             <span className="flex items-center gap-2 font-semibold text-rail-400">
               <span className="h-1.5 w-1.5 rounded-full bg-rail-400 shadow-[0_0_8px_2px_rgba(52,209,122,0.7)]" />
-              HQ Global Settlement
+              HQ Settlement Simulation
             </span>
             <span className={phase === "done" ? "text-signal" : "text-white/45"}>
               {phase === "analyzing"
                 ? "Routing…"
                 : phase === "done"
-                  ? "● Settling"
+                  ? "● Route simulated"
                   : "○ Standby"}
             </span>
           </div>
@@ -329,8 +330,8 @@ export function AeroSimulator() {
                 </div>
               ) : (
                 <p className="text-center text-xs text-white/50">
-                  Choose a destination and run HQ to watch value fly across the
-                  globe in real time.
+                  Choose a destination and run HQ to watch a simulated
+                  settlement route cross the globe.
                 </p>
               )}
             </div>
@@ -347,7 +348,7 @@ export function AeroSimulator() {
             <div className="flex items-center justify-between">
               <h3 className="text-base font-semibold text-white">Simulator</h3>
               <span className="rounded-full border border-cyan/30 bg-cyan/10 px-2.5 py-0.5 font-mono text-[0.6rem] uppercase tracking-widest text-cyan">
-                Live
+                Demo
               </span>
             </div>
 
@@ -480,7 +481,7 @@ export function AeroSimulator() {
                 >
                   Configure a transaction and run HQ to see the optimal route,
                   fees, settlement time, savings, success probability, and risk —
-                  scored live across 14 networks.
+                  scored across 14 simulated networks.
                 </motion.div>
               )}
 
@@ -604,9 +605,9 @@ export function AeroSimulator() {
 
         {/* Live metrics + security */}
         <div className="mt-5 grid gap-5 lg:grid-cols-2">
-          {/* Live metrics */}
+          {/* Simulated metrics */}
           <div className="glass rounded-4xl p-6 sm:p-8">
-            <FieldLabel>Live Metrics</FieldLabel>
+            <FieldLabel>Simulated Metrics</FieldLabel>
             <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3">
               <Metric label="Networks Scanned" value={r?.metrics.networksScanned ?? 14} runId={runId} />
               <Metric label="Liquidity Pools" value={r?.metrics.poolsChecked ?? 32} runId={runId} />
@@ -782,7 +783,7 @@ function ForecastTicker() {
   }, []);
   return (
     <div className="flex items-center gap-1.5 font-mono text-[0.55rem] normal-case tracking-normal text-amber-400/90">
-      <span>↗ Forecast</span>
+      <span>↗ Forecast · sim</span>
       <span className="text-white/60">
         {FORECAST_CORRIDORS[i]} · opens {s}s · {conf}% demand
       </span>
@@ -802,7 +803,7 @@ function NetworkTicker() {
   return (
     <div className="flex items-center gap-1.5 font-mono text-[0.55rem] uppercase tracking-widest text-rail-400/80">
       <span className="h-1 w-1 rounded-full bg-rail-400 animate-pulse-rail" />
-      {n.toLocaleString()} settlements / min
+      {n.toLocaleString()} simulated settlements / min
     </div>
   );
 }
