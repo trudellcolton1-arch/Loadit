@@ -4,11 +4,11 @@ import { SITE } from "./constants";
 export const FAQS = [
   {
     q: "What is Loadit?",
-    a: "Loadit is an AI-powered financial rail that converts cash, cards, and fiat into stablecoins and crypto in seconds. Its patent-pending Unified Financial Rail uses its AI, HQ, to route every payment across the cheapest, fastest network available.",
+    a: "Loadit is an AI-powered financial rail that converts cards and fiat into stablecoins and crypto in seconds; cash-in via MoneyGram's 350,000+ retail locations is in final testing under a signed partnership and launches soon. Its patent-pending Unified Financial Rail uses its AI, HQ, to route every payment across the cheapest, fastest network available.",
   },
   {
-    q: "How does Loadit turn cash into crypto?",
-    a: "A shopper pays with cash or card at a merchant on the Loadit network. The transaction is tokenized, identity-verified, and routed by HQ across L1s, L2s, Lightning, or banks — settling on-chain in seconds while the merchant still receives familiar fiat.",
+    q: "How will Loadit turn cash into crypto?",
+    a: "Card purchases work today through licensed partners. Cash-in — in final certification with MoneyGram — will let a shopper hand cash to any MoneyGram counter; the transaction is identity-verified there and routed by HQ across L1s, L2s, Lightning, or banks, settling on-chain in seconds.",
   },
   {
     q: "How does HQ route payments?",
@@ -77,7 +77,7 @@ export function buildJsonLd() {
         applicationCategory: "FinanceApplication",
         url: `${SITE.url}/install`,
         description:
-          "The Loadit app turns cash and cards into Bitcoin, Solana, Ethereum, or USDC in seconds. Non-custodial, AI-routed, with HQ (an in-app AI money assistant), Pulse offline Bluetooth payments, send to any @handle or wallet, and a flat 0.75% fee.",
+          "The Loadit app turns cards into Bitcoin, Solana, Ethereum, or USDC in seconds — cash-in at MoneyGram locations launching soon. Non-custodial, AI-routed, with HQ (an in-app AI money assistant), Pulse offline Bluetooth payments, send to any @handle or wallet, and a flat 0.75% fee.",
         publisher: { "@id": `${SITE.url}/#organization` },
         offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
       },

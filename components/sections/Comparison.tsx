@@ -10,7 +10,7 @@ type Cell = "yes" | "no" | "partial";
 
 const ROWS: { cap: string; cells: [Cell, Cell, Cell, Cell] }[] = [
   { cap: "AI route optimization", cells: ["yes", "no", "no", "no"] },
-  { cap: "Cash → crypto at POS", cells: ["yes", "no", "no", "no"] },
+  { cap: "Cash → crypto at POS (launching)", cells: ["partial", "no", "no", "no"] },
   { cap: "Cross-chain settlement", cells: ["yes", "no", "no", "partial"] },
   { cap: "Sub-second finality", cells: ["yes", "partial", "no", "partial"] },
   { cap: "Temporal settlement", cells: ["yes", "no", "no", "no"] },

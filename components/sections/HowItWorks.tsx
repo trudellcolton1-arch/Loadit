@@ -20,8 +20,8 @@ export function HowItWorks() {
         <SectionHeading
           align="center"
           eyebrow="How It Works"
-          title="Cash in. Crypto out. Seconds."
-          description="No bank account. No app store gymnastics. Six steps from a checkout counter to on-chain value."
+          title="Money in. Crypto out. Seconds."
+          description="Card today — cash at 350,000+ MoneyGram counters launching soon. No bank account. Six steps from checkout to on-chain value."
         />
 
         <div ref={ref} className="relative mx-auto mt-20 max-w-3xl">
