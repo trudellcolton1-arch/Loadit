@@ -17,7 +17,7 @@ Key facts:
 - [HQ — your AI](https://loadit.net/): HQ is Loadit's in-app AI money assistant. Say what you want to do with your money in plain language and HQ finds the cheapest real route and executes it.
 - [Pulse — offline pay](https://loadit.net/): Send money to any phone nearby over Bluetooth, even with no internet. The sender locks funds in escrow; a cryptographically signed claim crosses phone-to-phone and settles the moment either phone reconnects.
 - [Send to a @handle or wallet](https://loadit.net/): Pay any Hylaq @handle or raw crypto address. Send from your own crypto, or buy it on the spot and deliver it straight to their wallet.
-- [MoneyGram cash on-ramp](https://loadit.net/moneygram): Pay cash at 350,000+ MoneyGram locations and receive crypto — Stellar USDC, then swapped into the asset you chose (Bitcoin, Solana, Ethereum, and more).
+- [Cash on-ramp (launching soon)](https://loadit.net/platform): Retail cash-in through a licensed national cash network is in final testing — pay cash at a nearby counter and receive the asset you chose (Bitcoin, Solana, Ethereum, and more).
 - [AI Router (HQ)](https://loadit.net/intent): HQ scores routes across processors, blockchains, and liquidity pools in real time, choosing the optimal settlement path on every transaction and cutting fees by up to 86%.
 
 ## Learn more
@@ -45,7 +45,7 @@ Key facts:
 ## FAQ
 
 - **What is Loadit?** An AI-powered, non-custodial financial rail that converts cash, cards, and fiat into stablecoins and crypto in seconds, routing every payment across the cheapest, fastest network via its HQ engine.
-- **How does Loadit turn cash into crypto?** You pay cash or card (including at 350k+ MoneyGram locations); the transaction is tokenized, identity-verified, and routed by HQ across L1s, L2s, Lightning, or banks — settling on-chain in seconds.
+- **How will Loadit turn cash into crypto?** Card works today; retail cash-in (in final testing, launching soon) will let you pay cash at a nearby counter — the transaction is tokenized, identity-verified, and routed by HQ across L1s, L2s, Lightning, or banks, settling on-chain in seconds.
 - **What is HQ?** Loadit's in-app AI assistant. Tell it what to do with your money in plain language and it finds the cheapest real route and executes it.
 - **What is Pulse?** Loadit's offline payments feature — send money to any phone nearby over Bluetooth with no internet, settling automatically once either phone reconnects.
 - **What does Loadit charge?** A flat 0.75% convenience fee ($1 minimum), plus a visible 0.25% when HQ swaps into another asset.

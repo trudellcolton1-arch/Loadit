@@ -10,7 +10,7 @@ import { NextRequest, NextResponse } from "next/server";
 /** Site paths that must never be mistaken for a bare @handle on load.money. */
 const RESERVED = new Set([
   "install", "pay", "app", "learn", "tools", "compare", "platform", "technology",
-  "developers", "deck", "privacy", "moneygram", "intent", "exchange", "energy",
+  "developers", "deck", "privacy", "intent", "exchange", "energy",
   "marketplace", "earn", "admin", "login", "signup", "help", "support", "about",
 ]);
 const HANDLEISH = /^\/([a-z0-9][a-z0-9_.-]{1,30})(?:\/(\$?[0-9.]+))?\/?$/i;

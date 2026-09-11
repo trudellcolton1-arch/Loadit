@@ -26,9 +26,6 @@ const REVALIDATE_S = 600;
 
 /** The only HQ slugs Loadit will serve. Curated by hand; edit deliberately. */
 export const HQ_ALLOWED_SLUGS: readonly string[] = [
-  "how-to-buy-crypto-with-cash-at-a-moneygram-near-me",
-  "convert-cash-to-usdc-at-moneygram-locations-full-guide",
-  "moneygram-to-crypto-wallet-without-an-exchange-account",
   "non-custodial-app-to-convert-cash-to-bitcoin-without-kyc-delays",
   "send-crypto-to-family-overseas-without-custodial-risk",
 ];

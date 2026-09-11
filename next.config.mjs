@@ -12,6 +12,10 @@ const nextConfig = {
     return [
       // Vanity URL for the quantum receipts story.
       { source: "/proof", destination: "/quantum", permanent: false },
+      // Retired partner-branded pages — send old links home.
+      { source: "/moneygram", destination: "/", permanent: false },
+      { source: "/moneygram/:path*", destination: "/", permanent: false },
+      { source: "/blog/loadit-moneygram", destination: "/", permanent: false },
     ];
   },
   async headers() {

@@ -48,7 +48,7 @@ export interface MoneyGramDoorOptions {
 export class MoneyGramDoor extends BaseDoor {
   readonly id = "moneygram_cash";
   readonly kind: DoorKind = "cash";
-  readonly label = "MoneyGram (cash)";
+  readonly label = "Cash partner (cash)";
 
   constructor(private readonly opts: MoneyGramDoorOptions = {}) {
     super();

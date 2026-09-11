@@ -185,7 +185,7 @@ export function RailConsole() {
           DEMO · simulated doors · no real money
         </span>
         <span className="rounded-lg border border-rose-400/40 bg-rose-400/10 px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.15em] text-rose-300">
-          MoneyGram cash-in: certification in flight — not live
+          Cash-in: partner certification in flight — not live
         </span>
       </div>
       <p className="mt-3 max-w-2xl text-sm leading-relaxed text-white/55">
@@ -372,21 +372,20 @@ export function RailConsole() {
         </>
       )}
 
-      {/* ——— MoneyGram certification gate ——— */}
+      {/* ——— Cash partner certification gate ——— */}
       <div className="mt-10 rounded-xl border border-rose-400/25 bg-rose-400/[0.04] p-5">
-        <h2 className="text-sm font-bold text-white">MoneyGram door — certification gate</h2>
+        <h2 className="text-sm font-bold text-white">Cash door — certification gate</h2>
         <p className="mt-2 max-w-2xl text-xs leading-relaxed text-white/55">
-          MoneyGram cash-in is <b className="text-rose-300">not live</b>: certification is still in flight
-          with MoneyGram. The real MoneyGram door in <code className="text-white/70">lib/rail</code> refuses
-          to confirm customer cash until the owner explicitly sets{" "}
-          <code className="text-white/70">MONEYGRAM_CASH_IN_CERT=CLEARED</code>. Press the button to see the
+          Retail cash-in is <b className="text-rose-300">not live</b>: certification with our licensed
+          cash partner is still in flight. The real cash door in <code className="text-white/70">lib/rail</code> refuses
+          to confirm customer cash until the owner explicitly clears the certification flag. Press the button to see the
           runtime enforce it — this opens a simulated intake and attempts a confirm.
         </p>
         <button
           onClick={tryMoneyGramConfirm}
           className="mt-3 rounded-lg border border-rose-400/40 px-3 py-1.5 text-xs text-rose-300 hover:border-rose-300"
         >
-          Attempt confirm at the MoneyGram door
+          Attempt confirm at the cash door
         </button>
         {gateMsg && (
           <p className="mt-3 rounded-lg bg-black/30 px-3 py-2 font-mono text-[11px] leading-relaxed text-rose-200/90">
@@ -396,7 +395,7 @@ export function RailConsole() {
       </div>
 
       <p className="mt-8 font-mono text-[10px] uppercase tracking-[0.15em] text-white/30">
-        DEMO — simulated doors and simulated money. MoneyGram cash-in certification in flight; nothing on
+        DEMO — simulated doors and simulated money. Cash-in partner certification in flight; nothing on
         this page moves real funds or generates real transaction ids.
       </p>
     </div>

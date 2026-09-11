@@ -30,7 +30,7 @@ export function QuantumCollapse() {
     const COLS = [0.07, 0.36, 0.65, 0.93];
     const NODES: Record<string, { c: number; y: number; label: string; mg?: boolean }> = {
       src: { c: 0, y: 0.5, label: "$200 CASH" },
-      mg: { c: 1, y: 0.22, label: "MoneyGram", mg: true },
+      mg: { c: 1, y: 0.22, label: "Cash rail", mg: true },
       cb: { c: 1, y: 0.5, label: "Coinbase" },
       st: { c: 1, y: 0.78, label: "Stripe" },
       xlm: { c: 2, y: 0.18, label: "Stellar" },
