@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  View, Text, TouchableOpacity, ActivityIndicator, ScrollView, StyleSheet, Image, Share, Linking,
+  View, Text, TouchableOpacity, ActivityIndicator, ScrollView, StyleSheet, Image, Share, Linking, Alert,
 } from "react-native";
-import { Redirect, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@/lib/authContext";
+import { signInWithHylaq } from "@/lib/auth";
 import { getMyHandle, type HandleProfile } from "@/lib/api";
 import { getWalletBalance, type WalletBalance } from "@/lib/hylaqWallet";
 import { API_BASE, HYLAQ } from "@/lib/config";
@@ -26,7 +27,7 @@ const short = (a?: string | null) => (a && a.length > 16 ? `${a.slice(0, 8)}…$
 const HYLAQ_WEB = (HYLAQ.issuer || "https://www.hylaq.com").replace(/\/$/, "");
 
 export default function Profile() {
-  const { session, ready, signOut } = useAuth();
+  const { session, ready, signOut, setSession } = useAuth();
   const { theme: t } = useTheme();
   const styles = useMemo(() => makeStyles(t), [t]);
   const router = useRouter();
@@ -34,12 +35,31 @@ export default function Profile() {
   const [profile, setProfile] = useState<HandleProfile | null>(null);
   const [balance, setBalance] = useState<WalletBalance | null>(null);
   const [receiveNet, setReceiveNet] = useState("");
+  const [signingIn, setSigningIn] = useState(false);
 
   const signedIn = session?.kind === "hylaq";
 
+  const beginHylaqSignIn = async () => {
+    if (signingIn) return;
+    setSigningIn(true);
+    try {
+      const s = await signInWithHylaq();
+      setSession(s);
+    } catch (e) {
+      Alert.alert("Sign in", (e as Error).message);
+    } finally {
+      setSigningIn(false);
+    }
+  };
+
   useEffect(() => {
     if (!ready) return;
-    if (!session || session.kind !== "hylaq") return;
+    if (!session || session.kind !== "hylaq") {
+      setProfile(null);
+      setBalance(null);
+      setState("loading");
+      return;
+    }
     (async () => {
       try {
         const r = await getMyHandle(session.accessToken);
@@ -69,8 +89,6 @@ export default function Profile() {
     if (addresses.length && !receiveNet) setReceiveNet(addresses[0][0]);
   }, [addresses, receiveNet]);
 
-  if (ready && !session) return <Redirect href="/login" />;
-
   const activeAddr = (addresses.find(([n]) => n === receiveNet) || addresses[0])?.[1] || null;
 
   return (
@@ -86,13 +104,15 @@ export default function Profile() {
           {/* signed out (guest) — a real way in, never a dead end */}
           {!signedIn && (
             <>
-              <Text style={styles.handle}>You&apos;re signed out</Text>
+              <Text style={styles.handle}>Welcome back</Text>
               <Text style={styles.sub}>
-                Your Hylaq account is your Loadit identity. Sign in to see your @handle,
-                balance and wallet addresses — or claim a new @handle first.
+                Sign in with Hylaq anytime from here — even after you sign out.
+                Your @handle is your Loadit identity.
               </Text>
-              <TouchableOpacity style={styles.primaryBtn} onPress={() => router.push("/login")}>
-                <Text style={styles.primaryBtnText}>Sign in with Hylaq</Text>
+              <TouchableOpacity style={styles.primaryBtn} onPress={beginHylaqSignIn} disabled={signingIn}>
+                {signingIn
+                  ? <ActivityIndicator color={t.buttonText} />
+                  : <Text style={styles.primaryBtnText}>Sign in with Hylaq</Text>}
               </TouchableOpacity>
               <TouchableOpacity style={styles.secondaryBtn} onPress={() => Linking.openURL(HYLAQ_WEB)}>
                 <Text style={styles.secondaryBtnText}>New here? Claim your @handle on Hylaq →</Text>
@@ -135,8 +155,10 @@ export default function Profile() {
                 This session isn&apos;t linked to a Hylaq @handle. Sign in again with the account
                 that holds your @handle — or create one and it appears here automatically.
               </Text>
-              <TouchableOpacity style={styles.primaryBtn} onPress={() => router.push("/login")}>
-                <Text style={styles.primaryBtnText}>Sign in with Hylaq</Text>
+              <TouchableOpacity style={styles.primaryBtn} onPress={beginHylaqSignIn} disabled={signingIn}>
+                {signingIn
+                  ? <ActivityIndicator color={t.buttonText} />
+                  : <Text style={styles.primaryBtnText}>Sign in with Hylaq</Text>}
               </TouchableOpacity>
               <TouchableOpacity style={styles.secondaryBtn} onPress={() => Linking.openURL(HYLAQ_WEB)}>
                 <Text style={styles.secondaryBtnText}>Create account — claim your @handle on Hylaq →</Text>
@@ -147,8 +169,10 @@ export default function Profile() {
           {signedIn && state === "error" && (
             <>
               <Text style={styles.sub}>Couldn&apos;t reach Hylaq right now. Pull back and try again.</Text>
-              <TouchableOpacity style={styles.primaryBtn} onPress={() => router.push("/login")}>
-                <Text style={styles.primaryBtnText}>Sign in with Hylaq</Text>
+              <TouchableOpacity style={styles.primaryBtn} onPress={beginHylaqSignIn} disabled={signingIn}>
+                {signingIn
+                  ? <ActivityIndicator color={t.buttonText} />
+                  : <Text style={styles.primaryBtnText}>Sign in with Hylaq</Text>}
               </TouchableOpacity>
             </>
           )}
@@ -233,7 +257,6 @@ export default function Profile() {
             style={styles.signOutBtn}
             onPress={async () => {
               await signOut();
-              router.replace("/login");
             }}
           >
             <Text style={styles.signOutText}>Sign out</Text>

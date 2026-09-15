@@ -9,7 +9,9 @@ import { Redirect, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@/lib/authContext";
 import { routeIntent, type IntentResult } from "@/lib/api";
-import { isFounder, isRailOwner } from "@/lib/config";
+import { canSeeRailPoc } from "@/lib/config";
+import { CERT_LINE } from "@/lib/railPoc";
+import { HonestyPills } from "@/components/HonestyPills";
 import { useTheme, rgba, type Theme } from "@/lib/theme";
 import { Mark } from "@/components/Mark";
 
@@ -45,7 +47,6 @@ export default function Home() {
 
   // Only a server-VERIFIED, handle-linked Hylaq session counts as signed in.
   // A stale or unlinked session must never surface gated tiles or a profile.
-  const linkedHylaq = session?.kind === "hylaq" && hylaqStatus === "linked";
   // While the probe is in flight keep the avatar (no sign-in flash for a real
   // account), but gated tiles stay hidden until "linked" is confirmed.
   const showProfileControl =
@@ -148,6 +149,29 @@ export default function Home() {
             </View>
           )}
 
+          {canSeeRailPoc(session?.email, session?.kind, hylaqStatus) && (
+            <TouchableOpacity activeOpacity={0.85} onPress={() => router.push("/rail")}>
+              <LinearGradient
+                colors={[rgba(t.accent, 0.22), rgba(t.accent, 0.05), "rgba(255,255,255,0.02)"]}
+                start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                style={styles.loadCard}
+              >
+                <Text style={[styles.microlabel, { color: t.accentText }]}>RAIL POC</Text>
+                <Text style={styles.loadTitle}>The machine</Text>
+                <Text style={styles.loadSub}>
+                  Intake → UVCE → door → settle. {CERT_LINE}. Playground — not live cash-in.
+                </Text>
+                <View style={{ marginTop: 12 }}>
+                  <HonestyPills owner playground />
+                </View>
+                <View style={styles.loadPill}>
+                  <Text style={styles.loadPillText}>Open the rail</Text>
+                  <Feather name="chevron-right" size={15} color={t.onAccent} />
+                </View>
+              </LinearGradient>
+            </TouchableOpacity>
+          )}
+
           {/* LOAD hero card */}
           <TouchableOpacity activeOpacity={0.85} onPress={() => router.push("/load")}>
             <LinearGradient
@@ -158,7 +182,7 @@ export default function Home() {
               <Text style={[styles.microlabel, { color: t.accentText }]}>LOADIT</Text>
               <Text style={styles.loadTitle}>Cash or card → crypto</Text>
               <Text style={styles.loadSub}>
-                Bitcoin, Solana, Ethereum, USDC. Best price across licensed partners — proven.
+                Bitcoin, Solana, Ethereum, USDC. Card is live via licensed partners. Cash is {CERT_LINE.toLowerCase()}.
               </Text>
               <View style={styles.loadPill}>
                 <Text style={styles.loadPillText}>Start loading</Text>
@@ -178,46 +202,15 @@ export default function Home() {
             />
           </View>
 
-          {/* MoneyGram banner */}
+          {/* Cash rail — public preview only. Not live cash-in. */}
           <TouchableOpacity style={styles.mgBanner} activeOpacity={0.85} onPress={() => router.push("/moneygram")}>
             <Image source={require("../assets/moneygram-logo.jpg")} style={styles.mgLogo} />
             <View style={{ flex: 1 }}>
-              <Text style={styles.mgTitle}>Cash at MoneyGram</Text>
-              <Text style={styles.mgSub}>350,000+ locations · in integration</Text>
+              <Text style={styles.mgTitle}>Cash rail</Text>
+              <Text style={styles.mgSub}>{CERT_LINE} · not live cash-in</Text>
             </View>
             <Feather name="chevron-right" size={18} color={t.faint} />
           </TouchableOpacity>
-
-          {/* rail runtime — the owner's VERIFIED, handle-linked Hylaq account
-              ONLY. Guest, stale, or unlinked sessions never see this (the
-              server enforces the same gate on /api/rail). */}
-          {linkedHylaq && isRailOwner(session?.email) && (
-            <TouchableOpacity style={styles.practiceBanner} activeOpacity={0.85} onPress={() => router.push("/rail")}>
-              <View style={styles.practiceIcon}>
-                <Feather name="cpu" size={16} color={t.warn} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.mgTitle}>Rail</Text>
-                <Text style={styles.mgSub}>Owner only · one machine: quote → door → payout · cert in flight</Text>
-              </View>
-              <Feather name="chevron-right" size={18} color={t.faint} />
-            </TouchableOpacity>
-          )}
-
-          {/* founder practice — requires a VERIFIED, handle-linked Hylaq
-              founder account; stale or unlinked sessions don't qualify */}
-          {linkedHylaq && isFounder(session?.email) && (
-            <TouchableOpacity style={styles.practiceBanner} activeOpacity={0.85} onPress={() => router.push("/practice")}>
-              <View style={styles.practiceIcon}>
-                <Feather name="play" size={16} color={t.warn} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.mgTitle}>Practice run</Text>
-                <Text style={styles.mgSub}>Founder only · full flow in the MoneyGram sandbox</Text>
-              </View>
-              <Feather name="chevron-right" size={18} color={t.faint} />
-            </TouchableOpacity>
-          )}
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

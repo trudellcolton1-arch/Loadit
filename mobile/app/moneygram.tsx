@@ -51,11 +51,16 @@ export default function MoneyGram() {
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           <View style={styles.titleRow}>
             <Image source={require("../assets/moneygram-logo.jpg")} style={styles.mgLogo} />
-            <Text style={styles.h1}>Cash → crypto{"\n"}at MoneyGram</Text>
+            <Text style={styles.h1}>Cash rail{"\n"}preview</Text>
+          </View>
+          <View style={styles.badgeRow}>
+            <View style={styles.soon}><Text style={styles.soonText}>PATENT PENDING</Text></View>
+            <View style={styles.soon}><Text style={styles.soonText}>CERT APPROVED 4/5</Text></View>
           </View>
           <Text style={styles.sub}>
-            Pay cash at 350,000+ MoneyGram locations. They turn it into USDC and verify you
-            at the counter; HQ swaps it into your asset and sends it to your own wallet.
+            Retail cash-in is not live. Cert approved (4/5) — final go-live step pending.
+            This is a route preview: cash at a licensed counter → USDC → HQ swap → your
+            own wallet. Nothing here takes customer cash.
           </Text>
 
           <Text style={styles.label}>You want</Text>
@@ -95,7 +100,7 @@ export default function MoneyGram() {
             <View style={styles.planCard}>
               <View style={styles.flowHead}>
                 <Text style={styles.flowTitle}>Your route</Text>
-                {!plan.configured && <View style={styles.soon}><Text style={styles.soonText}>COMING SOON</Text></View>}
+                <View style={styles.soon}><Text style={styles.soonText}>NOT LIVE CASH</Text></View>
               </View>
 
               {plan.steps.map((s, i) => (
@@ -123,9 +128,10 @@ export default function MoneyGram() {
           )}
 
           <Text style={styles.legal}>
-            MoneyGram is the licensed money-transmitter and performs identity verification. The
-            USDC→{asset} swap is executed by a licensed liquidity provider. Loadit orchestrates the
-            route and never holds your funds. Amounts and fees are estimates until you confirm.
+            Cert approved (4/5) — final go-live step pending. This screen does not start a live cash-in.
+            A licensed money-transmitter will perform identity verification at the counter.
+            The USDC→{asset} swap is executed by a licensed liquidity provider. Loadit
+            orchestrates the route and never holds your funds. Fee: 0.75% with a $1 minimum.
           </Text>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -141,6 +147,7 @@ const makeStyles = (t: Theme) =>
     mgLogo: { width: 46, height: 46, borderRadius: 23 },
     h1: { color: t.text, fontSize: 24, fontWeight: "800", letterSpacing: -0.6, lineHeight: 28 },
     sub: { color: t.dim, fontSize: 14, lineHeight: 20, marginTop: 6 },
+    badgeRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 10 },
     label: { color: t.faint, fontSize: 11, letterSpacing: 1, textTransform: "uppercase", marginTop: 18 },
     row: { flexDirection: "row", gap: 8, marginTop: 8, flexWrap: "wrap" },
     chip: { borderColor: t.border, borderWidth: 1, borderRadius: 999, paddingHorizontal: 16, paddingVertical: 10 },

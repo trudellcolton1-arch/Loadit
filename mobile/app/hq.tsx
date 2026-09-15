@@ -6,7 +6,10 @@ import {
 import { Redirect, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@/lib/authContext";
+import { canSeeRailPoc } from "@/lib/config";
 import { askHQ, type HQMessage, type HQResult } from "@/lib/api";
+import { CERT_LINE } from "@/lib/railPoc";
+import { HonestyPills } from "@/components/HonestyPills";
 import { useTheme, type Theme } from "@/lib/theme";
 
 /**
@@ -23,20 +26,21 @@ interface Bubble extends HQMessage {
 const GREETING: Bubble = {
   role: "assistant",
   content:
-    "I'm HQ — your AI inside Loadit. Ask me anything about your money, or just say the move and I'll route it the cheapest real way.",
+    "I'm HQ — the brain of the rail. I score doors, watch health, and route value the cheapest real way. Say a move, or ask how the machine thinks.",
 };
 
 const SUGGESTIONS = [
   "Turn $200 cash into Bitcoin",
   "What's the cheapest way to buy SOL?",
-  "How does Cash at any register work?",
+  "How does the rail score a door?",
   "Is Loadit safe?",
 ];
 
 const money = (n: number) => `$${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 export default function HQ() {
-  const { session, ready } = useAuth();
+  const { session, ready, hylaqStatus } = useAuth();
+  const owner = canSeeRailPoc(session?.email, session?.kind, hylaqStatus);
   const { theme: t } = useTheme();
   const styles = useMemo(() => makeStyles(t), [t]);
   const router = useRouter();
@@ -84,6 +88,31 @@ export default function HQ() {
           keyboardShouldPersistTaps="handled"
           onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: true })}
         >
+          {owner && (
+            <TouchableOpacity style={styles.brain} activeOpacity={0.9} onPress={() => router.push("/rail")}>
+              <Text style={styles.brainKicker}>THE RAIL</Text>
+              <Text style={styles.brainTitle}>Scores, doors, health</Text>
+              <HonestyPills owner playground />
+              <View style={styles.brainGrid}>
+                <View style={styles.brainStat}>
+                  <Text style={styles.brainLabel}>MoneyGram</Text>
+                  <Text style={styles.brainVal}>4/5</Text>
+                  <Text style={styles.brainSub}>final go-live pending</Text>
+                </View>
+                <View style={styles.brainStat}>
+                  <Text style={styles.brainLabel}>Fee</Text>
+                  <Text style={styles.brainVal}>0.75%</Text>
+                  <Text style={styles.brainSub}>$1 minimum</Text>
+                </View>
+                <View style={styles.brainStat}>
+                  <Text style={styles.brainLabel}>Custody</Text>
+                  <Text style={styles.brainVal}>None</Text>
+                  <Text style={styles.brainSub}>your wallet</Text>
+                </View>
+              </View>
+              <Text style={styles.brainHint}>{CERT_LINE}. Open the Rail POC →</Text>
+            </TouchableOpacity>
+          )}
           {messages.map((m, i) => (
             <View key={i} style={[styles.row, m.role === "user" ? styles.rowUser : styles.rowAI]}>
               <View style={[styles.bubble, m.role === "user" ? styles.bubbleUser : styles.bubbleAI]}>
@@ -173,7 +202,8 @@ export default function HQ() {
           </TouchableOpacity>
         </View>
         <Text style={styles.disclaimer}>
-          Estimates depend on live conditions. Purchases complete via a licensed partner to your own wallet.
+          HQ scores routes. Purchases complete via a licensed partner to your own wallet.
+          {owner ? ` ${CERT_LINE}.` : ""}
         </Text>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -227,4 +257,19 @@ const makeStyles = (t: Theme) =>
     sendDisabled: { opacity: 0.4 },
     sendText: { color: t.buttonText, fontWeight: "800", fontSize: 18 },
     disclaimer: { color: t.faint, fontSize: 10, textAlign: "center", paddingHorizontal: 24, paddingTop: 6, paddingBottom: 4 },
+    brain: {
+      backgroundColor: t.card, borderColor: t.border, borderWidth: 1, borderRadius: 22,
+      padding: 16, marginBottom: 8,
+    },
+    brainKicker: { color: t.accentText, fontSize: 10, fontWeight: "800", letterSpacing: 2 },
+    brainTitle: { color: t.text, fontSize: 20, fontWeight: "800", letterSpacing: -0.5, marginTop: 4, marginBottom: 10 },
+    brainGrid: { flexDirection: "row", gap: 8, marginTop: 12 },
+    brainStat: {
+      flex: 1, backgroundColor: t.surface, borderColor: t.border, borderWidth: 1,
+      borderRadius: 14, padding: 10,
+    },
+    brainLabel: { color: t.faint, fontSize: 9, fontWeight: "700", letterSpacing: 0.8, textTransform: "uppercase" },
+    brainVal: { color: t.text, fontSize: 18, fontWeight: "800", marginTop: 4, letterSpacing: -0.4 },
+    brainSub: { color: t.dim, fontSize: 10, marginTop: 2 },
+    brainHint: { color: t.accentText, fontSize: 13, fontWeight: "700", marginTop: 12 },
   });

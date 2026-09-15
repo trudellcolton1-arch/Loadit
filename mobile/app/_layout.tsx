@@ -31,8 +31,8 @@ function ThemedStack() {
         <Stack.Screen name="moneygram" options={{ title: "Cash → crypto" }} />
         <Stack.Screen name="register" options={{ title: "Cash at any register" }} />
         <Stack.Screen name="appearance" options={{ title: "Appearance" }} />
-        <Stack.Screen name="practice" options={{ title: "Practice run" }} />
-        <Stack.Screen name="rail" options={{ title: "Rail" }} />
+        <Stack.Screen name="practice" options={{ title: "Rail POC" }} />
+        <Stack.Screen name="rail" options={{ title: "Rail POC" }} />
         <Stack.Screen name="quantum" options={{ title: "Quantum Routing" }} />
       </Stack>
     </GestureHandlerRootView>

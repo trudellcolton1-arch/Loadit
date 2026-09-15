@@ -61,7 +61,8 @@ test("MoneyGram door refuses to confirm real customer cash while cert is IN FLIG
     const after = await door.status(intake.internalRef);
     assert.equal(after.status, "pending");
     // The pending-intake instructions carry the honest cert-in-flight note.
-    assert.match(intake.instructions ?? "", /certification .* in flight/i);
+    assert.match(intake.instructions ?? "", /cert approved \(4\/5\)/i);
+    assert.match(intake.instructions ?? "", /in flight/i);
   });
 });
 

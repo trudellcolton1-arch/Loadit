@@ -185,9 +185,13 @@ export function RailConsole() {
           DEMO · simulated doors · no real money
         </span>
         <span className="rounded-lg border border-rose-400/40 bg-rose-400/10 px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.15em] text-rose-300">
-          Cash-in: partner certification in flight — not live
+          Cash-in: cert approved 4/5 — not live
         </span>
       </div>
+      <p className="mt-4 text-sm leading-6 text-white/55">
+        The product Rail POC runs in the Loadit Expo app (owner Hylaq only). This page is a
+        simulated leftover — patent pending, playground numbers, no customer cash.
+      </p>
       <p className="mt-3 max-w-2xl text-sm leading-relaxed text-white/55">
         One machine: an intent (amount + outcome, <b className="text-white/80">no chain picker</b>) goes in,
         HQ scores the candidate doors on fee, time, liquidity, risk, and certification, locks a quote with a

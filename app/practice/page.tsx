@@ -3,10 +3,10 @@ import { notFound } from "next/navigation";
 import { PracticeConsole } from "./PracticeConsole";
 
 /**
- * /practice?key=<PRACTICE_KEY> — founder-only desktop console for the
- * MoneyGram sandbox run. Key-gated (env PRACTICE_KEY); 404s without it so
- * the page is invisible to anyone else. Sandbox-only by construction —
- * the underlying API refuses to run against the public Stellar network.
+ * /practice?key=<PRACTICE_KEY> — secret-gated desktop leftover for the
+ * MoneyGram test playground. The product Rail POC lives in the Expo app.
+ * Key-gated (env PRACTICE_KEY); 404s without it. Sandbox-only — the API
+ * refuses the public Stellar network.
  */
 
 export const dynamic = "force-dynamic";

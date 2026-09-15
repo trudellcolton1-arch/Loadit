@@ -39,5 +39,18 @@ export function isRailOwner(email?: string | null): boolean {
   return Boolean(email && RAIL_OWNER_EMAILS.includes(email.trim().toLowerCase()));
 }
 
+/**
+ * Client visibility for the Rail POC. Fail closed: a guest, a logged-out
+ * user, an unlinked/stale Hylaq session, or a non-owner never sees the
+ * machine. "checking" is NOT enough — the probe must confirm a linked handle.
+ */
+export function canSeeRailPoc(
+  email?: string | null,
+  sessionKind?: string | null,
+  hylaqStatus?: string | null
+): boolean {
+  return sessionKind === "hylaq" && isRailOwner(email) && hylaqStatus === "linked";
+}
+
 // Colors live in lib/theme.tsx now — the user picks mode + accent and every
 // screen derives its palette from useTheme().

@@ -2,18 +2,17 @@ import type { Metadata } from "next";
 import { RailConsole } from "./RailConsole";
 
 /**
- * /rail — DEMO console for the Loadit rail runtime (lib/rail).
+ * /rail — simulated DEMO of lib/rail in the browser.
  *
- * Everything on this page runs the real runtime code in the browser against
- * SIMULATED demo doors — no real money, no live providers. Retail cash-in
- * certification is IN FLIGHT: the cash door on this page demonstrates
- * the refusal gate, not a live cash intake.
+ * The product Rail POC lives in the Expo app (mobile/app/rail.tsx), not here.
+ * This page is a developer leftover: simulated doors only, no real money.
+ * Cert approved (4/5) — final go-live pending. Do not treat this as the product.
  */
 
 export const metadata: Metadata = {
-  title: "Rail runtime — DEMO — Loadit",
+  title: "Not the product — simulated leftover — Loadit",
   description:
-    "Demo console for the Loadit rail runtime: intent → HQ score → quote → door intake → convert → payout, with self-heal. Simulated doors only; retail cash-in certification is in flight.",
+    "Simulated leftover of lib/rail. The product Rail POC lives in the Loadit Expo app. Cash-in is not live. Cert approved (4/5) — final go-live pending.",
   alternates: { canonical: "/rail" },
   robots: { index: false, follow: false },
 };

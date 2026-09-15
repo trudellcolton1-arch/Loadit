@@ -109,7 +109,7 @@ export function resetRailServiceForTests(): void {
 }
 
 const LIVE_NOTICE =
-  "MoneyGram cash-in is NOT live — certification is in flight with MoneyGram. Cash confirms are refused until the owner clears certification.";
+  "MoneyGram cash-in is NOT live — cert approved (4/5), final go-live step pending. Cash confirms are refused until the owner clears certification.";
 const SIM_NOTICE = "Simulated doors and simulated money — nothing real moves in this mode.";
 
 /** Wire-safe view of a payment (already plain data; picked explicitly). */

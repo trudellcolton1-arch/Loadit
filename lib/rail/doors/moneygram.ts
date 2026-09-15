@@ -79,7 +79,7 @@ export class MoneyGramDoor extends BaseDoor {
     const gate =
       this.certification() === "CLEARED"
         ? ""
-        : " NOTE: MoneyGram cash-in certification is in flight — this intake cannot be confirmed with real customer cash yet.";
+        : " NOTE: Cert approved (4/5) — final go-live step pending. This intake cannot be confirmed with real customer cash yet. Certification remains in flight until go-live.";
     return `Cash intake at any of ${MONEYGRAM_LOCATIONS} MoneyGram locations. ${firstStep}${gate}`;
   }
 }

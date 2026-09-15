@@ -393,18 +393,25 @@ export interface MgSandboxStatus {
   message?: string;
 }
 
-/** Start a real SEP-24 deposit at MoneyGram's testnet anchor (test money). */
-export async function startMgSandboxDeposit(amountUsd: number): Promise<MgSandboxDeposit> {
+/** Start a real SEP-24 deposit at MoneyGram's testnet anchor (test money). Owner-gated. */
+export async function startMgSandboxDeposit(amountUsd: number, token?: string): Promise<MgSandboxDeposit> {
   const res = await fetch(`${API_BASE}/api/practice/moneygram`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
     body: JSON.stringify({ amountUsd }),
   });
   return res.json();
 }
 
 /** Live status of a sandbox deposit, straight from the anchor. */
-export async function getMgSandboxStatus(id: string): Promise<MgSandboxStatus> {
-  const res = await fetch(`${API_BASE}/api/practice/moneygram?id=${encodeURIComponent(id)}`);
+export async function getMgSandboxStatus(id: string, token?: string): Promise<MgSandboxStatus> {
+  const res = await fetch(`${API_BASE}/api/practice/moneygram?id=${encodeURIComponent(id)}`, {
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  });
   return res.json();
 }

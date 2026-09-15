@@ -52,12 +52,57 @@ Backend env (in Vercel) for the on-ramps:
 - `COINBASE_ONRAMP_APP_ID` — Coinbase Developer Platform → Onramp.
 - `STRIPE_SECRET_KEY` — enables the Stripe Crypto Onramp session endpoint.
 
+## Rail POC (owner only)
+
+The Unified Financial Rail proof-of-concept lives **in this Expo app**, not in
+a separate web console. Sign in with Hylaq as `trudellcolton@gmail.com` (handle
+must be linked). Everyone else never sees the Rail POC tile or playground.
+
+Walk: **intent → quote/fee (0.75%, $1 min) → MoneyGram door (playground) →
+state machine / self-heal → honest outcome**.
+
+Labels say **patent pending**, **cert approved (4/5) — final go-live step pending**,
+and **playground**. Cash-in is not live. Crypto lands in the wallet you paste —
+Loadit is non-custodial.
+
+```bash
+cd mobile
+npm install
+npx expo start           # scan QR with Expo Go
+npx expo start --web     # Expo web, for a desktop walkthrough
+# or:
+npm run ios              # needs Xcode
+npm run android          # needs Android Studio
+```
+
+The app talks to the existing Next.js API (`https://loadit.net` by default, or
+`EXPO_PUBLIC_API_BASE` for a Vercel preview). `/api/rail` and
+`POST /api/practice/moneygram` are owner-gated on the server.
+
+### 30-second demo (Colton)
+
+1. Open the Expo app → **Login with Hylaq** as `trudellcolton@gmail.com`.
+2. Home shows **The machine** — tap it (or HQ → rail card, or Load → cash).
+3. Begin → pick USDC + $150 → paste your wallet → **Lock quote** (see 0.75% / $1 min).
+4. **Open the MoneyGram door** → **Start playground** (test money; cert 4/5).
+5. **Watch self-heal** — pipe dies, same payment id, one payout — then the honest outcome.
+
+Do not use `loadit.net/rail` as the demo. That page is a leftover sim.
+
+### Install / run
+
+- **Expo Go:** `cd mobile && npm install && npx expo start` — scan the QR.
+- **Expo web:** `npx expo start --web`.
+- **EAS / TestFlight:** `npx eas-cli build --platform ios --profile preview` (or `production`).
+  Android preview APK: `--platform android --profile preview`.
+
 ## Run locally
 
 ```bash
 cd mobile
 npm install
 npx expo start           # scan QR with Expo Go, or:
+npx expo start --web     # Expo web
 npm run ios              # needs Xcode
 npm run android          # needs Android Studio
 ```

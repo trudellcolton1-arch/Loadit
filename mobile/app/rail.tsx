@@ -1,37 +1,41 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  View, Text, TextInput, TouchableOpacity, ActivityIndicator, ScrollView, StyleSheet, Switch, Image,
+  View, Text, TextInput, TouchableOpacity, ActivityIndicator, ScrollView,
+  StyleSheet, Image, Platform, Linking, Animated, KeyboardAvoidingView,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
 import { Redirect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@/lib/authContext";
-import { isRailOwner } from "@/lib/config";
-import { railAction, type RailMode, type RailPayment, type RailResponse } from "@/lib/api";
+import { canSeeRailPoc, isRailOwner } from "@/lib/config";
+import {
+  getMyHandle, railAction, startMgSandboxDeposit, getMgSandboxStatus,
+  type RailPayment, type RailResponse, type MgSandboxStatus,
+} from "@/lib/api";
+import {
+  RAIL_STORY, CERT_LINE, loaditFeeUsd, playgroundStatusLabel, walletForAsset,
+} from "@/lib/railPoc";
+import { HonestyPills } from "@/components/HonestyPills";
+import { RailPath, pathIndexForWalk } from "@/components/RailPath";
+import { MgPlaygroundWeb } from "@/components/MgPlaygroundWeb";
 import { useTheme, rgba, type Theme } from "@/lib/theme";
 
 /**
- * RAIL — the one machine, owner only.
- *
- * Amount + outcome in (no chain picker — HQ scores fee, time, liquidity,
- * risk, certification and locks a TTL quote), MoneyGram cash is door one,
- * and the whole lifecycle runs on ONE payment id with self-heal and
- * idempotent payout. Non-custodial: delivery only to a wallet you control.
- *
- * Honesty rails, hard-coded:
- *  - MoneyGram cash-in is NOT live; certification is in flight. The live
- *    door REFUSES to confirm cash and this screen shows that refusal.
- *  - The "test the machine" mode is simulated money and says so everywhere.
- *  - This screen is only visible to the rail owner's Hylaq account, and the
- *    backend enforces the same gate on every call — hiding UI is not the gate.
+ * RAIL POC — the one machine, owner only. Product demo lives here, not /rail web.
+ * Walk: story → intent → quote → MoneyGram playground door → state machine →
+ * heal theater → honest outcome. Cert approved (4/5). Cash-in is not live.
  */
 
-const MGRED = "#E8453C";
 const ASSETS = ["BTC", "SOL", "ETH", "USDC"] as const;
 const AMOUNTS = [50, 150, 500] as const;
 const money = (n: number) => `$${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
+type Walk = "story" | "intent" | "quote" | "door" | "progress" | "heal" | "outcome";
+
+const STATE_ORDER: RailPayment["state"][] = [
+  "quoted", "intake_pending", "intake_confirmed", "converting", "paying_out", "settled",
+];
 const STATE_LABEL: Record<RailPayment["state"], string> = {
   quoted: "Quoted",
   intake_pending: "Intake pending",
@@ -43,69 +47,94 @@ const STATE_LABEL: Record<RailPayment["state"], string> = {
   healing: "Healing",
 };
 
-const HAPPY_PATH: RailPayment["state"][] = [
-  "quoted", "intake_pending", "intake_confirmed", "converting", "paying_out", "settled",
-];
-
-export default function Rail() {
+export default function RailPoc() {
   const { session, ready, hylaqStatus } = useAuth();
   const { theme: t } = useTheme();
   const styles = useMemo(() => makeStyles(t), [t]);
+  const fade = useRef(new Animated.Value(1)).current;
 
-  const [mode, setMode] = useState<RailMode>("live");
+  const [walk, setWalkRaw] = useState<Walk>("story");
   const [asset, setAsset] = useState<(typeof ASSETS)[number]>("USDC");
   const [amount, setAmount] = useState(150);
   const [wallet, setWallet] = useState("");
   const [payment, setPayment] = useState<RailPayment | null>(null);
+  const [sim, setSim] = useState<RailPayment | null>(null);
   const [meta, setMeta] = useState<RailResponse | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const [gate, setGate] = useState<string | null>(null);
-  const [killPayout, setKillPayout] = useState(false);
+  const [healLine, setHealLine] = useState<string | null>(null);
+  const [mgUrl, setMgUrl] = useState<string | null>(null);
+  const [mgId, setMgId] = useState<string | null>(null);
+  const [mgErr, setMgErr] = useState<string | null>(null);
+  const [showWeb, setShowWeb] = useState(false);
+  const [status, setStatus] = useState<MgSandboxStatus | null>(null);
   const [, setTick] = useState(0);
 
-  // 1s re-render for the quote TTL countdown.
+  const setWalk = (next: Walk) => {
+    Animated.sequence([
+      Animated.timing(fade, { toValue: 0, duration: 120, useNativeDriver: true }),
+      Animated.timing(fade, { toValue: 1, duration: 220, useNativeDriver: true }),
+    ]).start();
+    setWalkRaw(next);
+    setErr(null);
+  };
+
   useEffect(() => {
     const id = setInterval(() => setTick((n) => n + 1), 1000);
     return () => clearInterval(id);
   }, []);
 
+  useEffect(() => {
+    if (!session?.accessToken || session.kind !== "hylaq") return;
+    getMyHandle(session.accessToken).then((r) => {
+      if (r.ok && r.profile) setWallet((w) => w || walletForAsset(asset, r.profile!.addresses));
+    }).catch(() => {});
+  }, [session, asset]);
+
+  useEffect(() => {
+    if ((walk !== "progress" && walk !== "outcome") || !mgId) return;
+    let live = true;
+    const tick = async () => {
+      try {
+        const s = await getMgSandboxStatus(mgId, session?.accessToken);
+        if (live && s.ok) setStatus(s);
+      } catch { /* keep last */ }
+    };
+    tick();
+    const id = setInterval(tick, 5000);
+    return () => { live = false; clearInterval(id); };
+  }, [walk, mgId, session?.accessToken]);
+
   if (ready && !session) return <Redirect href="/login" />;
-  // Client-side visibility gate — the SERVER enforces the same allowlist on
-  // every /api/rail call, so this redirect is UX, not security. A stale or
-  // unlinked Hylaq session doesn't qualify ("checking" is tolerated so the
-  // screen doesn't bounce while the probe is in flight).
-  if (
-    ready &&
-    session &&
-    !(
-      session.kind === "hylaq" &&
-      isRailOwner(session.email) &&
-      (hylaqStatus === "linked" || hylaqStatus === "checking")
-    )
-  ) {
+  if (ready && session && hylaqStatus === "checking" && session.kind === "hylaq" && isRailOwner(session.email)) {
+    return (
+      <SafeAreaView style={styles.wrap} edges={["bottom"]}>
+        <View style={styles.centerBox}>
+          <ActivityIndicator color={t.accentText} />
+          <Text style={styles.dim}>Verifying your Hylaq session…</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+  if (ready && session && !canSeeRailPoc(session.email, session.kind, hylaqStatus)) {
     return <Redirect href="/" />;
   }
 
-  const act = async (body: Parameters<typeof railAction>[1]): Promise<RailResponse | null> => {
+  const act = async (
+    body: Parameters<typeof railAction>[1],
+    target: "live" | "sim" = "live"
+  ): Promise<RailResponse | null> => {
     setBusy(true);
-    setErr(null);
-    setGate(null);
     try {
       const r = await railAction(session?.accessToken, body);
-      if (r.payment) setPayment(r.payment);
+      if (r.payment) {
+        if (target === "sim") setSim(r.payment);
+        else setPayment(r.payment);
+      }
       setMeta(r);
-      if (!r.ok) {
-        if (r.reason === "certification_gate") {
-          setGate(r.message || "Certification is in flight — cash confirm refused.");
-          // Refresh the record so the state strip stays truthful.
-          const g = await railAction(session?.accessToken, { action: "get", mode: body.mode, paymentId: body.paymentId });
-          if (g.payment) setPayment(g.payment);
-        } else if (r.status === 401 || r.status === 403) {
-          setErr("This account is not authorized for the rail.");
-        } else {
-          setErr(r.message || "That didn't work — try again.");
-        }
+      if (!r.ok && r.status !== 409) {
+        if (r.status === 401 || r.status === 403) setErr("This account is not authorized for the rail.");
+        else if (r.reason !== "certification_gate") setErr(r.message || "That didn't work — try again.");
       }
       return r;
     } catch {
@@ -116,360 +145,503 @@ export default function Rail() {
     }
   };
 
-  const lockQuote = () =>
-    act({
-      action: "create",
-      mode,
-      intent: {
-        amountUsd: amount,
-        outcome: { asset, wallet: wallet.trim() || "wallet-you-control" },
-      },
-    });
-
-  const beginIntake = () => payment && act({ action: "intake", mode, paymentId: payment.id });
-  const confirmIntake = () => payment && act({ action: "confirm", mode, paymentId: payment.id });
-  const heal = () => payment && act({ action: "heal", mode, paymentId: payment.id });
-
-  const settle = async () => {
-    if (!payment) return;
-    if (mode === "sim" && killPayout) {
-      await act({ action: "kill_pipe", mode, paymentId: payment.id, pipe: "payout" });
-      setKillPayout(false);
+  const lockQuote = async () => {
+    const dest = wallet.trim();
+    if (!dest) {
+      setErr("Paste a wallet you control. Crypto lands there — Loadit never holds it.");
+      return;
     }
-    await act({ action: "settle", mode, paymentId: payment.id });
+    setWalkRaw("quote");
+    Animated.timing(fade, { toValue: 1, duration: 200, useNativeDriver: true }).start();
+    const r = await act({
+      action: "create",
+      mode: "live",
+      intent: { amountUsd: amount, outcome: { asset, wallet: dest } },
+    });
+    if (!r?.ok) setWalkRaw("intent");
   };
 
-  const switchMode = (m: RailMode) => {
-    setMode(m);
+  const openDoor = async () => {
+    if (!payment) return;
+    const r = await act({ action: "intake", mode: "live", paymentId: payment.id });
+    if (r?.ok) setWalk("door");
+  };
+
+  const openPlayground = async () => {
+    setBusy(true);
+    setMgErr(null);
+    try {
+      const r = await startMgSandboxDeposit(amount, session?.accessToken);
+      if (r.ok && r.url && r.id) {
+        setMgId(r.id);
+        setMgUrl(r.url);
+        setShowWeb(false);
+      } else if (r.reason === "not_rail_owner" || r.reason === "missing_token" || r.reason === "unverified_token") {
+        setMgErr("This account is not authorized for the playground.");
+      } else {
+        setMgErr(r.reason === "not_configured"
+          ? "The playground wallet isn't configured on the backend yet."
+          : "MoneyGram's playground didn't respond — try again.");
+      }
+    } catch {
+      setMgErr("Couldn't reach the playground — try again.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const watchHeal = async () => {
+    const dest = wallet.trim() || "wallet-you-control";
+    setWalk("heal");
+    setHealLine("Locking a simulated quote…");
+    const created = await act({
+      action: "create",
+      mode: "sim",
+      intent: { amountUsd: amount, outcome: { asset, wallet: dest } },
+    }, "sim");
+    if (!created?.ok || !created.payment) {
+      setHealLine("Couldn't start the simulated machine.");
+      return;
+    }
+    const id = created.payment.id;
+    setHealLine("Opening intake…");
+    await act({ action: "intake", mode: "sim", paymentId: id }, "sim");
+    setHealLine("Simulated cash confirmed…");
+    await act({ action: "confirm", mode: "sim", paymentId: id }, "sim");
+    setHealLine("Killing the payout pipe…");
+    await act({ action: "kill_pipe", mode: "sim", paymentId: id, pipe: "payout" }, "sim");
+    setHealLine("Settle failed — self-heal, same payment id…");
+    await act({ action: "settle", mode: "sim", paymentId: id }, "sim");
+    await act({ action: "heal", mode: "sim", paymentId: id }, "sim");
+    setHealLine("Healed. Paying out exactly once…");
+    await act({ action: "settle", mode: "sim", paymentId: id }, "sim");
+    setHealLine("Settled. Same payment id. One payout. Simulated money only.");
+  };
+
+  const reset = () => {
+    setWalk("story");
     setPayment(null);
+    setSim(null);
     setMeta(null);
-    setErr(null);
-    setGate(null);
+    setHealLine(null);
+    setMgUrl(null);
+    setMgId(null);
+    setMgErr(null);
+    setStatus(null);
+    setShowWeb(false);
   };
 
+  if (showWeb && mgUrl) {
+    return <MgPlaygroundWeb url={mgUrl} onDone={() => { setShowWeb(false); setWalk("progress"); }} />;
+  }
+
+  const fee = payment?.quote.loaditFeeUsd ?? loaditFeeUsd(amount);
   const ttlLeft = payment ? Math.max(0, Math.ceil((payment.quote.expiresAt - Date.now()) / 1000)) : 0;
-  const passed = new Set(payment?.history.map((h) => h.to) ?? []);
-  const canConfirm = payment?.state === "intake_pending";
-  const canSettle = payment ? ["intake_confirmed", "converting", "paying_out"].includes(payment.state) : false;
+  const machine = walk === "heal" ? sim : payment;
 
   return (
     <SafeAreaView style={styles.wrap} edges={["bottom"]}>
-      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-        {/* header + honest badges */}
-        <View style={styles.headRow}>
-          <Text style={styles.h1}>One machine</Text>
-          <View style={styles.ownerBadge}><Text style={styles.ownerBadgeText}>OWNER ONLY</Text></View>
-        </View>
-        <View style={styles.badgeRow}>
-          <View style={styles.certBadge}>
-            <Text style={styles.certBadgeText}>MONEYGRAM CASH-IN: CERT IN FLIGHT — NOT LIVE</Text>
-          </View>
-          {mode === "sim" && (
-            <View style={styles.simBadge}><Text style={styles.simBadgeText}>SIMULATED · TEST MONEY</Text></View>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+        <View style={styles.head}>
+          <Text style={styles.kicker}>UNIFIED FINANCIAL RAIL</Text>
+          <Text style={styles.h1}>The machine</Text>
+          <HonestyPills owner playground={walk !== "story"} />
+          {walk !== "story" && (
+            <View style={{ marginTop: 18 }}>
+              <RailPath active={pathIndexForWalk(walk)} />
+            </View>
           )}
         </View>
-        <Text style={styles.sub}>
-          Say what goes in and what should come out. No chains, no pickers — HQ scores every door on
-          fee, speed, liquidity, risk and certification, locks a quote, and drives one payment id end
-          to end. Non-custodial: it lands in a wallet you control.
-        </Text>
 
-        {/* mode toggle */}
-        <View style={styles.row}>
-          <TouchableOpacity
-            style={[styles.modeChip, mode === "live" && styles.modeChipOn]}
-            onPress={() => switchMode("live")}
-          >
-            <Text style={[styles.chipText, mode === "live" && styles.chipTextOn]}>MoneyGram door</Text>
-            <Text style={styles.modeChipSub}>cert in flight</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.modeChip, mode === "sim" && styles.modeChipOn]}
-            onPress={() => switchMode("sim")}
-          >
-            <Text style={[styles.chipText, mode === "sim" && styles.chipTextOn]}>Test the machine</Text>
-            <Text style={styles.modeChipSub}>simulated money</Text>
-          </TouchableOpacity>
-        </View>
+        <Animated.View style={{ flex: 1, opacity: fade }}>
+          <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+            {walk === "story" && (
+              <>
+                <Text style={styles.lede}>
+                  Intake → UVCE → door → settle. One payment id. Patent pending.
+                  {` ${CERT_LINE}.`} Not live cash-in.
+                </Text>
+                {RAIL_STORY.map((beat) => (
+                  <View key={beat.n} style={styles.storyRow}>
+                    <View style={styles.storyNum}><Text style={styles.storyNumText}>{beat.n}</Text></View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.storyTitle}>{beat.title}</Text>
+                      <Text style={styles.storyDetail}>{beat.detail}</Text>
+                    </View>
+                  </View>
+                ))}
+              </>
+            )}
 
-        {/* intent */}
-        <Text style={styles.label}>Outcome — what should arrive</Text>
-        <View style={styles.row}>
-          {ASSETS.map((a) => (
-            <TouchableOpacity key={a} style={[styles.chip, asset === a && styles.chipOn]} onPress={() => setAsset(a)}>
-              <Text style={[styles.chipText, asset === a && styles.chipTextOn]}>{a}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-        <Text style={styles.label}>Amount in (USD)</Text>
-        <View style={styles.row}>
-          {AMOUNTS.map((v) => (
-            <TouchableOpacity key={v} style={[styles.chip, amount === v && styles.chipOn]} onPress={() => setAmount(v)}>
-              <Text style={[styles.chipText, amount === v && styles.chipTextOn]}>${v}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-        <Text style={styles.label}>Deliver to — a wallet you control</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Paste your wallet address"
-          placeholderTextColor={t.faint}
-          value={wallet}
-          onChangeText={setWallet}
-          autoCapitalize="none"
-          autoCorrect={false}
-        />
+            {walk === "intent" && (
+              <>
+                <Text style={styles.lede}>
+                  What should arrive, and where. HQ picks the door. Non-custodial — it lands in a wallet you control.
+                </Text>
+                <Text style={styles.label}>You want</Text>
+                <View style={styles.row}>
+                  {ASSETS.map((a) => (
+                    <TouchableOpacity key={a} style={[styles.chip, asset === a && styles.chipOn]} onPress={() => setAsset(a)}>
+                      <Text style={[styles.chipText, asset === a && styles.chipTextOn]}>{a}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+                <Text style={styles.label}>Cash in (USD)</Text>
+                <View style={styles.row}>
+                  {AMOUNTS.map((v) => (
+                    <TouchableOpacity key={v} style={[styles.chip, amount === v && styles.chipOn]} onPress={() => setAmount(v)}>
+                      <Text style={[styles.chipText, amount === v && styles.chipTextOn]}>${v}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+                <Text style={styles.label}>Your wallet</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Paste an address you control"
+                  placeholderTextColor={t.faint}
+                  value={wallet}
+                  onChangeText={setWallet}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+                <View style={styles.feeRow}>
+                  <Text style={styles.dim}>Loadit fee · 0.75%, $1 min</Text>
+                  <Text style={styles.feeVal}>{money(loaditFeeUsd(amount))}</Text>
+                </View>
+              </>
+            )}
 
-        <TouchableOpacity style={styles.cta} onPress={lockQuote} disabled={busy}>
-          {busy && !payment ? <ActivityIndicator color={t.onAccent} /> : (
+            {walk === "quote" && (
+              <>
+                {busy && !payment && (
+                  <View style={styles.centerBox}>
+                    <ActivityIndicator color={t.accentText} />
+                    <Text style={styles.dim}>HQ is scoring doors…</Text>
+                  </View>
+                )}
+                {payment && (
+                  <QuotePanel styles={styles} t={t} payment={payment} fee={fee} ttlLeft={ttlLeft} />
+                )}
+              </>
+            )}
+
+            {walk === "door" && payment && (
+              <>
+                <View style={styles.card}>
+                  <View style={styles.mgHead}>
+                    <Image source={require("../assets/moneygram-logo.jpg")} style={styles.mgLogo} />
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.cardTitle}>MoneyGram door</Text>
+                      <Text style={styles.cert}>{CERT_LINE}</Text>
+                    </View>
+                  </View>
+                  <Text style={styles.body}>
+                    {payment.intake?.instructions ||
+                      "Door one. Final go-live is pending, so the walk continues in MoneyGram's official playground — real SEP-24 rails, test money."}
+                  </Text>
+                  <Text style={styles.mono}>
+                    ref {payment.intake?.internalRef || "—"} · partner tx {payment.intake?.partnerTxId ?? "none (never invented)"}
+                  </Text>
+                </View>
+                {mgUrl && (
+                  <View style={styles.card}>
+                    <Text style={styles.cardTitle}>Playground deposit ready</Text>
+                    <Text style={styles.dim}>SEP-24 · {mgId}</Text>
+                    <Text style={[styles.body, { marginTop: 8 }]}>
+                      {Platform.OS === "android"
+                        ? "Complete it in-app. Status updates from their test anchor."
+                        : "Their hosted page is most reliable on Chromium. Open it, then come back here."}
+                    </Text>
+                  </View>
+                )}
+                {mgErr ? <Text style={styles.err}>{mgErr}</Text> : null}
+              </>
+            )}
+
+            {walk === "progress" && (
+              <>
+                {machine && <Timeline styles={styles} t={t} payment={machine} />}
+                <LinearGradient
+                  colors={[rgba(t.accent, 0.12), "rgba(255,255,255,0.03)"]}
+                  start={{ x: 0, y: 0 }} end={{ x: 0.9, y: 1 }}
+                  style={styles.hero}
+                >
+                  <Text style={styles.tag}>PLAYGROUND STATUS</Text>
+                  <Text style={styles.heroTitle}>{playgroundStatusLabel(status?.status)}</Text>
+                  <Text style={styles.dim}>
+                    {status?.status || "…"}
+                    {status?.amountIn ? ` · in ${status.amountIn}` : ""}
+                    {status?.amountOut ? ` · out ${status.amountOut}` : ""}
+                  </Text>
+                  {mgId ? <Text style={styles.mono}>SEP-24 {mgId}</Text> : null}
+                </LinearGradient>
+                <Text style={styles.cert}>{CERT_LINE}. The live door still refuses a real cash confirm.</Text>
+              </>
+            )}
+
+            {walk === "heal" && (
+              <>
+                <Text style={styles.lede}>
+                  Simulated money only. A pipe dies mid-payout. The machine heals under the same payment id and pays once.
+                </Text>
+                <Text style={styles.healLine}>{healLine}</Text>
+                {sim && <Timeline styles={styles} t={t} payment={sim} />}
+                {sim?.receipt && (
+                  <View style={styles.card}>
+                    <Text style={styles.cardTitle}>Delivered · once</Text>
+                    <Text style={styles.body}>
+                      {money(sim.receipt.amountUsd)} → {sim.receipt.deliveredTo}
+                      {sim.receipt.replayed ? " · receipt replayed (idempotent)" : ""}
+                    </Text>
+                    <Text style={styles.mono}>
+                      {sim.id} · {sim.healCount} heal{sim.healCount === 1 ? "" : "s"}
+                    </Text>
+                  </View>
+                )}
+              </>
+            )}
+
+            {walk === "outcome" && (
+              <>
+                <LinearGradient
+                  colors={[rgba(t.accent, 0.16), "rgba(255,255,255,0.03)"]}
+                  start={{ x: 0, y: 0 }} end={{ x: 0.9, y: 1 }}
+                  style={styles.hero}
+                >
+                  <Text style={styles.tag}>
+                    {status?.status === "completed" ? "PLAYGROUND COMPLETE" : "POC OUTCOME"}
+                  </Text>
+                  <Text style={styles.heroTitle}>
+                    {status?.status === "completed"
+                      ? "Test USDC moved on Stellar testnet"
+                      : "You walked the machine"}
+                  </Text>
+                  <Text style={styles.body}>
+                    {CERT_LINE}. Nothing here is customer cash. Crypto, when it moves, lands in a wallet you control.
+                  </Text>
+                  {payment ? <Text style={styles.mono}>{payment.id} → {payment.intent.outcome.wallet}</Text> : null}
+                </LinearGradient>
+                <View style={styles.split}>
+                  <View style={[styles.splitCard, { borderColor: rgba(t.accent, 0.25) }]}>
+                    <Text style={[styles.tag, { color: t.accentText }]}>REAL</Text>
+                    <Text style={styles.splitBody}>State machine{"\n"}HQ quote + 0.75% fee{"\n"}Owner Hylaq gate{"\n"}Live-cash confirm refused</Text>
+                  </View>
+                  <View style={[styles.splitCard, { borderColor: rgba(t.warn, 0.3) }]}>
+                    <Text style={[styles.tag, { color: t.warn }]}>PLAYGROUND</Text>
+                    <Text style={styles.splitBody}>MoneyGram SEP-24{"\n"}Stellar testnet{"\n"}Test USDC{"\n"}Self-heal (simulated)</Text>
+                  </View>
+                </View>
+                {machine && <Timeline styles={styles} t={t} payment={machine} />}
+              </>
+            )}
+
+            {err ? <Text style={styles.err}>{err}</Text> : null}
+            {meta?.notice ? <Text style={styles.foot}>{meta.notice}</Text> : null}
+            <Text style={styles.foot}>
+              Owner-only. Patent pending — not patented. {CERT_LINE}. Loadit never holds your keys.
+            </Text>
+          </ScrollView>
+        </Animated.View>
+
+        <View style={styles.footer}>
+          {walk === "story" && (
+            <Cta styles={styles} label="Begin" onPress={() => setWalk("intent")} />
+          )}
+          {walk === "intent" && (
+            <Cta styles={styles} label="Lock quote" busy={busy} onPress={lockQuote} />
+          )}
+          {walk === "quote" && payment && (
+            <Cta styles={styles} label="Open the MoneyGram door" busy={busy} onPress={openDoor} />
+          )}
+          {walk === "door" && (
             <>
-              <Text style={styles.ctaText}>Lock quote — HQ scores the route</Text>
-              <Feather name="chevron-right" size={16} color={t.onAccent} />
+              {!mgUrl ? (
+                <Cta styles={styles} label="Start MoneyGram playground" busy={busy} onPress={openPlayground} />
+              ) : Platform.OS === "android" ? (
+                <Cta styles={styles} label="Continue in app" onPress={() => setShowWeb(true)} />
+              ) : (
+                <Cta styles={styles} label="Open playground" onPress={() => mgUrl && Linking.openURL(mgUrl)} />
+              )}
+              {mgUrl ? (
+                <TouchableOpacity style={styles.ghost} onPress={() => setWalk("progress")}>
+                  <Text style={styles.ghostText}>I&apos;ve finished — show the machine</Text>
+                </TouchableOpacity>
+              ) : null}
             </>
           )}
-        </TouchableOpacity>
-
-        {err && <Text style={styles.err}>{err}</Text>}
-
-        {payment && (
-          <>
-            {/* state strip */}
-            <View style={styles.stateStrip}>
-              {HAPPY_PATH.map((s) => (
-                <View
-                  key={s}
-                  style={[
-                    styles.stateChip,
-                    passed.has(s) && styles.stateChipDone,
-                    payment.state === s && styles.stateChipActive,
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.stateChipText,
-                      passed.has(s) && { color: t.dim },
-                      payment.state === s && { color: t.accentText },
-                    ]}
-                  >
-                    {STATE_LABEL[s]}
-                  </Text>
-                </View>
-              ))}
-              {(payment.state === "failed" || payment.state === "healing") && (
-                <View style={[styles.stateChip, styles.stateChipFailed]}>
-                  <Text style={[styles.stateChipText, { color: t.warn }]}>
-                    {STATE_LABEL[payment.state]}{payment.healCount > 0 ? ` · heals ${payment.healCount}` : ""}
-                  </Text>
-                </View>
-              )}
-            </View>
-
-            {/* quote card */}
-            <LinearGradient
-              colors={[rgba(t.accent, 0.13), "rgba(255,255,255,0.03)"]}
-              start={{ x: 0, y: 0 }} end={{ x: 0.9, y: 1 }}
-              style={styles.hero}
-            >
-              <View style={styles.quoteHead}>
-                <Text style={styles.bestTag}>
-                  {payment.quote.healed ? "HEALED QUOTE — SAME PAYMENT ID" : "LOCKED QUOTE"}
-                </Text>
-                <Text style={[styles.ttl, ttlLeft <= 15 && { color: t.warn }]}>TTL {ttlLeft}s</Text>
-              </View>
-              <Text style={styles.provider}>{payment.quote.route.doorLabel}</Text>
-              <Text style={styles.body}>
-                {money(payment.intent.amountUsd)} in → {payment.intent.outcome.asset} out · fee{" "}
-                {money(payment.quote.route.feeUsd)} · score {payment.quote.route.score.toFixed(1)}
-              </Text>
-              <Text style={styles.meta}>{payment.quote.route.legs.map((l) => l.detail).join(" → ")}</Text>
-              <Text style={styles.meta}>
-                Non-custodial → {payment.intent.outcome.wallet}
-              </Text>
-              {!payment.quote.route.confirmable && (
-                <Text style={styles.certLine}>
-                  This door cannot confirm real money yet — certification in flight.
-                </Text>
-              )}
-              <Text style={styles.mono}>payment {payment.id}</Text>
-              <Text style={styles.mono}>quote {payment.quote.quoteId} · #{payment.quoteCount}</Text>
-              {payment.lastError && <Text style={styles.err}>last error: {payment.lastError}</Text>}
-            </LinearGradient>
-
-            {/* MoneyGram intake instructions */}
-            {payment.intake?.instructions && (
-              <View style={styles.card}>
-                <View style={styles.mgHead}>
-                  {payment.intake.doorId === "moneygram_cash" && (
-                    <Image source={require("../assets/moneygram-logo.jpg")} style={styles.mgLogo} />
-                  )}
-                  <Text style={styles.cardTitle}>Intake</Text>
-                </View>
-                <Text style={styles.body}>{payment.intake.instructions}</Text>
-                <Text style={styles.mono}>
-                  ref {payment.intake.internalRef} · partner tx id: {payment.intake.partnerTxId ?? "none (never invented)"}
-                </Text>
-              </View>
-            )}
-
-            {/* certification refusal, verbatim */}
-            {gate && (
-              <View style={styles.gateCard}>
-                <Feather name="shield-off" size={16} color={t.warn} />
-                <Text style={styles.gateText}>{gate}</Text>
-              </View>
-            )}
-
-            {/* step buttons */}
-            <View style={styles.btnRow}>
-              <StepBtn styles={styles} t={t} disabled={payment.state !== "quoted" || busy} onPress={beginIntake} label="Begin intake" />
-              <StepBtn
-                styles={styles} t={t} disabled={!canConfirm || busy} onPress={confirmIntake}
-                label={mode === "live" ? "Confirm cash (will refuse)" : "Confirm intake (simulated)"}
-              />
-              <StepBtn styles={styles} t={t} disabled={!canSettle || busy} onPress={settle} label="Convert + pay out" />
-              <StepBtn styles={styles} t={t} disabled={payment.state !== "failed" || busy} onPress={heal} label="Heal — same payment id" warn />
-            </View>
-
-            {mode === "sim" && (
-              <View style={styles.killRow}>
-                <Switch
-                  value={killPayout}
-                  onValueChange={setKillPayout}
-                  trackColor={{ true: rgba(t.warn, 0.5), false: t.border }}
-                />
-                <Text style={styles.killText}>Kill the payout pipe on the next step (test heal)</Text>
-              </View>
-            )}
-
-            {/* receipt */}
-            {payment.receipt && (
-              <View style={[styles.card, { borderColor: rgba(t.accent, 0.3) }]}>
-                <Text style={styles.cardTitle}>Delivered</Text>
-                <Text style={styles.body}>
-                  {money(payment.receipt.amountUsd)} → {payment.receipt.deliveredTo}
-                  {payment.receipt.replayed ? " · receipt replayed on retry (idempotent — paid once)" : ""}
-                </Text>
-                <Text style={styles.mono}>receipt {payment.receipt.receiptRef}</Text>
-                <Text style={styles.meta}>
-                  This payment paid out exactly once
-                  {payment.healCount > 0 ? ` across ${payment.healCount} heal${payment.healCount === 1 ? "" : "s"}` : ""} —
-                  a retry replays this receipt instead of paying again.
-                </Text>
-              </View>
-            )}
-          </>
-        )}
-
-        {meta?.notice && <Text style={styles.disclaimer}>{meta.notice}</Text>}
-        <Text style={styles.disclaimer}>
-          Owner-only surface, enforced server-side against your Hylaq login. MoneyGram cash-in is not
-          live — certification is in flight with MoneyGram — and no partner transaction ids are ever
-          generated by Loadit. Loadit never holds your keys.
-        </Text>
-      </ScrollView>
+          {walk === "progress" && (
+            <>
+              {mgUrl ? (
+                <TouchableOpacity onPress={() => Linking.openURL(mgUrl)}>
+                  <Text style={styles.link}>Reopen playground</Text>
+                </TouchableOpacity>
+              ) : null}
+              <Cta styles={styles} label="Watch self-heal" busy={busy} onPress={watchHeal} />
+              <TouchableOpacity style={styles.ghost} onPress={() => setWalk("outcome")}>
+                <Text style={styles.ghostText}>Skip to outcome</Text>
+              </TouchableOpacity>
+            </>
+          )}
+          {walk === "heal" && (
+            <Cta styles={styles} label="See honest outcome" onPress={() => setWalk("outcome")} />
+          )}
+          {walk === "outcome" && (
+            <Cta styles={styles} label="Run it again" onPress={reset} />
+          )}
+          {walk !== "story" && walk !== "outcome" && (
+            <TouchableOpacity onPress={() => {
+              if (walk === "intent") setWalk("story");
+              else if (walk === "quote") setWalk("intent");
+              else if (walk === "door") setWalk("quote");
+              else if (walk === "progress") setWalk("door");
+              else if (walk === "heal") setWalk("progress");
+            }}>
+              <Text style={styles.back}>Back</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
-function StepBtn({ styles, t, label, onPress, disabled, warn }: {
-  styles: ReturnType<typeof makeStyles>; t: Theme; label: string;
-  onPress: () => void; disabled: boolean; warn?: boolean;
+function Cta({ styles, label, onPress, busy }: {
+  styles: ReturnType<typeof makeStyles>; label: string; onPress: () => void; busy?: boolean;
 }) {
   return (
-    <TouchableOpacity
-      style={[styles.stepBtn, warn && { borderColor: rgba(t.warn, 0.45) }, disabled && { opacity: 0.35 }]}
-      onPress={onPress}
-      disabled={disabled}
-    >
-      <Text style={[styles.stepBtnText, warn && { color: t.warn }]}>{label}</Text>
+    <TouchableOpacity style={styles.cta} onPress={onPress} disabled={busy}>
+      {busy ? <ActivityIndicator color={styles.ctaText.color} /> : (
+        <>
+          <Text style={styles.ctaText}>{label}</Text>
+          <Feather name="arrow-right" size={16} color={styles.ctaText.color} />
+        </>
+      )}
     </TouchableOpacity>
+  );
+}
+
+function QuotePanel({ styles, t, payment, fee, ttlLeft }: {
+  styles: ReturnType<typeof makeStyles>; t: Theme; payment: RailPayment; fee: number; ttlLeft: number;
+}) {
+  return (
+    <LinearGradient
+      colors={[rgba(t.accent, 0.16), "rgba(255,255,255,0.03)"]}
+      start={{ x: 0, y: 0 }} end={{ x: 0.9, y: 1 }}
+      style={styles.hero}
+    >
+      <View style={styles.quoteTop}>
+        <Text style={styles.tag}>LOCKED QUOTE</Text>
+        <Text style={[styles.ttl, ttlLeft <= 15 && { color: t.warn }]}>{ttlLeft}s</Text>
+      </View>
+      <Text style={styles.heroTitle}>{payment.quote.route.doorLabel}</Text>
+      <Text style={styles.bigFee}>{money(fee)}</Text>
+      <Text style={styles.dim}>Loadit fee · 0.75% · $1 minimum</Text>
+      <Text style={styles.body}>
+        {money(payment.intent.amountUsd)} in → {payment.intent.outcome.asset} out
+      </Text>
+      <Text style={styles.dim}>{payment.quote.route.legs.map((l) => l.detail).join(" → ")}</Text>
+      <Text style={styles.cert}>{CERT_LINE}. This door cannot confirm real cash yet.</Text>
+      <Text style={styles.mono}>{payment.id} → {payment.intent.outcome.wallet}</Text>
+    </LinearGradient>
+  );
+}
+
+function Timeline({ styles, t, payment }: {
+  styles: ReturnType<typeof makeStyles>; t: Theme; payment: RailPayment;
+}) {
+  const passed = new Set(payment.history.map((h) => h.to));
+  const extra = payment.state === "failed" || payment.state === "healing" ? [payment.state] : [];
+  return (
+    <View style={styles.timeline}>
+      {[...STATE_ORDER, ...extra].map((s, i, arr) => {
+        const on = passed.has(s) || payment.state === s;
+        const here = payment.state === s;
+        return (
+          <View key={`${s}-${i}`} style={styles.tlRow}>
+            <View style={styles.tlRail}>
+              <View style={[styles.tlDot, on && { backgroundColor: here ? t.accent : t.dim }]} />
+              {i < arr.length - 1 && <View style={[styles.tlLine, on && { backgroundColor: rgba(t.accent, 0.35) }]} />}
+            </View>
+            <Text style={[styles.tlLabel, here && { color: t.accentText, fontWeight: "800" }]}>
+              {STATE_LABEL[s]}{s === "healing" && payment.healCount ? ` · ${payment.healCount}` : ""}
+            </Text>
+          </View>
+        );
+      })}
+    </View>
   );
 }
 
 const makeStyles = (t: Theme) =>
   StyleSheet.create({
     wrap: { flex: 1, backgroundColor: t.bg },
-    scroll: { padding: 22, paddingBottom: 48 },
-    headRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-    h1: { color: t.text, fontSize: 26, fontWeight: "800", letterSpacing: -0.8 },
-    ownerBadge: {
-      backgroundColor: t.accentSoft, borderColor: rgba(t.accent, 0.4), borderWidth: 1,
-      borderRadius: 8, paddingHorizontal: 9, paddingVertical: 4,
+    head: { paddingHorizontal: 22, paddingTop: 8, paddingBottom: 4 },
+    kicker: { color: t.accentText, fontSize: 10, fontWeight: "800", letterSpacing: 2 },
+    h1: { color: t.text, fontSize: 32, fontWeight: "800", letterSpacing: -1.2, marginTop: 4, marginBottom: 10 },
+    scroll: { paddingHorizontal: 22, paddingBottom: 24 },
+    lede: { color: t.dim, fontSize: 15, lineHeight: 22, marginTop: 8, marginBottom: 8 },
+    storyRow: { flexDirection: "row", gap: 14, marginTop: 18, alignItems: "flex-start" },
+    storyNum: {
+      width: 28, height: 28, borderRadius: 14, backgroundColor: t.accent,
+      alignItems: "center", justifyContent: "center",
     },
-    ownerBadgeText: { color: t.accentText, fontSize: 10, fontWeight: "800", letterSpacing: 1.5 },
-    badgeRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 10 },
-    certBadge: {
-      backgroundColor: rgba(MGRED, 0.1), borderColor: rgba(MGRED, 0.4), borderWidth: 1,
-      borderRadius: 8, paddingHorizontal: 9, paddingVertical: 4,
-    },
-    certBadgeText: { color: MGRED, fontSize: 9, fontWeight: "800", letterSpacing: 1 },
-    simBadge: {
-      backgroundColor: rgba(t.warn, 0.1), borderColor: rgba(t.warn, 0.4), borderWidth: 1,
-      borderRadius: 8, paddingHorizontal: 9, paddingVertical: 4,
-    },
-    simBadgeText: { color: t.warn, fontSize: 9, fontWeight: "800", letterSpacing: 1 },
-    sub: { color: t.dim, fontSize: 13, marginTop: 8, lineHeight: 19 },
-    label: { color: t.faint, fontSize: 11, letterSpacing: 1, textTransform: "uppercase", marginTop: 18 },
-    row: { flexDirection: "row", gap: 8, marginTop: 8, flexWrap: "wrap" },
-    modeChip: {
-      flex: 1, borderColor: t.border, borderWidth: 1, borderRadius: 16,
-      paddingHorizontal: 14, paddingVertical: 12, marginTop: 10,
-    },
-    modeChipOn: { borderColor: t.accent, backgroundColor: t.accentSoft },
-    modeChipSub: { color: t.faint, fontSize: 11, marginTop: 2 },
+    storyNumText: { color: t.onAccent, fontWeight: "800", fontSize: 12 },
+    storyTitle: { color: t.text, fontSize: 17, fontWeight: "800", letterSpacing: -0.3 },
+    storyDetail: { color: t.dim, fontSize: 14, lineHeight: 20, marginTop: 4 },
+    label: { color: t.faint, fontSize: 11, letterSpacing: 1.2, textTransform: "uppercase", marginTop: 18 },
+    row: { flexDirection: "row", gap: 8, marginTop: 10, flexWrap: "wrap" },
     chip: { borderColor: t.border, borderWidth: 1, borderRadius: 999, paddingHorizontal: 16, paddingVertical: 10 },
     chipOn: { borderColor: t.accent, backgroundColor: t.accentSoft },
     chipText: { color: t.dim, fontWeight: "600" },
     chipTextOn: { color: t.text },
     input: {
-      marginTop: 8, backgroundColor: t.card, borderColor: t.border, borderWidth: 1,
-      borderRadius: 16, paddingHorizontal: 16, paddingVertical: 13, color: t.text, fontSize: 14,
+      marginTop: 10, backgroundColor: t.card, borderColor: t.border, borderWidth: 1,
+      borderRadius: 16, paddingHorizontal: 16, paddingVertical: 14, color: t.text, fontSize: 15,
     },
-    cta: {
-      flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6,
-      backgroundColor: t.accent, borderRadius: 18, paddingVertical: 16, marginTop: 18,
-      shadowColor: t.accent, shadowOpacity: 0.4, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 6,
+    feeRow: {
+      flexDirection: "row", justifyContent: "space-between", alignItems: "center",
+      marginTop: 14, paddingVertical: 12, borderTopColor: t.border, borderTopWidth: StyleSheet.hairlineWidth,
     },
-    ctaText: { color: t.onAccent, fontWeight: "700", fontSize: 15 },
+    feeVal: { color: t.text, fontSize: 17, fontWeight: "800" },
+    dim: { color: t.dim, fontSize: 13, lineHeight: 18 },
+    body: { color: t.text, fontSize: 15, lineHeight: 22, marginTop: 8 },
+    cert: { color: "#E8453C", fontSize: 13, fontWeight: "600", marginTop: 10, lineHeight: 18 },
+    mono: { color: t.faint, fontSize: 11, fontFamily: "Courier", marginTop: 8 },
     err: { color: t.warn, fontSize: 13, marginTop: 12 },
-    stateStrip: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 18 },
-    stateChip: {
-      borderColor: t.border, borderWidth: 1, borderRadius: 999,
-      paddingHorizontal: 10, paddingVertical: 5,
-    },
-    stateChipDone: { backgroundColor: t.card },
-    stateChipActive: { borderColor: t.accent, backgroundColor: t.accentSoft },
-    stateChipFailed: { borderColor: rgba(t.warn, 0.5), backgroundColor: rgba(t.warn, 0.08) },
-    stateChipText: { color: t.faint, fontSize: 10, fontWeight: "700", letterSpacing: 0.5 },
+    card: { marginTop: 14, backgroundColor: t.card, borderColor: t.border, borderWidth: 1, borderRadius: 22, padding: 18 },
+    cardTitle: { color: t.text, fontSize: 16, fontWeight: "800", letterSpacing: -0.3 },
+    mgHead: { flexDirection: "row", alignItems: "center", gap: 12 },
+    mgLogo: { width: 40, height: 40, borderRadius: 20 },
     hero: {
-      marginTop: 14, borderRadius: 24, padding: 20,
+      marginTop: 14, borderRadius: 26, padding: 22,
       borderColor: rgba(t.accent, 0.28), borderWidth: 1, overflow: "hidden",
     },
-    quoteHead: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-    bestTag: { color: t.accentText, fontSize: 10, fontWeight: "700", letterSpacing: 1.6 },
-    ttl: { color: t.dim, fontSize: 12, fontWeight: "700" },
-    provider: { color: t.text, fontSize: 19, fontWeight: "800", letterSpacing: -0.4, marginTop: 8 },
-    body: { color: t.text, fontSize: 14, lineHeight: 21, marginTop: 6 },
-    meta: { color: t.dim, fontSize: 12, marginTop: 6, lineHeight: 17 },
-    certLine: { color: MGRED, fontSize: 12, fontWeight: "600", marginTop: 8 },
-    mono: { color: t.faint, fontSize: 11, fontFamily: "Courier", marginTop: 6 },
-    card: { marginTop: 12, backgroundColor: t.card, borderColor: t.border, borderWidth: 1, borderRadius: 20, padding: 18 },
-    cardTitle: { color: t.text, fontSize: 15, fontWeight: "800" },
-    mgHead: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 6 },
-    mgLogo: { width: 28, height: 28, borderRadius: 14 },
-    gateCard: {
-      flexDirection: "row", gap: 10, alignItems: "flex-start",
-      marginTop: 12, backgroundColor: rgba(MGRED, 0.07), borderColor: rgba(MGRED, 0.35),
-      borderWidth: 1, borderRadius: 20, padding: 16,
+    tag: { color: t.accentText, fontSize: 10, fontWeight: "800", letterSpacing: 1.6 },
+    heroTitle: { color: t.text, fontSize: 22, fontWeight: "800", letterSpacing: -0.6, marginTop: 8 },
+    bigFee: { color: t.text, fontSize: 42, fontWeight: "800", letterSpacing: -1.6, marginTop: 10 },
+    quoteTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+    ttl: { color: t.dim, fontSize: 13, fontWeight: "700" },
+    healLine: { color: t.text, fontSize: 18, fontWeight: "700", letterSpacing: -0.3, marginTop: 12, lineHeight: 24 },
+    split: { flexDirection: "row", gap: 10, marginTop: 14 },
+    splitCard: { flex: 1, backgroundColor: t.card, borderWidth: 1, borderRadius: 20, padding: 14 },
+    splitBody: { color: t.dim, fontSize: 12, lineHeight: 19, marginTop: 8 },
+    timeline: { marginTop: 18 },
+    tlRow: { flexDirection: "row", minHeight: 28 },
+    tlRail: { width: 18, alignItems: "center" },
+    tlDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: t.border, marginTop: 5 },
+    tlLine: { width: 2, flex: 1, backgroundColor: t.border, marginTop: 3 },
+    tlLabel: { color: t.dim, fontSize: 13, fontWeight: "600", paddingLeft: 8 },
+    footer: { paddingHorizontal: 22, paddingTop: 8, paddingBottom: 10 },
+    cta: {
+      flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
+      backgroundColor: t.accent, borderRadius: 18, paddingVertical: 16,
+      shadowColor: t.accent, shadowOpacity: 0.35, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 6,
     },
-    gateText: { flex: 1, color: t.text, fontSize: 13, lineHeight: 19 },
-    btnRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 14 },
-    stepBtn: {
-      borderColor: t.border, borderWidth: 1, borderRadius: 14,
-      paddingHorizontal: 14, paddingVertical: 11,
-    },
-    stepBtnText: { color: t.text, fontSize: 13, fontWeight: "700" },
-    killRow: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 12 },
-    killText: { color: t.dim, fontSize: 12, flex: 1 },
-    disclaimer: { color: t.faint, fontSize: 11, lineHeight: 16, marginTop: 16, textAlign: "center" },
+    ctaText: { color: t.onAccent, fontWeight: "700", fontSize: 16 },
+    ghost: { paddingVertical: 12, alignItems: "center" },
+    ghostText: { color: t.text, fontWeight: "600", fontSize: 14 },
+    link: { color: t.accentText, fontWeight: "700", textAlign: "center", marginBottom: 10 },
+    back: { color: t.faint, textAlign: "center", marginTop: 6, fontSize: 14 },
+    foot: { color: t.faint, fontSize: 11, lineHeight: 16, marginTop: 16, textAlign: "center" },
+    centerBox: { alignItems: "center", justifyContent: "center", gap: 12, paddingVertical: 36 },
   });

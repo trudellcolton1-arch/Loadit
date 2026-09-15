@@ -7,15 +7,17 @@ import {
   latestSandboxReport,
 } from "@/lib/moneygramSandbox";
 import { authorizeStatusRead, isQueryFlagEnabled } from "@/lib/practiceStatusAuth";
+import { authorizeRailOwner } from "@/lib/rail/ownerGate";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
- * FOUNDER PRACTICE RUN — MoneyGram sandbox leg.
+ * MONEYGRAM PLAYGROUND — testnet SEP-24, owner-gated on POST.
  *
  * POST { amountUsd } → starts a real SEP-24 interactive deposit at MoneyGram's
- * TESTNET anchor and returns their hosted sandbox URL + transaction id.
+ * TESTNET anchor. Requires the rail owner's Hylaq bearer token (same gate as
+ * /api/rail). Everyone else gets 401/403 — this is not a public cash console.
  * GET ?id=<sep24 id> → live transaction status from the anchor.
  * GET ?latest=1 → read-only snapshot of the latest practice run for Gunna
  *   (secret-gated). Does not start a new MoneyGram transaction unless
@@ -29,10 +31,19 @@ export const dynamic = "force-dynamic";
  *     "https://loadit.net/api/practice/moneygram?latest=1"
  */
 
-const NO_STORE = { "Cache-Control": "no-store" };
+const CORS_HEADERS: Record<string, string> = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Authorization, Content-Type",
+  "Cache-Control": "no-store",
+};
 
 function json(data: unknown, status = 200) {
-  return NextResponse.json(data, { status, headers: NO_STORE });
+  return NextResponse.json(data, { status, headers: CORS_HEADERS });
+}
+
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: CORS_HEADERS });
 }
 
 function parseAmountUsd(raw: string | null): number | null {
@@ -106,6 +117,11 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+  const auth = await authorizeRailOwner(req);
+  if (!auth.ok) {
+    return json({ ok: false, reason: auth.reason, mode: "sandbox" }, auth.status);
+  }
+
   const limited = limit(req, "practice-mg", 10);
   if (limited) return limited;
 

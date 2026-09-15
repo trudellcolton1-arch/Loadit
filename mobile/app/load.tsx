@@ -8,6 +8,7 @@ import { Redirect, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { WebView } from "react-native-webview";
 import { useAuth } from "@/lib/authContext";
+import { canSeeRailPoc } from "@/lib/config";
 import { getOnramp, getRoute, preferredProvider } from "@/lib/api";
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useTheme, rgba, type Theme } from "@/lib/theme";
@@ -39,7 +40,8 @@ const COINS = [
 ] as const;
 
 export default function Load() {
-  const { session, ready } = useAuth();
+  const { session, ready, hylaqStatus } = useAuth();
+  const ownerPoc = canSeeRailPoc(session?.email, session?.kind, hylaqStatus);
   const { theme: t } = useTheme();
   const styles = useMemo(() => makeStyles(t), [t]);
   const router = useRouter();
@@ -145,9 +147,28 @@ export default function Load() {
                   </TouchableOpacity>
                 ))}
               </View>
-              <TouchableOpacity style={styles.cta} onPress={() => setStep("amount")}>
-                <Text style={styles.ctaText}>Continue</Text>
+              <TouchableOpacity
+                style={styles.cta}
+                onPress={() => {
+                  if (method === "Cash") {
+                    router.push(ownerPoc ? "/rail" : "/moneygram");
+                    return;
+                  }
+                  setStep("amount");
+                }}
+              >
+                <Text style={styles.ctaText}>{method === "Cash" ? (ownerPoc ? "Open Rail POC" : "See cash rail status") : "Continue"}</Text>
               </TouchableOpacity>
+              {method === "Cash" && (
+                <Text style={styles.legal}>
+                  Cert approved (4/5) — final go-live step pending. Not live cash-in. {ownerPoc ? "The Rail POC uses the MoneyGram playground." : "This preview does not take customer cash."}
+                </Text>
+              )}
+              {ownerPoc && method !== "Cash" && (
+                <TouchableOpacity style={styles.pocLink} onPress={() => router.push("/rail")}>
+                  <Text style={styles.pocLinkText}>Owner · open Rail POC (patent pending · cert 4/5)</Text>
+                </TouchableOpacity>
+              )}
             </>
           )}
 
@@ -304,6 +325,8 @@ const makeStyles = (t: Theme) =>
     ctaDisabled: { opacity: 0.4 },
     ctaText: { color: t.buttonText, fontWeight: "700", fontSize: 16 },
     legal: { color: t.faint, fontSize: 11, lineHeight: 16, marginTop: 14, textAlign: "center" },
+    pocLink: { marginTop: 16, alignItems: "center" },
+    pocLinkText: { color: t.accentText, fontSize: 13, fontWeight: "700", textAlign: "center" },
     successWrap: { flex: 1, alignItems: "center", justifyContent: "center", gap: 6 },
     successCircle: { width: 84, height: 84, borderRadius: 42, backgroundColor: t.accent, alignItems: "center", justifyContent: "center", marginBottom: 10, shadowColor: t.accent, shadowOpacity: 0.5, shadowRadius: 24, shadowOffset: { width: 0, height: 8 }, elevation: 8 },
     pendingCircle: { width: 74, height: 74, borderRadius: 37, backgroundColor: rgba(t.warn, 0.12), alignItems: "center", justifyContent: "center", marginBottom: 8 },
