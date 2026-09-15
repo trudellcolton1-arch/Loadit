@@ -13,6 +13,7 @@ import { getOnramp, getRoute, preferredProvider } from "@/lib/api";
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useTheme, rgba, type Theme } from "@/lib/theme";
 import { Mark } from "@/components/Mark";
+import { CERT_LINE } from "@/lib/railPoc";
 
 /**
  * LOAD — the signature stepped flow:
@@ -161,7 +162,7 @@ export default function Load() {
               </TouchableOpacity>
               {method === "Cash" && (
                 <Text style={styles.legal}>
-                  Cert approved (4/5) — final go-live step pending; cash-in not live yet. {ownerPoc ? "The Rail POC uses the MoneyGram playground." : "This preview does not take customer cash."}
+                  {CERT_LINE} {ownerPoc ? "The Rail POC uses the MoneyGram playground." : "This preview does not take customer cash."}
                 </Text>
               )}
               {ownerPoc && method !== "Cash" && (

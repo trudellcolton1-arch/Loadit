@@ -17,7 +17,7 @@ export const dynamic = "force-dynamic";
 /**
  * PUBLIC HQ ROUTING API — POST/GET /api/v1/route
  *
- * The patented HQ engine as a metered HTTP endpoint. Returns the cheapest,
+ * The patent-pending HQ engine as a metered HTTP endpoint. Returns the cheapest,
  * fastest non-custodial settlement route for a given funding method + asset.
  *
  * Auth: send an API key via `x-api-key` header or `?key=`.

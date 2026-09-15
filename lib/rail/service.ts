@@ -20,6 +20,7 @@
  * wallet in the intent.
  */
 import { RailRuntime, type PaymentRecord } from "./runtime";
+import { CASH_CERT_NOTICE } from "./copy";
 import { MoneyGramDoor, moneygramCertification } from "./doors/moneygram";
 import { cardDoorStub, bankDoorStub, nextCashNetworkDoorStub } from "./doors/stubs";
 import { FixtureDoor } from "./doors/fixture";
@@ -108,8 +109,7 @@ export function resetRailServiceForTests(): void {
   (globalThis as { __loaditRailService?: ServiceState }).__loaditRailService = undefined;
 }
 
-const LIVE_NOTICE =
-  "Cert approved (4/5) — final go-live step pending; cash-in not live yet. Cash confirms are refused until go-live (5/5).";
+const LIVE_NOTICE = CASH_CERT_NOTICE;
 const SIM_NOTICE = "Simulated doors and simulated money — nothing real moves in this mode.";
 
 /** Wire-safe view of a payment (already plain data; picked explicitly). */

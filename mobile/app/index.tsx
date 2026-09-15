@@ -205,8 +205,9 @@ export default function Home() {
           {/* Cash rail — public preview only. Not live cash-in. */}
           <TouchableOpacity style={styles.mgBanner} activeOpacity={0.85} onPress={() => router.push("/moneygram")}>
             <Image source={require("../assets/moneygram-logo.jpg")} style={styles.mgLogo} />
-            <View style={{ flex: 1 }}>
+            <View style={{ flex: 1, gap: 6 }}>
               <Text style={styles.mgTitle}>Cash rail</Text>
+              <HonestyPills playground />
               <Text style={styles.mgSub}>{CERT_LINE}</Text>
             </View>
             <Feather name="chevron-right" size={18} color={t.faint} />

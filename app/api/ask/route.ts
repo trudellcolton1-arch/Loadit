@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { limit } from "@/lib/ratelimit";
+import { CASH_CERT_LINE } from "@/lib/rail/copy";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,7 +18,7 @@ HOW LOADIT WORKS — the rails
 5. IDENTITY VERIFIED OFFLINE RAIL (IVOR) — secure financial activity even with no internet connectivity.
 You are the intelligence layer connecting every rail.
 
-PATENTED ARCHITECTURE (ground truth — use this for accuracy)
+PATENT-PENDING ARCHITECTURE (ground truth — use this for accuracy)
 Loadit's invention is the "Loadit Unified Financial Rail" — a self-healing, AI-orchestrated, quantum-optimized, temporally programmable, offline-resilient, multi-reality universal value conversion architecture for global settlement (patent pending; 25 claims — one independent claim and 24 dependent). It is explicitly NON-CUSTODIAL: Loadit converts and routes value without acting as a custodial wallet provider. Seven interlinked subsystems:
 1) Transaction Intake Layer — POS and remote intake of cash, card-present, card-not-present, fiat, QR-triggered, NFC, and merchant invoicing; emits a transaction-intent packet (amount, merchant ID, asset selection, temporal-settlement parameters, routing preferences).
 2) Universal Value Conversion Engine — real-time conversion between fiat, cryptocurrencies, stablecoins, tokenized assets, loyalty units, energy credits, and programmable value instruments; merchants can receive fiat, digital assets, or a programmable split.
@@ -46,6 +47,7 @@ The internet let information move globally; Loadit lets value move globally. The
 
 CONSTRAINTS
 Loadit continuously optimizes cost, speed, security, compliance, liquidity, and reliability. Never guarantee specific fee reductions, returns, speeds, or performance. Always describe outcomes as estimates that depend on market and network conditions.
+Never say "patented" — say "patent pending". Retail cash-in: ${CASH_CERT_LINE} Never describe cash-in as available today. Never say certification is "in flight" or "awaiting cert" as if cert has not happened. Card purchases work today.
 
 PERSONALITY
 Brilliant, calm, confident, helpful, transparent, professional, futuristic. Never robotic, never hype. You speak like the AI operating system of the future financial internet.
@@ -72,8 +74,10 @@ function canned(q: string): string {
     return "Identity is a first-class layer: every transaction carries a verifiable identity claim, and a geo-temporal compliance engine enforces jurisdiction- and asset-specific KYC/AML and data-residency rules in real time, dynamically choosing compliant rails.";
   if (s.includes("invest") || s.includes("raise") || s.includes("fund"))
     return "Loadit is raising to build out the Unified Financial Rail. The moat is one patent-pending invention with 25 claims across routing, temporal settlement, quantum optimization, offline mode, and multi-reality input. See the Investors section, or ask about the technology.";
+  if (s.includes("cash") || s.includes("moneygram") || s.includes("cash-in") || s.includes("cash in"))
+    return `Cash → crypto: ${CASH_CERT_LINE} A licensed national cash network will take cash at a nearby retail counter, verify identity, and turn it into USDC; HQ routes that into the asset you picked, straight to your own wallet. Today, card purchases work through licensed partners.`;
   if (s.includes("how") && (s.includes("work") || s.includes("route")))
-    return "Walk into a store, scan a QR, pay with cash or card. Loadit tokenizes it, verifies identity, and HQ routes the value — e.g. Cash → USDC → Solana → your asset → wallet — settling on-chain in ~2 seconds while the merchant still gets fiat.";
+    return `Card purchases work today through licensed partners. Cash-in: ${CASH_CERT_LINE} When that last step clears, you hand cash at a nearby retail counter; they verify you and turn it into USDC; HQ routes it to your wallet. Today, say an amount and asset and I'll explain the card route.`;
   if (s.includes("send") || s.includes("remit") || s.includes("transfer"))
     return "Tell me the amount, asset, and destination and HQ will pick the optimal corridor. A $500 USDC transfer to Manila would likely route Debit → USDC → Solana (or Lightning for BTC), ~$0.45 fee, arriving in under 2 seconds.";
   if (s.includes("what is loadit") || s.includes("about loadit") || s.includes("who is loadit"))

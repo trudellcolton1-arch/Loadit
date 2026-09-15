@@ -7,6 +7,8 @@ import { Redirect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@/lib/authContext";
 import { getMoneyGramPlan, type MoneyGramPlan } from "@/lib/api";
+import { CERT_LINE } from "@/lib/railPoc";
+import { HonestyPills } from "@/components/HonestyPills";
 import { useTheme, type Theme } from "@/lib/theme";
 
 /**
@@ -54,12 +56,10 @@ export default function MoneyGram() {
             <Text style={styles.h1}>Cash rail{"\n"}preview</Text>
           </View>
           <View style={styles.badgeRow}>
-            <View style={styles.soon}><Text style={styles.soonText}>PATENT PENDING</Text></View>
-            <View style={styles.soon}><Text style={styles.soonText}>CERT APPROVED 4/5</Text></View>
+            <HonestyPills playground />
           </View>
           <Text style={styles.sub}>
-            Cert approved (4/5) — final go-live step pending; cash-in not live yet.
-            This is a route preview: cash at a licensed counter → USDC → HQ swap → your
+            {CERT_LINE} This is a route preview: cash at a licensed counter → USDC → HQ swap → your
             own wallet. Nothing here takes customer cash. Playground until 5/5.
           </Text>
 
@@ -128,7 +128,7 @@ export default function MoneyGram() {
           )}
 
           <Text style={styles.legal}>
-            Cert approved (4/5) — final go-live step pending; cash-in not live yet. This screen does not start a live cash-in.
+            {CERT_LINE} This screen does not start a live cash-in.
             A licensed money-transmitter will perform identity verification at the counter.
             The USDC→{asset} swap is executed by a licensed liquidity provider. Loadit
             orchestrates the route and never holds your funds. Fee: 0.75% with a $1 minimum.

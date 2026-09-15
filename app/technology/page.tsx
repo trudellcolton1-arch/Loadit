@@ -12,7 +12,7 @@ import { NetworkStatus } from "@/components/sections/NetworkStatus";
 import { Roadmap } from "@/components/sections/Roadmap";
 
 export const metadata: Metadata = {
-  title: "Technology — The Patented Loadit Architecture",
+  title: "Technology — The Patent-Pending Loadit Architecture",
   description:
     "The advanced subsystems behind Loadit's patent-pending unified rail: temporal settlement, energy rails, offline mode, autonomous agents, multi-reality input, self-healing, security, and live network status.",
   alternates: { canonical: "/technology" },

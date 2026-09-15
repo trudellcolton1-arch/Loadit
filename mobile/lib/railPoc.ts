@@ -24,7 +24,7 @@ export const RAIL_STORY = [
   {
     n: "1",
     title: "Intake",
-    detail: "Cash or card enters a licensed door. MoneyGram is door one. Cert approved (4/5) — final go-live step pending; cash-in not live yet. This walk uses their playground.",
+    detail: `Cash or card enters a licensed door. MoneyGram is door one. ${CERT_LINE} This walk uses their playground.`,
   },
   {
     n: "2",

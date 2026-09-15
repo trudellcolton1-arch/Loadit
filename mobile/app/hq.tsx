@@ -97,7 +97,7 @@ export default function HQ() {
                 <View style={styles.brainStat}>
                   <Text style={styles.brainLabel}>MoneyGram</Text>
                   <Text style={styles.brainVal}>4/5</Text>
-                  <Text style={styles.brainSub}>final go-live pending</Text>
+                  <Text style={styles.brainSub}>cash-in not live yet</Text>
                 </View>
                 <View style={styles.brainStat}>
                   <Text style={styles.brainLabel}>Fee</Text>

@@ -5,6 +5,7 @@ import { useRef } from "react";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { Reveal } from "@/components/ui/Reveal";
 import { HOW_STEPS } from "@/lib/constants";
+import { CASH_CERT_LINE } from "@/lib/rail/copy";
 
 export function HowItWorks() {
   const ref = useRef<HTMLDivElement>(null);
@@ -21,7 +22,7 @@ export function HowItWorks() {
           align="center"
           eyebrow="How It Works"
           title="Money in. Crypto out. Seconds."
-          description="Card today. Cash-in: cert approved (4/5) — final go-live pending; not live yet. No bank account. Six steps from checkout to on-chain value."
+          description={`Card today. Cash-in: ${CASH_CERT_LINE} No bank account. Six steps from checkout to on-chain value.`}
         />
 
         <div ref={ref} className="relative mx-auto mt-20 max-w-3xl">

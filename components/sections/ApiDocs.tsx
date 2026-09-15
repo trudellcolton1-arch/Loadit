@@ -73,7 +73,7 @@ export function ApiDocs() {
           align="center"
           eyebrow="HQ API · v1"
           title="Routing intelligence, one HTTP call."
-          description="The patented HQ engine as a metered API. Send a funding method and a target asset; get the cheapest, fastest non-custodial route back as JSON. No SDK required."
+          description="The patent-pending HQ engine as a metered API. Send a funding method and a target asset; get the cheapest, fastest non-custodial route back as JSON. No SDK required."
         />
 
         {/* quickstart */}

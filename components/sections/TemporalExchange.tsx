@@ -192,7 +192,7 @@ export function TemporalExchange() {
           align="center"
           eyebrow="Temporal Exchange · World First"
           title="Trade time, not just price."
-          description="The first market for the timing and conditions of settlement. Lock today's rate, buy tomorrow's cheapest gas window, or sell a conditional release — powered by Loadit's patented temporal settlement."
+          description="The first market for the timing and conditions of settlement. Lock today's rate, buy tomorrow's cheapest gas window, or sell a conditional release — powered by Loadit's patent-pending temporal settlement."
         />
 
         {/* spot ticker — real live prices */}

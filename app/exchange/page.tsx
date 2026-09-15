@@ -6,7 +6,7 @@ import { TemporalExchange } from "@/components/sections/TemporalExchange";
 export const metadata: Metadata = {
   title: "Temporal Exchange",
   description:
-    "Trade the timing and conditions of settlement — rate locks, gas futures, and conditional releases on Loadit's patented temporal settlement rail. Live prices.",
+    "Trade the timing and conditions of settlement — rate locks, gas futures, and conditional releases on Loadit's patent-pending temporal settlement rail. Live prices.",
   alternates: { canonical: "/exchange" },
 };
 

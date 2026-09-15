@@ -7,7 +7,7 @@ import { ApiPlayground } from "@/components/sections/ApiPlayground";
 export const metadata: Metadata = {
   title: "HQ Routing API for Developers",
   description:
-    "Integrate Loadit's patented HQ routing engine in one HTTP call. Get the cheapest, fastest non-custodial settlement route as JSON. Live playground, docs, and pricing.",
+    "Integrate Loadit's patent-pending HQ routing engine in one HTTP call. Get the cheapest, fastest non-custodial settlement route as JSON. Live playground, docs, and pricing.",
   alternates: { canonical: "/developers" },
 };
 
