@@ -18,6 +18,7 @@ import type {
   PaymentIntent,
 } from "../types";
 import { CertificationGateError } from "../errors";
+import { CASH_CERT_GATE } from "../copy";
 import { newInternalRef } from "../ids";
 
 export abstract class BaseDoor implements DoorAdapter {
@@ -74,8 +75,7 @@ export abstract class BaseDoor implements DoorAdapter {
       if (this.certification() !== "CLEARED") {
         throw new CertificationGateError(
           this.id,
-          `${this.label}: certification is IN FLIGHT — refusing to confirm real customer money. ` +
-            `The intake stays pending until the owner explicitly clears certification for this door.`
+          `${this.label}: ${CASH_CERT_GATE} The intake stays pending.`
         );
       }
       intake.status = "confirmed";

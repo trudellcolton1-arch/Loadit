@@ -7,9 +7,9 @@
  *
  *  - "live":  MoneyGram cash is door one (card/bank/next-cash-network stubs
  *             bid behind the same interface). MoneyGram cash-in is NOT live —
- *             certification is in flight — so a cash confirm is REFUSED until
- *             the owner sets MONEYGRAM_CASH_IN_CERT=CLEARED. Nothing past
- *             intake can happen in this mode today, and that is the point.
+ *             cert approved (4/5), final go-live pending — so a cash confirm
+ *             is REFUSED until the owner sets MONEYGRAM_CASH_IN_CERT=CLEARED
+ *             (5/5). Nothing past intake can happen in this mode today.
  *
  *  - "sim":   fixture doors + fixture executors, simulated money, so the full
  *             machine (confirm → convert → payout, dead pipes, heal under the
@@ -109,7 +109,7 @@ export function resetRailServiceForTests(): void {
 }
 
 const LIVE_NOTICE =
-  "MoneyGram cash-in is NOT live — cert approved (4/5), final go-live step pending. Cash confirms are refused until the owner clears certification.";
+  "Cert approved (4/5) — final go-live step pending; cash-in not live yet. Cash confirms are refused until go-live (5/5).";
 const SIM_NOTICE = "Simulated doors and simulated money — nothing real moves in this mode.";
 
 /** Wire-safe view of a payment (already plain data; picked explicitly). */

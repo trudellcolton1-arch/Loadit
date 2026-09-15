@@ -61,8 +61,8 @@ must be linked). Everyone else never sees the Rail POC tile or playground.
 Walk: **intent → quote/fee (0.75%, $1 min) → MoneyGram door (playground) →
 state machine / self-heal → honest outcome**.
 
-Labels say **patent pending**, **cert approved (4/5) — final go-live step pending**,
-and **playground**. Cash-in is not live. Crypto lands in the wallet you paste —
+Labels say **patent pending**, **cert approved (4/5) — final go-live step pending;
+cash-in not live yet**, and **playground**. Crypto lands in the wallet you paste —
 Loadit is non-custodial.
 
 ```bash

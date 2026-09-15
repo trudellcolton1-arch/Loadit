@@ -6,9 +6,9 @@
  * keys on every side effect. Non-custodial throughout — Loadit never holds
  * keys.
  *
- * STATUS: MoneyGram cash-in certification is IN FLIGHT. The MoneyGram door
- * refuses to confirm real customer cash until MONEYGRAM_CASH_IN_CERT=CLEARED
- * is set explicitly by the owner. Nothing here generates partner tx ids.
+ * STATUS: MoneyGram cert approved (4/5) — final go-live pending; cash-in
+ * is not live. The MoneyGram door refuses to confirm real customer cash
+ * until MONEYGRAM_CASH_IN_CERT=CLEARED (5/5). No partner tx ids invented.
  */
 export * from "./types";
 export * from "./errors";

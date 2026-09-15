@@ -19,7 +19,7 @@ import {
  * The real lib/rail runtime, running in the browser against SIMULATED demo
  * doors. No real money moves here and no live provider is called. The
  * MoneyGram panel exists to demonstrate the certification gate: cash-in is
- * NOT live — certification is in flight with MoneyGram — so the door refuses
+ * NOT live — cert approved (4/5), final go-live pending — so the door refuses
  * to confirm, and this page shows that refusal verbatim.
  */
 
@@ -366,7 +366,7 @@ export function RailConsole() {
                     </span>
                   ) : (
                     <span className="rounded bg-rose-400/15 px-1.5 py-0.5 text-rose-300">
-                      cert in flight — cannot confirm real money
+                      cert 4/5 — cannot confirm real money
                     </span>
                   )}
                 </div>
@@ -380,9 +380,9 @@ export function RailConsole() {
       <div className="mt-10 rounded-xl border border-rose-400/25 bg-rose-400/[0.04] p-5">
         <h2 className="text-sm font-bold text-white">Cash door — certification gate</h2>
         <p className="mt-2 max-w-2xl text-xs leading-relaxed text-white/55">
-          Retail cash-in is <b className="text-rose-300">not live</b>: certification with our licensed
-          cash partner is still in flight. The real cash door in <code className="text-white/70">lib/rail</code> refuses
-          to confirm customer cash until the owner explicitly clears the certification flag. Press the button to see the
+          Retail cash-in is <b className="text-rose-300">not live</b>: cert approved (4/5) — final
+          go-live step pending. The real cash door in <code className="text-white/70">lib/rail</code> refuses
+          to confirm customer cash until go-live (5/5). Press the button to see the
           runtime enforce it — this opens a simulated intake and attempts a confirm.
         </p>
         <button
@@ -399,7 +399,7 @@ export function RailConsole() {
       </div>
 
       <p className="mt-8 font-mono text-[10px] uppercase tracking-[0.15em] text-white/30">
-        DEMO — simulated doors and simulated money. Cash-in partner certification in flight; nothing on
+        DEMO — simulated doors and simulated money. Cert approved (4/5); cash-in not live yet. Nothing on
         this page moves real funds or generates real transaction ids.
       </p>
     </div>

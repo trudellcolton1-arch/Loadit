@@ -1,11 +1,11 @@
 /**
  * MONEYGRAM CASH DOOR — the first real door behind the adapter interface.
  *
- * STATUS (do not soften this): MoneyGram cash-in is NOT live. Certification
- * is still in flight with MoneyGram (Tim Dugan). Until the owner explicitly
- * sets MONEYGRAM_CASH_IN_CERT=CLEARED, this door will open intakes (plan,
- * quote, reference instructions) but it will REFUSE to confirm real customer
- * cash — the certification gate in BaseDoor throws before any confirm.
+ * STATUS (do not soften this): MoneyGram cash-in is NOT live. Cert is
+ * approved at 4/5 — final go-live step pending. Until the owner explicitly
+ * sets MONEYGRAM_CASH_IN_CERT=CLEARED (5/5), this door will open intakes
+ * (plan, quote, reference instructions) but it will REFUSE to confirm real
+ * customer cash — the certification gate in BaseDoor throws before any confirm.
  *
  * The default is IN_FLIGHT. Unset, empty, or any other value = IN_FLIGHT.
  *
@@ -19,6 +19,7 @@
  * Loadit never holds keys or funds.
  */
 import { planMoneyGram, MONEYGRAM_LOCATIONS } from "../../moneygram";
+import { CASH_CERT_LINE } from "../copy";
 import type {
   CertificationStatus,
   DoorCandidate,
@@ -79,7 +80,7 @@ export class MoneyGramDoor extends BaseDoor {
     const gate =
       this.certification() === "CLEARED"
         ? ""
-        : " NOTE: Cert approved (4/5) — final go-live step pending. This intake cannot be confirmed with real customer cash yet. Certification remains in flight until go-live.";
+        : ` NOTE: ${CASH_CERT_LINE} This intake cannot be confirmed with real customer cash.`;
     return `Cash intake at any of ${MONEYGRAM_LOCATIONS} MoneyGram locations. ${firstStep}${gate}`;
   }
 }

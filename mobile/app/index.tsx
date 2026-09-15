@@ -159,7 +159,7 @@ export default function Home() {
                 <Text style={[styles.microlabel, { color: t.accentText }]}>RAIL POC</Text>
                 <Text style={styles.loadTitle}>The machine</Text>
                 <Text style={styles.loadSub}>
-                  Intake → UVCE → door → settle. {CERT_LINE}. Playground — not live cash-in.
+                  Intake → UVCE → door → settle. {CERT_LINE} Playground until 5/5.
                 </Text>
                 <View style={{ marginTop: 12 }}>
                   <HonestyPills owner playground />
@@ -207,7 +207,7 @@ export default function Home() {
             <Image source={require("../assets/moneygram-logo.jpg")} style={styles.mgLogo} />
             <View style={{ flex: 1 }}>
               <Text style={styles.mgTitle}>Cash rail</Text>
-              <Text style={styles.mgSub}>{CERT_LINE} · not live cash-in</Text>
+              <Text style={styles.mgSub}>{CERT_LINE}</Text>
             </View>
             <Feather name="chevron-right" size={18} color={t.faint} />
           </TouchableOpacity>

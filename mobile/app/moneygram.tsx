@@ -58,9 +58,9 @@ export default function MoneyGram() {
             <View style={styles.soon}><Text style={styles.soonText}>CERT APPROVED 4/5</Text></View>
           </View>
           <Text style={styles.sub}>
-            Retail cash-in is not live. Cert approved (4/5) — final go-live step pending.
+            Cert approved (4/5) — final go-live step pending; cash-in not live yet.
             This is a route preview: cash at a licensed counter → USDC → HQ swap → your
-            own wallet. Nothing here takes customer cash.
+            own wallet. Nothing here takes customer cash. Playground until 5/5.
           </Text>
 
           <Text style={styles.label}>You want</Text>
@@ -128,7 +128,7 @@ export default function MoneyGram() {
           )}
 
           <Text style={styles.legal}>
-            Cert approved (4/5) — final go-live step pending. This screen does not start a live cash-in.
+            Cert approved (4/5) — final go-live step pending; cash-in not live yet. This screen does not start a live cash-in.
             A licensed money-transmitter will perform identity verification at the counter.
             The USDC→{asset} swap is executed by a licensed liquidity provider. Loadit
             orchestrates the route and never holds your funds. Fee: 0.75% with a $1 minimum.

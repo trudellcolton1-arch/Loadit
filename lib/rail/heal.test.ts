@@ -203,7 +203,7 @@ test("uncertified door in the runtime: webhook confirm is refused, payment stays
       internalRef: intake.internalRef,
       type: "intake_confirmed",
     }),
-    /IN FLIGHT/
+    /4\/5|not live/i
   );
   assert.equal(payment.state, "intake_pending");
   assert.equal(payout.ledger.length, 0);

@@ -2,8 +2,9 @@
 import type { PaymentState } from "./stateMachine";
 
 /**
- * Raised when a door is asked to confirm real customer money while its
- * certification is still IN FLIGHT. This is a hard gate, not a warning.
+ * Raised when a door is asked to confirm real customer money before
+ * go-live (5/5). Cert may already be approved at 4/5 — this is still a
+ * hard gate, not a warning. The machine flag remains IN_FLIGHT until CLEARED.
  */
 export class CertificationGateError extends Error {
   readonly doorId: string;

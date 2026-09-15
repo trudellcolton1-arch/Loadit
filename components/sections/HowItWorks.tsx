@@ -21,7 +21,7 @@ export function HowItWorks() {
           align="center"
           eyebrow="How It Works"
           title="Money in. Crypto out. Seconds."
-          description="Card today — retail cash-in launching soon. No bank account. Six steps from checkout to on-chain value."
+          description="Card today. Cash-in: cert approved (4/5) — final go-live pending; not live yet. No bank account. Six steps from checkout to on-chain value."
         />
 
         <div ref={ref} className="relative mx-auto mt-20 max-w-3xl">

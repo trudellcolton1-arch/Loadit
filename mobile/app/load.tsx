@@ -161,7 +161,7 @@ export default function Load() {
               </TouchableOpacity>
               {method === "Cash" && (
                 <Text style={styles.legal}>
-                  Cert approved (4/5) — final go-live step pending. Not live cash-in. {ownerPoc ? "The Rail POC uses the MoneyGram playground." : "This preview does not take customer cash."}
+                  Cert approved (4/5) — final go-live step pending; cash-in not live yet. {ownerPoc ? "The Rail POC uses the MoneyGram playground." : "This preview does not take customer cash."}
                 </Text>
               )}
               {ownerPoc && method !== "Cash" && (

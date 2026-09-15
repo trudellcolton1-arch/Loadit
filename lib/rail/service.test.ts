@@ -28,10 +28,11 @@ test("live mode: MoneyGram cash is door one and the quote has no chain field", a
   assert.equal(payment.state, "quoted");
   assert.equal("chain" in payment.intent, false);
   assert.equal(payment.quote.route.settlement, "non_custodial");
-  // Cert is in flight → the route says so instead of pretending.
+  // Cert is 4/5 — quote is honest: not confirmable, cash-in not live.
   assert.equal(payment.quote.route.confirmable, false);
   assert.equal(res.payload.moneygram_certification, "IN_FLIGHT");
-  assert.match(String(res.payload.notice), /NOT live/);
+  assert.match(String(res.payload.notice), /4\/5/);
+  assert.match(String(res.payload.notice), /not live/i);
 });
 
 test("live mode: a smuggled chain picker is rejected at the API boundary", async () => {
@@ -59,7 +60,8 @@ test("live mode: cash confirm is refused while certification is IN FLIGHT", asyn
   const confirm = await handleRailAction({ action: "confirm", mode: "live", paymentId });
   assert.equal(confirm.status, 409);
   assert.equal(confirm.payload.reason, "certification_gate");
-  assert.match(String(confirm.payload.message), /IN FLIGHT/);
+  assert.match(String(confirm.payload.message), /4\/5/);
+  assert.match(String(confirm.payload.message), /not live/i);
 
   // The payment did not advance and still has no partner tx id.
   const after = await handleRailAction({ action: "get", mode: "live", paymentId });

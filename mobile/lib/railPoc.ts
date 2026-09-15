@@ -10,7 +10,8 @@ export const RAIL_FEE_PCT = 0.0075;
 export const RAIL_FEE_MIN_USD = 1;
 
 export const CERT_PILL = "CERT APPROVED 4/5";
-export const CERT_LINE = "Cert approved (4/5) — final go-live step pending";
+export const CERT_LINE =
+  "Cert approved (4/5) — final go-live step pending; cash-in not live yet.";
 export const PATENT_PILL = "PATENT PENDING";
 export const PLAYGROUND_PILL = "PLAYGROUND";
 export const OWNER_PILL = "OWNER";
@@ -23,7 +24,7 @@ export const RAIL_STORY = [
   {
     n: "1",
     title: "Intake",
-    detail: "Cash or card enters a licensed door. MoneyGram is door one. Cert approved (4/5) — final go-live pending, so this walk uses their playground.",
+    detail: "Cash or card enters a licensed door. MoneyGram is door one. Cert approved (4/5) — final go-live step pending; cash-in not live yet. This walk uses their playground.",
   },
   {
     n: "2",

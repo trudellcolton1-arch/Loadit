@@ -87,7 +87,7 @@ export function MgPlaygroundWeb({ url, onDone }: { url: string; onDone: () => vo
         </View>
         <View style={{ flex: 1 }}>
           <Text style={styles.webTitle}>MoneyGram playground</Text>
-          <Text style={styles.webSub}>Test network — cert approved 4/5 — not live cash</Text>
+          <Text style={styles.webSub}>Playground — cert approved 4/5 — cash-in not live yet</Text>
         </View>
         <TouchableOpacity onPress={onDone}>
           <Text style={styles.close}>Done →</Text>
