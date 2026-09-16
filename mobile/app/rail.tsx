@@ -18,6 +18,7 @@ import {
 } from "@/lib/railPoc";
 import { HonestyPills } from "@/components/HonestyPills";
 import { UvcePanel } from "@/components/UvcePanel";
+import { HqStrip } from "@/components/HqStrip";
 import { RailPath, pathIndexForWalk } from "@/components/RailPath";
 import { MgPlaygroundWeb } from "@/components/MgPlaygroundWeb";
 import { useTheme, rgba, type Theme } from "@/lib/theme";
@@ -195,7 +196,7 @@ export default function RailPoc() {
   const watchHeal = async () => {
     const dest = wallet.trim() || "wallet-you-control";
     setWalk("heal");
-    setHealLine("Locking a simulated quote…");
+    setHealLine("HQ locks a simulated quote — UVCE plans the conversion…");
     const created = await act({
       action: "create",
       mode: "sim",
@@ -210,12 +211,12 @@ export default function RailPoc() {
     await act({ action: "intake", mode: "sim", paymentId: id }, "sim");
     setHealLine("Simulated cash confirmed…");
     await act({ action: "confirm", mode: "sim", paymentId: id }, "sim");
-    setHealLine("Killing the payout pipe…");
+    setHealLine("Killing the payout pipe mid-pay…");
     await act({ action: "kill_pipe", mode: "sim", paymentId: id, pipe: "payout" }, "sim");
-    setHealLine("Settle failed — self-heal, same payment id…");
+    setHealLine("Settle failed. HQ heals — same payment id, UVCE plan intact…");
     await act({ action: "settle", mode: "sim", paymentId: id }, "sim");
     await act({ action: "heal", mode: "sim", paymentId: id }, "sim");
-    setHealLine("Healed. Paying out exactly once…");
+    setHealLine("Healed. HQ executes UVCE's plan — paying out exactly once…");
     await act({ action: "settle", mode: "sim", paymentId: id }, "sim");
     setHealLine("Settled. Same payment id. One payout. Simulated money only.");
   };
@@ -242,6 +243,49 @@ export default function RailPoc() {
   const ttlLeft = payment ? Math.max(0, Math.ceil((payment.quote.expiresAt - Date.now()) / 1000)) : 0;
   const machine = walk === "heal" ? sim : payment;
 
+  // HQ's live line — driven by real machine state, never a fake timer.
+  const hqVenue = payment?.quote.route.conversion?.venues.find((v) => v.selected)?.label;
+  const hqLine = (() => {
+    switch (walk) {
+      case "story":
+        return "This is my machine. I score the doors, UVCE converts under my governance, and money only ever lands in a wallet you control.";
+      case "intent":
+        return "Name the outcome — asset, amount, your wallet. I pick the door; UVCE and I shape the conversion together.";
+      case "quote":
+        if (payment)
+          return `Locked ${payment.quote.route.doorLabel} at ${payment.quote.route.score.toFixed(1)}. Quote holds ${ttlLeft}s — next I hand the conversion to UVCE.`;
+        return "Scoring every door on fee, time, liquidity, risk, and certification…";
+      case "uvce":
+        return uvceDone
+          ? `UVCE and I agreed${hqVenue ? ` on ${hqVenue}` : ""} — fees normalized, settlement object in hand. Ready to open the door.`
+          : "Working with UVCE now — it normalizes and proposes, I constrain and approve. Watch the exchange.";
+      case "door":
+        return mgUrl
+          ? "UVCE's plan is locked under this payment id. Finish the playground deposit — I'm watching the intake."
+          : "Opening the cash door with UVCE's settlement-ready object attached.";
+      case "progress": {
+        const st = machine?.state;
+        if (st === "converting") return `Executing UVCE's plan${hqVenue ? ` via ${hqVenue}` : ""} — converting now.`;
+        if (st === "paying_out") return "Conversion done. Paying out to your wallet — exactly once.";
+        if (st === "settled") return "Settled. UVCE's estimates held. One payout, non-custodial end to end.";
+        if (st === "failed") return "A pipe died. Same payment id, UVCE's plan intact — say the word and I heal.";
+        return "Intake in flight. The moment cash confirms, I execute UVCE's plan.";
+      }
+      case "heal":
+        return "A pipe died mid-payout. Same payment id, UVCE's plan intact — I re-lock and pay exactly once.";
+      case "outcome":
+        return "Run complete. I routed, UVCE converted under my governance, and you held the keys the whole way.";
+      default:
+        return "";
+    }
+  })();
+  const hqWorking =
+    busy ||
+    (walk === "uvce" && !uvceDone) ||
+    machine?.state === "converting" ||
+    machine?.state === "paying_out" ||
+    machine?.state === "healing";
+
   return (
     <SafeAreaView style={styles.wrap} edges={["bottom"]}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
@@ -254,6 +298,7 @@ export default function RailPoc() {
               <RailPath active={pathIndexForWalk(walk)} />
             </View>
           )}
+          <HqStrip line={hqLine} working={hqWorking} />
         </View>
 
         <Animated.View style={{ flex: 1, opacity: fade }}>
@@ -319,7 +364,7 @@ export default function RailPoc() {
                 {busy && !payment && (
                   <View style={styles.centerBox}>
                     <ActivityIndicator color={t.accentText} />
-                    <Text style={styles.dim}>HQ is scoring doors…</Text>
+                    <Text style={styles.dim}>Doors are bidding…</Text>
                   </View>
                 )}
                 {payment && (
@@ -567,6 +612,29 @@ function QuotePanel({ styles, t, payment, fee, ttlLeft }: {
         {money(payment.intent.amountUsd)} in → {payment.intent.outcome.asset} out
       </Text>
       <Text style={styles.dim}>{payment.quote.route.legs.map((l) => l.detail).join(" → ")}</Text>
+      {payment.quote.route.breakdown && (
+        <View style={styles.hqMath}>
+          <Text style={styles.hqMathTitle}>HQ&apos;s scoring math</Text>
+          {(
+            [
+              ["Fee", payment.quote.route.breakdown.fee],
+              ["Time", payment.quote.route.breakdown.time],
+              ["Liquidity", payment.quote.route.breakdown.liquidity],
+              ["Risk", payment.quote.route.breakdown.risk],
+              ["Cert", payment.quote.route.breakdown.certification],
+            ] as const
+          ).map(([label, v]) => (
+            <View key={label} style={styles.hqMathRow}>
+              <Text style={styles.hqMathLabel}>{label}</Text>
+              <View style={styles.hqMathTrack}>
+                <View style={[styles.hqMathFill, { width: `${Math.min(100, v)}%` as `${number}%`, backgroundColor: t.accent }]} />
+              </View>
+              <Text style={styles.hqMathVal}>{Math.round(v)}</Text>
+            </View>
+          ))}
+          <Text style={styles.hqHandoff}>→ HQ hands this quote to UVCE for the conversion plan</Text>
+        </View>
+      )}
       <Text style={styles.cert}>{CERT_LINE}. This door cannot confirm real cash yet.</Text>
       <Text style={styles.mono}>{payment.id} → {payment.intent.outcome.wallet}</Text>
     </LinearGradient>
@@ -647,6 +715,14 @@ const makeStyles = (t: Theme) =>
     heroTitle: { color: t.text, fontSize: 22, fontWeight: "800", letterSpacing: -0.6, marginTop: 8 },
     bigFee: { color: t.text, fontSize: 42, fontWeight: "800", letterSpacing: -1.6, marginTop: 10 },
     quoteTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+    hqMath: { marginTop: 14, borderTopColor: t.border, borderTopWidth: StyleSheet.hairlineWidth, paddingTop: 12 },
+    hqMathTitle: { color: t.faint, fontSize: 10, fontWeight: "800", letterSpacing: 1.4, textTransform: "uppercase" },
+    hqMathRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 7 },
+    hqMathLabel: { color: t.dim, fontSize: 11, fontWeight: "600", width: 58 },
+    hqMathTrack: { flex: 1, height: 4, borderRadius: 2, backgroundColor: t.border, overflow: "hidden" },
+    hqMathFill: { height: 4, borderRadius: 2 },
+    hqMathVal: { color: t.dim, fontSize: 11, fontWeight: "700", width: 26, textAlign: "right" },
+    hqHandoff: { color: t.accentText, fontSize: 12, fontWeight: "700", marginTop: 12 },
     ttl: { color: t.dim, fontSize: 13, fontWeight: "700" },
     healLine: { color: t.text, fontSize: 18, fontWeight: "700", letterSpacing: -0.3, marginTop: 12, lineHeight: 24 },
     split: { flexDirection: "row", gap: 10, marginTop: 14 },

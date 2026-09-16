@@ -133,6 +133,8 @@ export function serializePayment(p: PaymentRecord) {
         doorId: p.quote.route.doorId,
         doorLabel: p.quote.route.doorLabel,
         score: p.quote.route.score,
+        // HQ's five-dimension scoring math — shown, not asserted.
+        breakdown: p.quote.route.breakdown,
         feeUsd: p.quote.route.feeUsd,
         etaSeconds: p.quote.route.etaSeconds,
         confirmable: p.quote.route.confirmable,

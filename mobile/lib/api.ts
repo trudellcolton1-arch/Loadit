@@ -326,6 +326,13 @@ export interface RailQuote {
     doorId: string;
     doorLabel: string;
     score: number;
+    breakdown?: {
+      fee: number;
+      time: number;
+      liquidity: number;
+      risk: number;
+      certification: number;
+    };
     feeUsd: number;
     etaSeconds: number;
     confirmable: boolean;
