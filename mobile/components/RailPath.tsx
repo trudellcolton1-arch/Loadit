@@ -69,8 +69,9 @@ export function pathIndexForWalk(walk: string): number {
   switch (walk) {
     case "story":
     case "intent":
-      return 0;
     case "quote":
+      return 0;
+    case "uvce":
       return 1;
     case "door":
       return 2;

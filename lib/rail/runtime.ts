@@ -191,7 +191,15 @@ export class RailRuntime {
     const payment = this.getPayment(paymentId);
     try {
       if (payment.state === "intake_confirmed") {
-        this.transition(payment, "converting");
+        const conv = payment.quote.route.conversion;
+        const venue = conv.venues.find((v) => v.selected);
+        this.transition(
+          payment,
+          "converting",
+          venue
+            ? `UVCE convert via ${venue.label}${conv.program.deferral === "brief" ? ` (deferred ${conv.forecast.deferMs} ms per forecast)` : ""}`
+            : undefined
+        );
       }
       if (payment.state === "converting") {
         await this.convertExecutor.convert({

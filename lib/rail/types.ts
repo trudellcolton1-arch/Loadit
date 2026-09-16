@@ -140,6 +140,12 @@ export interface ScoredRoute {
   doorId: string;
   doorLabel: string;
   legs: RouteLeg[];
+  /**
+   * The UVCE conversion plan HQ commissioned for this route (patent §7.2):
+   * normalized uvce.v1 object, sourced venues, forecast, normalized fees,
+   * and the HQ↔UVCE directive transcript. Estimates only, always.
+   */
+  conversion: import("./uvce").ConversionPlan;
   feeUsd: number;
   etaSeconds: number;
   /** Blended 0..100 score (higher wins). */

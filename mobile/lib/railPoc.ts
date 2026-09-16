@@ -28,8 +28,8 @@ export const RAIL_STORY = [
   },
   {
     n: "2",
-    title: "UVCE",
-    detail: "Universal value conversion. Loadit orchestrates the hop and never takes custody — no keys, no balance, no holding the funds.",
+    title: "UVCE × HQ",
+    detail: "Universal value conversion, governed by HQ. UVCE sources liquidity venues, forecasts the execution window, normalizes every fee, and hands HQ one settlement-ready object — never taking custody. You watch the exchange live.",
   },
   {
     n: "3",

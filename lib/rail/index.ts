@@ -11,6 +11,7 @@
  * until MONEYGRAM_CASH_IN_CERT=CLEARED (5/5). No partner tx ids invented.
  */
 export * from "./types";
+export * from "./uvce";
 export * from "./errors";
 export * from "./ids";
 export * from "./stateMachine";

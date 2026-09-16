@@ -6,17 +6,16 @@
  * scorer (HQ) owns the routing decision end to end, reusing the same swap
  * planner the MoneyGram flow uses (lib/swap.ts) for the convert/payout legs.
  */
-import { planSwap } from "../swap";
 import { calcLoaditFee } from "../aero";
 import type {
   DoorCandidate,
   LockedQuote,
   PaymentIntent,
-  RouteLeg,
   ScoredRoute,
 } from "./types";
 import { NoViableRouteError } from "./errors";
 import { newQuoteId, newRouteId } from "./ids";
+import { planConversion } from "./uvce";
 
 /** Default quote lock TTL — 90 seconds. */
 export const DEFAULT_QUOTE_TTL_MS = 90_000;
@@ -41,23 +40,13 @@ export interface ScoreOptions {
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
-function buildLegs(candidate: DoorCandidate, intent: PaymentIntent): RouteLeg[] {
-  const swap = planSwap(intent.outcome.asset);
-  const legs: RouteLeg[] = [
-    {
-      kind: "intake",
-      via: candidate.label,
-      detail: `${candidate.kind} intake via ${candidate.label}`,
-    },
-  ];
-  for (const step of swap.steps) {
-    legs.push({
-      kind: step.kind === "deliver" ? "payout" : "convert",
-      via: "HQ",
-      detail: step.detail,
-    });
-  }
-  return legs;
+/** HQ invokes the UVCE for a candidate — legs come from the conversion plan. */
+function uvceFor(candidate: DoorCandidate, intent: PaymentIntent) {
+  return planConversion(intent, {
+    doorId: candidate.doorId,
+    doorLabel: candidate.label,
+    doorKind: candidate.kind,
+  });
 }
 
 /** Score every viable candidate for an intent, best first. */
@@ -102,11 +91,13 @@ export function scoreRoutes(
         breakdown.risk * SCORE_WEIGHTS.risk +
         breakdown.certification * SCORE_WEIGHTS.certification
     );
+    const conversion = uvceFor(c, intent);
     return {
       routeId: newRouteId(),
       doorId: c.doorId,
       doorLabel: c.label,
-      legs: buildLegs(c, intent),
+      legs: conversion.legs,
+      conversion,
       feeUsd: round2(c.feeUsd),
       etaSeconds: c.etaSeconds,
       score,

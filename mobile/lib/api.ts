@@ -271,6 +271,48 @@ export interface RailRouteLeg {
   detail: string;
 }
 
+/** UVCE conversion plan (patent §7.2) — HQ-governed, estimates only. */
+export interface RailConversionPlan {
+  normalized: {
+    schema: "uvce.v1";
+    valueIn: { form: string; amountUsd: number; via: string };
+    valueOut: { asset: string; chain: string; wallet: string };
+    settlement: "non_custodial";
+  };
+  legs: RailRouteLeg[];
+  venues: {
+    venueId: string;
+    label: string;
+    kind: string;
+    slippageBps: number;
+    depth: number;
+    volatilityBps: number;
+    counterpartyRisk: number;
+    score: number;
+    selected: boolean;
+  }[];
+  forecast: {
+    volatilityBps: number;
+    driftBps: number;
+    liquidityOutlook: string;
+    action: "execute_now" | "brief_defer";
+    deferMs: number;
+    confidence: number;
+    summary: string;
+  };
+  fees: {
+    loaditFeeUsd: number;
+    swapFeeUsd: number;
+    venueCostUsd: number;
+    networkFeeUsd: number;
+    totalUsd: number;
+    totalPct: number;
+  };
+  directives: { seq: number; from: "HQ" | "UVCE"; note: string }[];
+  program: { targetAsset: string; splitSettlement: boolean; deferral: string };
+  estimates: true;
+}
+
 export interface RailQuote {
   quoteId: string;
   amountUsd: number;
@@ -289,6 +331,7 @@ export interface RailQuote {
     confirmable: boolean;
     settlement: string;
     legs: RailRouteLeg[];
+    conversion?: RailConversionPlan;
   };
 }
 

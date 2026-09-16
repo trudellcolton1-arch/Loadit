@@ -138,6 +138,8 @@ export function serializePayment(p: PaymentRecord) {
         confirmable: p.quote.route.confirmable,
         settlement: p.quote.route.settlement,
         legs: p.quote.route.legs,
+        // UVCE conversion plan (patent §7.2) — estimates, HQ-governed.
+        conversion: p.quote.route.conversion,
       },
     },
     quoteCount: p.quotes.length,

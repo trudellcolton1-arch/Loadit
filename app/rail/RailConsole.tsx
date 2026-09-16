@@ -293,6 +293,51 @@ export function RailConsole() {
             )}
           </div>
 
+          {/* ——— UVCE — HQ-governed conversion plan (patent §7.2) ——— */}
+          <div className="mt-6 rounded-xl border border-[#9D8CFF]/25 bg-[#9D8CFF]/[0.04] p-5">
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <h2 className="text-sm font-bold text-white">
+                UVCE ⇄ HQ{" "}
+                <span className="font-mono text-[10px] font-normal text-white/40">
+                  {payment.quote.route.conversion.normalized.schema}
+                </span>
+              </h2>
+              <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-[#B7A9FF]/70">
+                governed conversion · estimates
+              </span>
+            </div>
+            <div className="mt-3 grid gap-1.5 font-mono text-[11px] leading-relaxed text-white/70">
+              {payment.quote.route.conversion.directives.map((d) => (
+                <div key={d.seq} className="flex gap-2">
+                  <span className={`w-10 shrink-0 font-bold ${d.from === "HQ" ? "text-emerald-300" : "text-[#B7A9FF]"}`}>
+                    {d.from}
+                  </span>
+                  <span>{d.note}</span>
+                </div>
+              ))}
+            </div>
+            <div className="mt-4 grid gap-1 border-t border-white/10 pt-3 font-mono text-[11px] text-white/50">
+              {payment.quote.route.conversion.venues.map((v) => (
+                <div key={v.venueId} className="flex justify-between">
+                  <span className={v.selected ? "font-bold text-white" : ""}>
+                    {v.selected ? "▸ " : "  "}{v.label} · {v.slippageBps} bps · depth {v.depth.toFixed(2)}
+                  </span>
+                  <span className={v.selected ? "text-emerald-300" : ""}>{v.score.toFixed(1)}</span>
+                </div>
+              ))}
+              <div className="mt-2 flex justify-between text-white/70">
+                <span>{payment.quote.route.conversion.forecast.summary}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>all-in fee estimate</span>
+                <span className="text-white">
+                  ${payment.quote.route.conversion.fees.totalUsd.toFixed(2)} ·{" "}
+                  {payment.quote.route.conversion.fees.totalPct.toFixed(2)}%
+                </span>
+              </div>
+            </div>
+          </div>
+
           {/* ——— Step buttons ——— */}
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <button

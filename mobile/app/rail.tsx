@@ -17,6 +17,7 @@ import {
   RAIL_STORY, CERT_LINE, loaditFeeUsd, playgroundStatusLabel, walletForAsset,
 } from "@/lib/railPoc";
 import { HonestyPills } from "@/components/HonestyPills";
+import { UvcePanel } from "@/components/UvcePanel";
 import { RailPath, pathIndexForWalk } from "@/components/RailPath";
 import { MgPlaygroundWeb } from "@/components/MgPlaygroundWeb";
 import { useTheme, rgba, type Theme } from "@/lib/theme";
@@ -31,7 +32,7 @@ const ASSETS = ["BTC", "SOL", "ETH", "USDC"] as const;
 const AMOUNTS = [50, 150, 500] as const;
 const money = (n: number) => `$${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-type Walk = "story" | "intent" | "quote" | "door" | "progress" | "heal" | "outcome";
+type Walk = "story" | "intent" | "quote" | "uvce" | "door" | "progress" | "heal" | "outcome";
 
 const STATE_ORDER: RailPayment["state"][] = [
   "quoted", "intake_pending", "intake_confirmed", "converting", "paying_out", "settled",
@@ -68,6 +69,7 @@ export default function RailPoc() {
   const [mgErr, setMgErr] = useState<string | null>(null);
   const [showWeb, setShowWeb] = useState(false);
   const [status, setStatus] = useState<MgSandboxStatus | null>(null);
+  const [uvceDone, setUvceDone] = useState(false);
   const [, setTick] = useState(0);
 
   const setWalk = (next: Walk) => {
@@ -229,6 +231,7 @@ export default function RailPoc() {
     setMgErr(null);
     setStatus(null);
     setShowWeb(false);
+    setUvceDone(false);
   };
 
   if (showWeb && mgUrl) {
@@ -321,6 +324,21 @@ export default function RailPoc() {
                 )}
                 {payment && (
                   <QuotePanel styles={styles} t={t} payment={payment} fee={fee} ttlLeft={ttlLeft} />
+                )}
+              </>
+            )}
+
+            {walk === "uvce" && payment && (
+              <>
+                <Text style={styles.lede}>
+                  HQ hands the locked quote to the UVCE — the Universal Value Conversion Engine.
+                  Watch them work: venues sourced, the window forecast, every fee normalized,
+                  one settlement-ready object back to HQ. Estimates only; nothing executes yet.
+                </Text>
+                {payment.quote.route.conversion ? (
+                  <UvcePanel plan={payment.quote.route.conversion} onLive={setUvceDone} />
+                ) : (
+                  <Text style={styles.dim}>This quote predates the UVCE — lock a fresh one to see the plan.</Text>
                 )}
               </>
             )}
@@ -451,7 +469,15 @@ export default function RailPoc() {
             <Cta styles={styles} label="Lock quote" busy={busy} onPress={lockQuote} />
           )}
           {walk === "quote" && payment && (
-            <Cta styles={styles} label="Open the MoneyGram door" busy={busy} onPress={openDoor} />
+            <Cta styles={styles} label="Hand to UVCE" onPress={() => { setUvceDone(false); setWalk("uvce"); }} />
+          )}
+          {walk === "uvce" && payment && (
+            <Cta
+              styles={styles}
+              label={uvceDone ? "HQ approved — open the MoneyGram door" : "HQ ⇄ UVCE working…"}
+              busy={busy || !uvceDone}
+              onPress={openDoor}
+            />
           )}
           {walk === "door" && (
             <>
@@ -492,7 +518,8 @@ export default function RailPoc() {
             <TouchableOpacity onPress={() => {
               if (walk === "intent") setWalk("story");
               else if (walk === "quote") setWalk("intent");
-              else if (walk === "door") setWalk("quote");
+              else if (walk === "uvce") setWalk("quote");
+              else if (walk === "door") setWalk("uvce");
               else if (walk === "progress") setWalk("door");
               else if (walk === "heal") setWalk("progress");
             }}>
