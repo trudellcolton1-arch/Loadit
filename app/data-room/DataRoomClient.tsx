@@ -27,8 +27,7 @@ interface Section {
   documents: DocMeta[];
 }
 
-const CODE_KEY = "loadit_dataroom_code";
-const ADMIN_KEY = "loadit_dataroom_admin";
+const KEY_STORE = "loadit_dataroom_key";
 
 function fmtBytes(n: number): string {
   if (n < 1024) return `${n} B`;
@@ -46,7 +45,6 @@ function fmtDate(iso: string): string {
 export function DataRoomClient() {
   const [code, setCode] = useState("");
   const [entered, setEntered] = useState<string | null>(null);
-  const [adminKey, setAdminKey] = useState<string | null>(null);
   const [role, setRole] = useState<"admin" | "investor" | null>(null);
   const [sections, setSections] = useState<Section[]>([]);
   const [err, setErr] = useState<string | null>(null);
@@ -57,23 +55,20 @@ export function DataRoomClient() {
 
   useEffect(() => {
     try {
-      const c = sessionStorage.getItem(CODE_KEY);
-      const a = sessionStorage.getItem(ADMIN_KEY);
-      if (a) setAdminKey(a);
-      if (c) setEntered(c);
-      if (!c && !a) return;
+      const k = sessionStorage.getItem(KEY_STORE);
+      if (k) setEntered(k);
     } catch { /* gate stays up */ }
   }, []);
 
+  // One field, two doors: the server decides which role a code unlocks,
+  // so the same value rides both headers and the right one matches.
   const headers = useCallback((): Record<string, string> => {
-    const h: Record<string, string> = {};
-    if (adminKey) h["x-dataroom-admin"] = adminKey;
-    if (entered) h["x-dataroom-code"] = entered;
-    return h;
-  }, [adminKey, entered]);
+    if (!entered) return {};
+    return { "x-dataroom-admin": entered, "x-dataroom-code": entered };
+  }, [entered]);
 
   const refresh = useCallback(async () => {
-    if (!entered && !adminKey) return;
+    if (!entered) return;
     setLoading(true);
     setErr(null);
     try {
@@ -83,9 +78,8 @@ export function DataRoomClient() {
         if (res.status === 401) {
           setRole(null);
           setErr("That code isn't valid. Check it and try again.");
-          try { sessionStorage.removeItem(CODE_KEY); sessionStorage.removeItem(ADMIN_KEY); } catch { /* ok */ }
+          try { sessionStorage.removeItem(KEY_STORE); } catch { /* ok */ }
           setEntered(null);
-          setAdminKey(null);
         } else {
           setErr("The room is unavailable right now — try again shortly.");
         }
@@ -98,21 +92,15 @@ export function DataRoomClient() {
     } finally {
       setLoading(false);
     }
-  }, [entered, adminKey, headers]);
+  }, [entered, headers]);
 
   useEffect(() => { refresh(); }, [refresh]);
 
   const enter = () => {
     const v = code.trim();
     if (!v) return;
-    // One field, two doors: admin keys are long and prefixed; investor codes are short.
-    if (v.startsWith("dradm_")) {
-      setAdminKey(v);
-      try { sessionStorage.setItem(ADMIN_KEY, v); } catch { /* ok */ }
-    } else {
-      setEntered(v);
-      try { sessionStorage.setItem(CODE_KEY, v); } catch { /* ok */ }
-    }
+    setEntered(v);
+    try { sessionStorage.setItem(KEY_STORE, v); } catch { /* ok */ }
     setCode("");
   };
 
