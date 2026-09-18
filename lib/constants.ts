@@ -29,6 +29,7 @@ export const NAV_LINKS = [
   { label: "Developers", href: "/developers" },
   { label: "Patents", href: "/#patents" },
   { label: "Investors", href: "/#investors" },
+  { label: "Data Room", href: "/data-room" },
   { label: "Deck", href: "/deck" },
 ] as const;
 
@@ -41,6 +42,7 @@ export const NAV_PRIMARY = [
   { label: "Developers", href: "/developers" },
   { label: "Patents", href: "/#patents" },
   { label: "Investors", href: "/#investors" },
+  { label: "Data Room", href: "/data-room" },
 ] as const;
 
 /** Networks the AI routing engine arbitrates across. */
