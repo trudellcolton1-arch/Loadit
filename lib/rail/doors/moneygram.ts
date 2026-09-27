@@ -1,11 +1,12 @@
 /**
  * MONEYGRAM CASH DOOR — the first real door behind the adapter interface.
  *
- * STATUS (do not soften this): MoneyGram cash-in is NOT live. Cert is
- * approved at 4/5 — final go-live step pending. Until the owner explicitly
- * sets MONEYGRAM_CASH_IN_CERT=CLEARED (5/5), this door will open intakes
- * (plan, quote, reference instructions) but it will REFUSE to confirm real
- * customer cash — the certification gate in BaseDoor throws before any confirm.
+ * STATUS: MoneyGram certification is COMPLETE (5/5) and cleared for go-live,
+ * but consumer cash-in is NOT live yet — it launches with the production
+ * build. Until the owner explicitly sets MONEYGRAM_CASH_IN_CERT=CLEARED in
+ * the production runtime, this door will open intakes (plan, quote, reference
+ * instructions) but it will REFUSE to confirm real customer cash — the
+ * certification gate in BaseDoor throws before any confirm.
  *
  * The default is IN_FLIGHT. Unset, empty, or any other value = IN_FLIGHT.
  *

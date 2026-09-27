@@ -9,8 +9,9 @@
  *
  * Integration is via the Stellar SEP standards: SEP-1 (the hosted
  * stellar.toml), SEP-10 (auth), and SEP-24 (interactive deposit). This module
- * plans the route. Cash-in is NOT live: cert approved (4/5), final go-live
- * pending. MONEYGRAM_ANCHOR_URL is unused until go-live (5/5).
+ * plans the route. Certification is complete (5/5); consumer cash-in is not
+ * live yet — it launches with the production build. MONEYGRAM_ANCHOR_URL is
+ * unused until the production runtime goes live.
  */
 import { planSwap, HQ_SWAP_FEE_PCT, type SwapAsset, type SwapPlan } from "./swap";
 import { LOADIT_FEE_PCT, calcLoaditFee } from "./aero";
@@ -62,7 +63,7 @@ export function planMoneyGram(amountUsd: number, asset: SwapAsset, wallet: strin
     {
       n: 1,
       title: "Pay cash at MoneyGram (not live yet)",
-      detail: `${CASH_CERT_LINE} When go-live (5/5) clears, you'll show a Loadit code at any of ${MONEYGRAM_LOCATIONS} MoneyGram locations and hand over cash. MoneyGram verifies identity at the counter.`,
+      detail: `${CASH_CERT_LINE} At launch, you'll show a Loadit code at any of ${MONEYGRAM_LOCATIONS} MoneyGram locations and hand over cash. MoneyGram verifies identity at the counter.`,
     },
     {
       n: 2,

@@ -1,17 +1,17 @@
 /**
  * Shared copy + helpers for the owner-only Rail POC.
  *
- * Honesty: patent pending (never "patented"). Cash-in is NOT live.
- * Cert is approved at 4/5 — final go-live step pending. Never imply
- * cert has not happened. MoneyGram sandbox is a playground.
+ * Honesty: patent pending (never "patented"). Certification is complete
+ * (5/5); consumer cash-in is NOT live yet — it launches with the production
+ * build. Never imply cert hasn't happened. MoneyGram sandbox is a playground.
  */
 
 export const RAIL_FEE_PCT = 0.0075;
 export const RAIL_FEE_MIN_USD = 1;
 
-export const CERT_PILL = "CERT APPROVED 4/5";
+export const CERT_PILL = "CERT COMPLETE 5/5";
 export const CERT_LINE =
-  "Cert approved (4/5) — final go-live step pending; cash-in not live yet.";
+  "certification complete (5/5) — launching soon, not live yet.";
 export const PATENT_PILL = "PATENT PENDING";
 export const PLAYGROUND_PILL = "PLAYGROUND";
 export const OWNER_PILL = "OWNER";

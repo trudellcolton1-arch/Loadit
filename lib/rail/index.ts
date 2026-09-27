@@ -6,9 +6,11 @@
  * keys on every side effect. Non-custodial throughout — Loadit never holds
  * keys.
  *
- * STATUS: MoneyGram cert approved (4/5) — final go-live pending; cash-in
- * is not live. The MoneyGram door refuses to confirm real customer cash
- * until MONEYGRAM_CASH_IN_CERT=CLEARED (5/5). No partner tx ids invented.
+ * STATUS: MoneyGram certification is complete (5/5) and cleared for go-live.
+ * Consumer cash-in is not live yet — it launches with the production build.
+ * The MoneyGram door still refuses to confirm real customer cash until
+ * MONEYGRAM_CASH_IN_CERT=CLEARED in the production runtime. No partner tx
+ * ids invented.
  */
 export * from "./types";
 export * from "./uvce";

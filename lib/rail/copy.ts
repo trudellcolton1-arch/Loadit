@@ -1,13 +1,16 @@
 /**
- * User-facing cash-cert copy. The machine flag is still IN_FLIGHT until
- * MONEYGRAM_CASH_IN_CERT=CLEARED (5/5). Do not say cert hasn't happened —
- * never "in flight" or "awaiting cert" in product copy. Never "patented".
+ * User-facing cash-cert copy. Certification with the licensed cash network is
+ * COMPLETE (5/5) and cleared for go-live. Consumer cash-in is not live yet —
+ * it launches with the production application (the current app is a prototype).
+ * So: never say cert is pending/"in flight"/"awaiting"; never say cash-in is
+ * available to customers today; always frame it as certified and launching.
+ * Never "patented" — patent pending only.
  */
 export const CASH_CERT_LINE =
-  "Cert approved (4/5) — final go-live step pending; cash-in not live yet.";
+  "certification complete (5/5) — launching soon, not live yet.";
 
 export const CASH_CERT_GATE =
-  `${CASH_CERT_LINE} Refusing to confirm real customer cash until go-live (5/5).`;
+  `Certification complete (5/5). This demo never moves real customer cash — consumer cash-in launches with the production build.`;
 
 export const CASH_CERT_NOTICE =
-  `${CASH_CERT_LINE} Cash confirms are refused until go-live (5/5).`;
+  `Certification complete (5/5). No real customer cash moves here — consumer cash-in launches with the production build.`;

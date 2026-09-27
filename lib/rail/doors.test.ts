@@ -60,8 +60,8 @@ test("MoneyGram door refuses to confirm real customer cash while cert is IN FLIG
     // Refusal must leave the intake untouched — still pending, still unconfirmed.
     const after = await door.status(intake.internalRef);
     assert.equal(after.status, "pending");
-    // The pending-intake instructions carry the honest 4/5 / not-live note.
-    assert.match(intake.instructions ?? "", /cert approved \(4\/5\)/i);
+    // The pending-intake instructions carry the honest 5/5 / not-live note.
+    assert.match(intake.instructions ?? "", /certification complete \(5\/5\)/i);
     assert.match(intake.instructions ?? "", /not live/i);
     assert.doesNotMatch(intake.instructions ?? "", /in flight/i);
   });

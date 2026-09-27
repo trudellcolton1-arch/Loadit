@@ -6,10 +6,11 @@
  * Two modes, labeled honestly everywhere:
  *
  *  - "live":  MoneyGram cash is door one (card/bank/next-cash-network stubs
- *             bid behind the same interface). MoneyGram cash-in is NOT live —
- *             cert approved (4/5), final go-live pending — so a cash confirm
- *             is REFUSED until the owner sets MONEYGRAM_CASH_IN_CERT=CLEARED
- *             (5/5). Nothing past intake can happen in this mode today.
+ *             bid behind the same interface). Certification is complete (5/5),
+ *             but consumer cash-in is not live yet — it launches with the
+ *             production build — so a cash confirm is REFUSED until the owner
+ *             sets MONEYGRAM_CASH_IN_CERT=CLEARED in the production runtime.
+ *             Nothing past intake can happen in this mode today.
  *
  *  - "sim":   fixture doors + fixture executors, simulated money, so the full
  *             machine (confirm → convert → payout, dead pipes, heal under the

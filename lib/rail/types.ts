@@ -100,11 +100,12 @@ export function parsePaymentIntent(raw: unknown): PaymentIntent {
 export type DoorKind = "cash" | "card" | "bank" | "cash_network";
 
 /**
- * Certification status of a door. The machine flag stays `IN_FLIGHT` until
- * the owner sets MONEYGRAM_CASH_IN_CERT=CLEARED (5/5). Product copy must
- * say cert is already approved at 4/5 — never "awaiting cert" or "in flight".
- * A door must be explicitly flipped to `CLEARED` before it may confirm
- * real customer money.
+ * Certification status of a door. Certification with the licensed cash network
+ * is complete (5/5); this machine flag stays `IN_FLIGHT` in non-production
+ * runtimes until the owner sets MONEYGRAM_CASH_IN_CERT=CLEARED in production.
+ * Product copy must say certification is complete (5/5) and cash-in is
+ * launching — never "awaiting cert" or "in flight". A door must be explicitly
+ * flipped to `CLEARED` before it may confirm real customer money.
  */
 export type CertificationStatus = "CLEARED" | "IN_FLIGHT";
 
