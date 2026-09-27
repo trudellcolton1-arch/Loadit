@@ -17,6 +17,26 @@ const HANDLEISH = /^\/([a-z0-9][a-z0-9_.-]{1,30})(?:\/(\$?[0-9.]+))?\/?$/i;
 
 export function middleware(req: NextRequest) {
   const host = (req.headers.get("host") || "").toLowerCase();
+
+  // load.club — the Loadit members/rewards program. Same deployment, its own
+  // face: serve the /club experience while the load.club URL stays in the bar.
+  if (host === "load.club" || host === "www.load.club") {
+    const { pathname } = req.nextUrl;
+    if (host === "www.load.club") {
+      const url = req.nextUrl.clone();
+      url.protocol = "https:";
+      url.host = "load.club";
+      url.port = "";
+      return NextResponse.redirect(url, 308); // canonical apex
+    }
+    if (!pathname.startsWith("/club")) {
+      const url = req.nextUrl.clone();
+      url.pathname = pathname === "/" ? "/club" : `/club${pathname}`;
+      return NextResponse.rewrite(url);
+    }
+    return NextResponse.next();
+  }
+
   if (host !== "load.money" && host !== "www.load.money") return NextResponse.next();
 
   const { pathname } = req.nextUrl;
