@@ -6,8 +6,11 @@ import {
   ensureSchema,
   loadStructure,
   newDocId,
+  recordNdaAcceptance,
+  listNdaAcceptances,
   MAX_FILE_BYTES,
 } from "@/lib/dataroom";
+import { NDA_VERSION } from "@/lib/nda";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -32,7 +35,9 @@ export async function GET(req: NextRequest) {
   const role = dataroomRole(req.headers);
   if (!role) return deny(401, "unauthorized");
   const sections = await loadStructure();
-  return NextResponse.json({ ok: true, role, sections });
+  // The owner sees who has signed the NDA; investors never see the list.
+  const ndaAcceptances = role === "admin" ? await listNdaAcceptances() : undefined;
+  return NextResponse.json({ ok: true, role, sections, ndaAcceptances, ndaVersion: NDA_VERSION });
 }
 
 interface AdminBody {
@@ -41,6 +46,7 @@ interface AdminBody {
   title?: string;
   docId?: string;
   name?: string;
+  email?: string;
   folder?: string;
   mime?: string;
   contentB64?: string;
@@ -49,7 +55,7 @@ interface AdminBody {
 export async function POST(req: NextRequest) {
   if (!dataroomConfigured()) return deny(503, "not_configured");
   const role = dataroomRole(req.headers);
-  if (role !== "admin") return deny(role ? 403 : 401, role ? "admin_only" : "unauthorized");
+  if (!role) return deny(401, "unauthorized");
 
   let body: AdminBody;
   try {
@@ -57,6 +63,25 @@ export async function POST(req: NextRequest) {
   } catch {
     return deny(400, "bad_json");
   }
+
+  // Recording an NDA acceptance is open to any authorized role (an investor
+  // signs before entering). Everything else below is admin-only.
+  if (body.action === "accept_nda") {
+    const name = (body.name || "").trim().slice(0, 160);
+    const email = (body.email || "").trim().slice(0, 200);
+    const entity = (body.folder || "").trim().slice(0, 200); // 'folder' reused as optional entity
+    if (!name || !email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+      return deny(400, "name_and_valid_email_required");
+    }
+    const id = await recordNdaAcceptance({
+      name, email, entity, role,
+      ndaVersion: NDA_VERSION,
+      userAgent: req.headers.get("user-agent") || "",
+    });
+    return NextResponse.json({ ok: true, acceptanceId: id, ndaVersion: NDA_VERSION });
+  }
+
+  if (role !== "admin") return deny(403, "admin_only");
 
   await ensureSchema();
 

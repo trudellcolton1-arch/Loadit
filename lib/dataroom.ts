@@ -107,6 +107,62 @@ export async function ensureSchema(): Promise<void> {
       content_b64 text not null,
       uploaded_at timestamptz not null default now()
     )`);
+  await drQuery(`
+    create table if not exists dataroom_nda_acceptances (
+      id text primary key,
+      name text not null,
+      email text not null,
+      entity text not null default '',
+      role text not null,
+      nda_version text not null,
+      user_agent text not null default '',
+      accepted_at timestamptz not null default now()
+    )`);
+}
+
+/** A recorded NDA acceptance (admin-visible evidence). */
+export interface NdaAcceptance {
+  id: string;
+  name: string;
+  email: string;
+  entity: string;
+  ndaVersion: string;
+  acceptedAt: string;
+}
+
+/** Record a click-through NDA acceptance. Returns the new row id. */
+export async function recordNdaAcceptance(a: {
+  name: string; email: string; entity: string; role: DataroomRole; ndaVersion: string; userAgent: string;
+}): Promise<string> {
+  await ensureSchema();
+  const id = "nda_" + Array.from({ length: 16 }, () =>
+    "abcdefghijklmnopqrstuvwxyz0123456789"[Math.floor(Math.random() * 36)]
+  ).join("");
+  await drQuery(
+    `insert into dataroom_nda_acceptances (id, name, email, entity, role, nda_version, user_agent)
+     values ($1,$2,$3,$4,$5,$6,$7)`,
+    [id, a.name, a.email, a.entity, a.role || "investor", a.ndaVersion, a.userAgent.slice(0, 400)]
+  );
+  return id;
+}
+
+/** All acceptances, newest first — admin only. */
+export async function listNdaAcceptances(): Promise<NdaAcceptance[]> {
+  try {
+    const rows = await drQuery<{
+      id: string; name: string; email: string; entity: string; nda_version: string; accepted_at: string;
+    }>(
+      `select id, name, email, entity, nda_version, accepted_at
+       from dataroom_nda_acceptances order by accepted_at desc`
+    );
+    return rows.map((r) => ({
+      id: r.id, name: r.name, email: r.email, entity: r.entity,
+      ndaVersion: r.nda_version, acceptedAt: r.accepted_at,
+    }));
+  } catch (err) {
+    if (/relation .* does not exist/i.test(err instanceof Error ? err.message : "")) return [];
+    throw err;
+  }
 }
 
 /* ----------------------------------------------------------------- types */

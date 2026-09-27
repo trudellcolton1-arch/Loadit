@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { NDA_VERSION, NDA_TITLE, NDA_EFFECTIVE, NDA_INTRO, NDA_CLAUSES } from "@/lib/nda";
 
 /**
  * DATA ROOM CLIENT — gate first, room second.
@@ -28,6 +29,7 @@ interface Section {
 }
 
 const KEY_STORE = "loadit_dataroom_key";
+const NDA_STORE = `loadit_dataroom_nda_${NDA_VERSION}`;
 
 function fmtBytes(n: number): string {
   if (n < 1024) return `${n} B`;
@@ -53,10 +55,21 @@ export function DataRoomClient() {
   const fileInput = useRef<HTMLInputElement>(null);
   const [uploadTarget, setUploadTarget] = useState<{ sectionId: number; folder: string } | null>(null);
 
+  // NDA click-through gate (investors only; the owner's own room is exempt).
+  const [ndaAccepted, setNdaAccepted] = useState(false);
+  const [ndaName, setNdaName] = useState("");
+  const [ndaEmail, setNdaEmail] = useState("");
+  const [ndaEntity, setNdaEntity] = useState("");
+  const [ndaReadToEnd, setNdaReadToEnd] = useState(false);
+  const [acceptances, setAcceptances] = useState<
+    { id: string; name: string; email: string; entity: string; ndaVersion: string; acceptedAt: string }[]
+  >([]);
+
   useEffect(() => {
     try {
       const k = sessionStorage.getItem(KEY_STORE);
       if (k) setEntered(k);
+      if (localStorage.getItem(NDA_STORE)) setNdaAccepted(true);
     } catch { /* gate stays up */ }
   }, []);
 
@@ -87,6 +100,7 @@ export function DataRoomClient() {
       }
       setRole(data.role);
       setSections(data.sections);
+      if (Array.isArray(data.ndaAcceptances)) setAcceptances(data.ndaAcceptances);
     } catch {
       setErr("Couldn't reach the room — check your connection.");
     } finally {
@@ -105,6 +119,37 @@ export function DataRoomClient() {
   };
 
   const admin = role === "admin";
+  // Investors must accept the NDA; the owner's own room is exempt.
+  const ndaRequired = role === "investor" && !ndaAccepted;
+
+  const acceptNda = async () => {
+    const name = ndaName.trim();
+    const email = ndaEmail.trim();
+    if (!name || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+      setErr("Enter your full name and a valid email to accept.");
+      return;
+    }
+    setBusy(true);
+    setErr(null);
+    try {
+      const res = await fetch("/api/dataroom", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...headers() },
+        body: JSON.stringify({ action: "accept_nda", name, email, folder: ndaEntity.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        setErr("Couldn't record your acceptance — try again.");
+        return;
+      }
+      try { localStorage.setItem(NDA_STORE, new Date().toISOString()); } catch { /* ok */ }
+      setNdaAccepted(true);
+    } catch {
+      setErr("Couldn't reach the room — try again.");
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const act = async (body: Record<string, unknown>): Promise<boolean> => {
     setBusy(true);
@@ -241,6 +286,79 @@ export function DataRoomClient() {
     );
   }
 
+  /* --------------------------------------------------------- NDA gate */
+  if (ndaRequired) {
+    const canAccept = ndaReadToEnd && ndaName.trim() && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(ndaEmail.trim());
+    return (
+      <div className="mx-auto max-w-2xl px-6 pb-24 pt-12">
+        <p className="font-mono text-[10px] font-bold uppercase tracking-[0.3em] text-emerald-300/80">
+          Loadit Global · Diligence Library
+        </p>
+        <h1 className="mt-2 text-2xl font-black tracking-tight text-white">{NDA_TITLE}</h1>
+        <p className="mt-1 text-xs text-white/40">
+          Version {NDA_VERSION} · Effective {NDA_EFFECTIVE} · You must accept to view the materials.
+        </p>
+
+        <div
+          onScroll={(e) => {
+            const el = e.currentTarget;
+            if (el.scrollTop + el.clientHeight >= el.scrollHeight - 24) setNdaReadToEnd(true);
+          }}
+          className="mt-5 max-h-[46vh] overflow-y-auto rounded-xl border border-white/10 bg-white/[0.03] p-5 text-sm leading-relaxed text-white/70"
+        >
+          <p className="text-white/80">{NDA_INTRO}</p>
+          {NDA_CLAUSES.map((c) => (
+            <div key={c.heading} className="mt-4">
+              <p className="font-bold text-emerald-300/90">{c.heading}</p>
+              <p className="mt-1">{c.body}</p>
+            </div>
+          ))}
+          <p className="mt-5 text-[11px] text-white/35">— End of agreement —</p>
+        </div>
+        {!ndaReadToEnd && (
+          <p className="mt-2 text-[11px] text-white/35">Scroll to the end of the agreement to enable acceptance.</p>
+        )}
+
+        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+          <input
+            value={ndaName} onChange={(e) => setNdaName(e.target.value)}
+            placeholder="Full legal name"
+            className="rounded-xl border border-white/15 bg-white/[0.04] px-4 py-3 text-sm text-white placeholder-white/30 outline-none focus:border-emerald-400/50"
+          />
+          <input
+            value={ndaEmail} onChange={(e) => setNdaEmail(e.target.value)}
+            placeholder="Email" type="email" autoCapitalize="none"
+            className="rounded-xl border border-white/15 bg-white/[0.04] px-4 py-3 text-sm text-white placeholder-white/30 outline-none focus:border-emerald-400/50"
+          />
+          <input
+            value={ndaEntity} onChange={(e) => setNdaEntity(e.target.value)}
+            placeholder="Entity / firm (optional)"
+            className="rounded-xl border border-white/15 bg-white/[0.04] px-4 py-3 text-sm text-white placeholder-white/30 outline-none focus:border-emerald-400/50 sm:col-span-2"
+          />
+        </div>
+
+        <button
+          onClick={acceptNda}
+          disabled={!canAccept || busy}
+          className="mt-5 w-full rounded-xl bg-emerald-400 px-5 py-3.5 text-sm font-bold text-[#05270F] disabled:opacity-40 hover:bg-emerald-300"
+        >
+          {busy ? "Recording…" : "I Agree — Enter the Data Room"}
+        </button>
+        <p className="mt-3 text-[11px] leading-relaxed text-white/35">
+          Clicking &ldquo;I Agree&rdquo; is your electronic signature and records your name, email, and the
+          date and time as binding acceptance of this Agreement.
+        </p>
+        {err && <p className="mt-3 text-xs text-rose-300">{err}</p>}
+        <button
+          onClick={() => { try { sessionStorage.removeItem(KEY_STORE); } catch { /* ok */ } setEntered(null); setRole(null); }}
+          className="mt-6 text-xs text-white/40 underline"
+        >
+          Decline and exit
+        </button>
+      </div>
+    );
+  }
+
   /* ------------------------------------------------------------- room */
   return (
     <div className="mx-auto max-w-4xl px-6 pb-24 pt-14">
@@ -283,6 +401,42 @@ export function DataRoomClient() {
           </button>
           <span className="self-center text-[11px] text-white/35">Uploads: 3 MB per file. Stored privately; served only to authorized codes.</span>
         </div>
+      )}
+
+      {admin && (
+        <details className="mt-4 rounded-xl border border-white/10 bg-white/[0.02] p-4">
+          <summary className="cursor-pointer text-sm font-bold text-white">
+            NDA acceptances <span className="text-white/40">({acceptances.length})</span>
+          </summary>
+          {acceptances.length === 0 ? (
+            <p className="mt-3 text-xs text-white/40">No one has accepted the NDA yet.</p>
+          ) : (
+            <div className="mt-3 overflow-x-auto">
+              <table className="w-full text-left text-xs text-white/70">
+                <thead className="text-[10px] uppercase tracking-[0.12em] text-white/35">
+                  <tr>
+                    <th className="py-1 pr-4">Name</th>
+                    <th className="py-1 pr-4">Email</th>
+                    <th className="py-1 pr-4">Entity</th>
+                    <th className="py-1 pr-4">Version</th>
+                    <th className="py-1">Accepted</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {acceptances.map((a) => (
+                    <tr key={a.id} className="border-t border-white/8">
+                      <td className="py-1.5 pr-4 font-semibold text-white">{a.name}</td>
+                      <td className="py-1.5 pr-4">{a.email}</td>
+                      <td className="py-1.5 pr-4">{a.entity || "—"}</td>
+                      <td className="py-1.5 pr-4">{a.ndaVersion}</td>
+                      <td className="py-1.5">{fmtDate(a.acceptedAt)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </details>
       )}
 
       {err && <p className="mt-4 text-xs text-rose-300">{err}</p>}
