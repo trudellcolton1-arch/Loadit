@@ -19,11 +19,14 @@ const LEADS_FROM = process.env.LEADS_FROM || "Loadit <onboarding@resend.dev>";
 
 async function emailLead(lead: { email: string; source: string; ts: string }): Promise<void> {
   const key = process.env.RESEND_API_KEY;
-  if (!key) return;
+  if (!key) {
+    console.warn("[waitlist] RESEND_API_KEY not set — lead only logged, not emailed");
+    return;
+  }
   try {
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), 5000);
-    await fetch("https://api.resend.com/emails", {
+    const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
       signal: ctrl.signal,
@@ -34,8 +37,17 @@ async function emailLead(lead: { email: string; source: string; ts: string }): P
         subject: `Loadit lead: ${lead.email}`,
         text: `New Request Access lead on loadit.net\n\nEmail: ${lead.email}\nSource: ${lead.source}\nTime: ${lead.ts}\n\nReply to this email to reach them directly.`,
       }),
-    }).catch(() => {});
+    }).catch((e: unknown) => {
+      console.error("[waitlist] resend request failed:", e instanceof Error ? e.message : String(e));
+      return null;
+    });
     clearTimeout(timer);
+    if (res) {
+      // Visible in Vercel runtime logs: proves whether the lead actually reached LEADS_TO.
+      const text = await res.text().catch(() => "");
+      if (res.ok) console.log(`[waitlist] emailed lead to ${LEADS_TO}: ${text}`);
+      else console.error(`[waitlist] resend rejected (${res.status}) to ${LEADS_TO}: ${text}`);
+    }
   } catch {
     // Never fail the user on a mail hiccup.
   }
