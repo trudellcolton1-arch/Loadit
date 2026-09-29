@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { PageShell } from "../_components/PageShell";
 import { Section, Kicker, H2, Lede, Cta } from "../_components/Bits";
 import { Labs } from "../_components/Labs";
+import { Roadmap } from "../_components/Roadmap";
 import { Reveal } from "@/components/ui/Reveal";
 
 export const metadata: Metadata = {
@@ -54,6 +55,7 @@ export default function CompanyPage() {
           </Reveal>
         </div>
       </Section>
+      <Roadmap />
       <Labs />
     </PageShell>
   );

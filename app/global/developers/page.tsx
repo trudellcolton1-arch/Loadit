@@ -13,6 +13,8 @@ const NAVI = [
   { label: "Overview", href: "/developers" },
   { label: "Quickstart (preview)", href: "/developers/quickstart" },
   { label: "API Reference (preview)", href: "/developers/api" },
+  { label: "Transaction model (preview)", href: "/developers/transaction-model" },
+  { label: "Embedded capabilities", href: "/capabilities" },
   { label: "SDKs", href: "/developers/sdks" },
   { label: "Webhooks", href: "/developers/webhooks" },
   { label: "Live demo", href: "/developers/sandbox" },
@@ -48,10 +50,14 @@ export default function DevelopersPage() {
               ["Routing engine — public live demo", "LIVE DEMO"],
               ["Routing API access", "COMING SOON"],
               ["API keys", "EARLY ACCESS"],
-              ["Transactions / settlement objects", "IN BUILD"],
+              ["Transactions / settlement objects (Load)", "IN BUILD"],
+              ["Multi-Asset Load · allocations", "PLANNED"],
+              ["Send · Convert · Receive · Connect · Cash Out", "PLANNED"],
+              ["Loadit One for platforms (issuing partner required)", "PLANNED"],
+              ["Capability registry", "PLANNED"],
               ["Webhooks", "PLANNED"],
               ["SDKs (TypeScript, Python)", "PLANNED"],
-              ["Dashboard", "PLANNED"],
+              ["White-label components · dashboard", "PLANNED"],
             ].map(([k, s]) => (
               <div key={k} className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.02] px-4 py-3">
                 <span className="text-sm text-white/80">{k}</span>

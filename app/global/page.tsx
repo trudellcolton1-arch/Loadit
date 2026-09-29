@@ -6,6 +6,7 @@ import { GpsComparison } from "./_components/GpsComparison";
 import { Rerouting } from "./_components/Rerouting";
 import { HowItWorks } from "./_components/HowItWorks";
 import { Engine } from "./_components/Engine";
+import { Capabilities } from "./_components/Capabilities";
 import { DeveloperExperience } from "./_components/DeveloperExperience";
 import { WhoFor } from "./_components/WhoFor";
 import { ProductsGrid } from "./_components/ProductsGrid";
@@ -34,6 +35,7 @@ export default function GlobalHome() {
       <Rerouting />
       <HowItWorks />
       <Engine />
+      <Capabilities />
       <DeveloperExperience />
       <WhoFor />
       <ProductsGrid />

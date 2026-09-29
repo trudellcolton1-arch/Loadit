@@ -33,6 +33,19 @@ export default function CompliancePage() {
             ))}
           </div>
 
+          <H3 id="availability">Faster availability and who takes the risk</H3>
+          <P>
+            Loadit cannot tell a bank that uncleared money is cleared, and it will not. Faster availability exists only
+            where an approved partner or facility provides value before the original funding source is final — a
+            prefunded settlement pool, a credit facility, or a guarantee, with explicit risk ownership, transaction
+            limits, and fraud controls. HQ can decide whether that faster path is eligible; the contract decides who
+            absorbs a failed incoming payment.
+          </P>
+          <div className="mt-4 flex flex-wrap items-center gap-3 rounded-xl border border-white/10 bg-white/[0.02] px-5 py-3.5">
+            <StatusTag status="PLANNED" />
+            <span className="text-sm text-white/60">No &ldquo;instant finality&rdquo; is promised until the facility and the contractual risk allocation are actually live.</span>
+          </div>
+
           <H3 id="honesty">Honesty policy</H3>
           <P>Every capability on this site carries a status label. Illustrative visualizations are labeled illustrative. Planned endpoints are labeled planned. Estimates are called estimates. Enterprise diligence materials are available under NDA on request.</P>
         </div>

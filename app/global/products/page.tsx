@@ -15,7 +15,7 @@ export default function ProductsPage() {
     <PageShell
       eyebrow="Products"
       title="Every layer of the route."
-      lede="One integration exposes the whole stack. Each capability carries an honest status: live in the sandbox today, patent-pending design, or in build for production."
+      lede="One integration exposes the whole stack. Each layer carries an honest status: running in the live demo today, patent-pending design, or in build for production. The customer-facing actions built on these layers — Load, Send, Connect, Convert, Receive, Cash Out, Loadit One — are on the embedded capabilities page."
     >
       <ProductsGrid full />
       <Engine />

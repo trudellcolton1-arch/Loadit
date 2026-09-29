@@ -55,6 +55,22 @@ export function GlobalJsonLd() {
           },
           {
             "@type": "Question",
+            name: "What can a business embed with Loadit?",
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: "The same seven money actions the consumer product is built on — Load, Send, Connect, Convert, Receive, Cash Out, and Loadit One — through APIs, SDKs, and white-label experiences. Load is in build; the rest follows a published launch sequence and is labeled planned until it exists in the runtime.",
+            },
+          },
+          {
+            "@type": "Question",
+            name: "Does a bank or exchange need Loadit for what it already does?",
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: "No. Keep the rails and trading you already have. Loadit earns its place only where it adds a transaction type, a conversion, a destination, an interoperability layer, or a spending behavior you do not already provide efficiently — for example checking to a supported stablecoin in an external wallet, or cash funding for an exchange with no retail network.",
+            },
+          },
+          {
+            "@type": "Question",
             name: "Can I integrate Loadit Global today?",
             acceptedAnswer: {
               "@type": "Answer",

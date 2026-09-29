@@ -109,10 +109,14 @@ Content-Type: application/json
 
           <H3 id="planned">Planned endpoints</H3>
           <div className="mt-3 flex items-center gap-2"><StatusTag status="PLANNED" /><span className="text-sm text-white/50">Shapes shown for design review.</span></div>
-          <Code title="Conceptual">{`POST   /api/v1/transactions            create a transaction (origin, destination, amount, constraints)
-GET    /api/v1/transactions/:id        state machine: quoted → intake → converting → paying_out → settled
-POST   /api/v1/transactions/:id/heal   re-score remaining legs under the same id
-GET    /api/v1/routes                  list supported corridors and their status`}</Code>
+          <Code title="Conceptual">{`POST   /api/v1/transactions            create a transaction — type: load | send | convert | receive | cash_out | connect | spend
+                                       one source, one or many outputs (Multi-Asset Load, allocations, recipient rules)
+GET    /api/v1/transactions/:id        parent state: quoted → funded → converting → paying_out → settled; every leg inside
+POST   /api/v1/transactions/:id/heal   re-score remaining legs under the same id after a partner or network failure
+GET    /api/v1/capabilities            the capability registry: funding methods, assets, networks, partners live right now
+GET    /api/v1/routes                  list supported corridors and their status
+POST   /api/v1/receive-rules           a standing rule for how incoming value arrives and is allocated (Receive)`}</Code>
+          <P>The full object, its legs, partial-failure rules, and idempotency are described in the <a href="/developers/transaction-model" className="text-white underline decoration-white/30 underline-offset-4 hover:decoration-white">transaction model preview</a>.</P>
         </div>
         <Aside title="On this page" items={NAVI} />
       </Prose>

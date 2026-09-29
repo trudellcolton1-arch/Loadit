@@ -8,7 +8,9 @@ const LAYERS = [
   { name: "Intelligent orchestration", sub: "HQ · scores every supported path" },
   { name: "Route evaluation", sub: "cost · speed · liquidity · availability · risk · compliance" },
   { name: "Compliance + risk", sub: "jurisdiction-aware, scored per route" },
+  { name: "Partners + rails execute", sub: "cash · card · liquidity · networks · banks · issuing — under their role" },
   { name: "Settlement execution", sub: "idempotent · one payment id" },
+  { name: "Loadit ledger", sub: "verifies · reconciles · one receipt" },
   { name: "Destination", sub: "the value the application asked for" },
 ];
 
@@ -19,9 +21,14 @@ const EXPLAIN = [
     body: "The UVCE is designed to normalize different representations of value into a system Loadit's infrastructure can route and process. A card authorization, cash at a counter, and a stablecoin on one network all become the same kind of settlement-ready object.",
   },
   {
-    title: "Intelligent routing",
+    title: "HQ — intelligent routing",
     status: "IN BUILD" as const,
-    body: "Loadit's orchestration layer evaluates available supported settlement paths instead of forcing developers to hard-code every possible financial route. The selected route is locked with a time-to-live and returned with its cost, expected time, and confidence.",
+    body: "HQ is the orchestration brain. It understands the requested outcome and decides among eligible routes, providers, liquidity, funding sources, networks, and destinations — instead of forcing developers to hard-code every financial route. The selected route is locked with a time-to-live and returned with its cost, expected time, and confidence.",
+  },
+  {
+    title: "Partners + Loadit ledger",
+    status: "IN BUILD" as const,
+    body: "Connected partners execute the actual funding, conversion, card, payout, or network movement under their own role and license. Loadit records the instruction, the route, every leg's state, and the receipt, then verifies status, settlement, and reconciliation against what the partners report.",
   },
   {
     title: "Adaptive routing",
@@ -42,7 +49,7 @@ export function Engine() {
         <Reveal>
           <ol className="relative rounded-2xl border border-white/10 bg-[#070A12]/85 p-3 shadow-glass">
             {LAYERS.map((l, i) => {
-              const core = i >= 2 && i <= 6;
+              const core = i >= 2 && i <= 8;
               return (
                 <li key={l.name} className="relative">
                   <div className={`flex items-center justify-between rounded-xl px-4 py-3 ${core ? "border border-rail-400/25 bg-rail-400/[0.05]" : "border border-white/8 bg-white/[0.02]"}`}>
