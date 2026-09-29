@@ -81,13 +81,15 @@ export function Lede({ children, className }: { children: ReactNode; className?:
   );
 }
 
-export type Status = "COMING SOON" | "EARLY ACCESS" | "PREVIEW" | "PATENT PENDING" | "IN BUILD" | "CONCEPTUAL" | "ILLUSTRATIVE" | "PLANNED" | "LABS";
+export type Status = "LIVE DEMO" | "COMING SOON" | "EARLY ACCESS" | "PREVIEW" | "PATENT PENDING" | "IN BUILD" | "CONCEPTUAL" | "ILLUSTRATIVE" | "PLANNED" | "LABS";
 
 /** Honest capability tag — every product/example carries one. */
 export function StatusTag({ status, className }: { status: Status; className?: string }) {
   const tone =
-    status === "COMING SOON" || status === "EARLY ACCESS"
-      ? "border-rail-400/50 text-rail-400 bg-rail-400/10"
+    status === "LIVE DEMO"
+      ? "border-rail-400/70 text-rail-400 bg-rail-400/15 shadow-glow"
+      : status === "COMING SOON" || status === "EARLY ACCESS"
+        ? "border-rail-400/50 text-rail-400 bg-rail-400/10"
       : status === "PATENT PENDING"
         ? "border-cyan-glow/40 text-cyan-glow bg-cyan-glow/10"
         : status === "IN BUILD"

@@ -33,7 +33,7 @@ export const NAV = {
     { label: "API Reference", href: "/developers/api", desc: "Preview of the interface." },
     { label: "SDKs", href: "/developers/sdks", desc: "Client libraries." },
     { label: "Webhooks", href: "/developers/webhooks", desc: "Route and settlement events." },
-    { label: "Sandbox", href: "/developers/sandbox", desc: "Opens with early access." },
+    { label: "Live demo", href: "/developers/sandbox", desc: "Watch the real engine route." },
     { label: "Status", href: "/status", desc: "System status." },
   ],
   top: [
@@ -64,7 +64,7 @@ export const FOOTER = [
       { label: "API Reference", href: "/developers/api" },
       { label: "SDKs", href: "/developers/sdks" },
       { label: "Webhooks", href: "/developers/webhooks" },
-      { label: "Sandbox", href: "/developers/sandbox" },
+      { label: "Live demo", href: "/developers/sandbox" },
       { label: "Status", href: "/status" },
     ],
   },

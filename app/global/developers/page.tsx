@@ -15,7 +15,7 @@ const NAVI = [
   { label: "API Reference (preview)", href: "/developers/api" },
   { label: "SDKs", href: "/developers/sdks" },
   { label: "Webhooks", href: "/developers/webhooks" },
-  { label: "Sandbox", href: "/developers/sandbox" },
+  { label: "Live demo", href: "/developers/sandbox" },
   { label: "Status", href: "/status" },
 ];
 
@@ -32,7 +32,7 @@ export default function DevelopersPage() {
           <div className="rounded-2xl border border-rail-400/30 bg-rail-400/[0.05] p-5">
             <p className="font-mono text-[10px] font-bold uppercase tracking-[0.25em] text-rail-400">Pre-launch</p>
             <p className="mt-2 text-sm text-white/80">Nothing on these pages is available to integrate yet. Keys are issued to early-access partners first, by a person.</p>
-            <div className="mt-4"><Cta href="/access" className="px-4 py-2.5 text-xs">Join the early-access list</Cta></div>
+            <div className="mt-4 flex flex-wrap gap-2"><Cta href="/access" className="px-4 py-2.5 text-xs">Join the early-access list</Cta><Cta href="/developers/sandbox" variant="secondary" className="px-4 py-2.5 text-xs">Watch the live demo</Cta></div>
           </div>
 
           <H3 id="what">What the platform is</H3>
@@ -45,7 +45,8 @@ export default function DevelopersPage() {
           <H3 id="status">Capability status</H3>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             {[
-              ["Routing API", "COMING SOON"],
+              ["Routing engine — public live demo", "LIVE DEMO"],
+              ["Routing API access", "COMING SOON"],
               ["API keys", "EARLY ACCESS"],
               ["Transactions / settlement objects", "IN BUILD"],
               ["Webhooks", "PLANNED"],
@@ -54,7 +55,7 @@ export default function DevelopersPage() {
             ].map(([k, s]) => (
               <div key={k} className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.02] px-4 py-3">
                 <span className="text-sm text-white/80">{k}</span>
-                <StatusTag status={s as "COMING SOON" | "EARLY ACCESS" | "PLANNED" | "IN BUILD"} />
+                <StatusTag status={s as "LIVE DEMO" | "COMING SOON" | "EARLY ACCESS" | "PLANNED" | "IN BUILD"} />
               </div>
             ))}
           </div>

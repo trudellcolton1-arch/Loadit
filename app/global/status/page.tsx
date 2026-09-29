@@ -9,7 +9,8 @@ export const metadata: Metadata = {
 };
 
 const COMPONENTS = [
-  { name: "Platform", state: "Pre-launch — not yet available", tone: "build" },
+  { name: "Public live demo (Route Finder)", state: "Operational — real routing engine, demo only", tone: "ok" },
+  { name: "Platform access", state: "Pre-launch — not yet open to integrators", tone: "build" },
   { name: "Routing API", state: "In build — opening to early-access partners first", tone: "build" },
   { name: "Transactions / settlement", state: "In build — not yet available", tone: "build" },
   { name: "Webhooks", state: "Planned", tone: "build" },
