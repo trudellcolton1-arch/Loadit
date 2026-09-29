@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { timingSafeEqual } from "crypto";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,11 +18,15 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const LEADS_TO = process.env.LEADS_TO || "colt@loadit.net";
 const LEADS_FROM = process.env.LEADS_FROM || "Loadit <onboarding@resend.dev>";
 
-async function emailLead(lead: { email: string; source: string; ts: string }): Promise<void> {
+type Delivery =
+  | { channel: "email"; ok: boolean; status: number; to: string; detail: string }
+  | { channel: "log_only"; ok: false; reason: string };
+
+async function emailLead(lead: { email: string; source: string; ts: string }): Promise<Delivery> {
   const key = process.env.RESEND_API_KEY;
   if (!key) {
     console.warn("[waitlist] RESEND_API_KEY not set — lead only logged, not emailed");
-    return;
+    return { channel: "log_only", ok: false, reason: "RESEND_API_KEY not set" };
   }
   try {
     const ctrl = new AbortController();
@@ -42,15 +47,25 @@ async function emailLead(lead: { email: string; source: string; ts: string }): P
       return null;
     });
     clearTimeout(timer);
-    if (res) {
-      // Visible in Vercel runtime logs: proves whether the lead actually reached LEADS_TO.
-      const text = await res.text().catch(() => "");
-      if (res.ok) console.log(`[waitlist] emailed lead to ${LEADS_TO}: ${text}`);
-      else console.error(`[waitlist] resend rejected (${res.status}) to ${LEADS_TO}: ${text}`);
-    }
-  } catch {
+    if (!res) return { channel: "log_only", ok: false, reason: "resend unreachable" };
+    // Visible in Vercel runtime logs: proves whether the lead actually reached LEADS_TO.
+    const text = await res.text().catch(() => "");
+    if (res.ok) console.log(`[waitlist] emailed lead to ${LEADS_TO}: ${text}`);
+    else console.error(`[waitlist] resend rejected (${res.status}) to ${LEADS_TO}: ${text}`);
+    return { channel: "email", ok: res.ok, status: res.status, to: LEADS_TO, detail: text.slice(0, 300) };
+  } catch (e) {
     // Never fail the user on a mail hiccup.
+    return { channel: "log_only", ok: false, reason: e instanceof Error ? e.message : String(e) };
   }
+}
+
+/** Admin-only diagnostics: the data-room admin key unlocks the delivery report in the response. */
+function isAdmin(req: Request): boolean {
+  const want = process.env.DATAROOM_ADMIN_KEY;
+  const got = req.headers.get("x-waitlist-diag");
+  if (!want || !got) return false;
+  const a = Buffer.from(want), b = Buffer.from(got);
+  return a.length === b.length && timingSafeEqual(a, b);
 }
 export async function POST(req: Request) {
   let body: { email?: string; source?: string };
@@ -71,7 +86,7 @@ export async function POST(req: Request) {
     ts: new Date().toISOString(),
   };
 
-  await emailLead(lead);
+  const delivery = await emailLead(lead);
 
   const hook = process.env.WAITLIST_WEBHOOK_URL;
   if (hook) {
@@ -88,5 +103,6 @@ export async function POST(req: Request) {
   // Backstop: always visible in Vercel runtime logs.
   console.log("[waitlist] lead:", lead);
 
+  if (isAdmin(req)) return NextResponse.json({ ok: true, delivery });
   return NextResponse.json({ ok: true });
 }
