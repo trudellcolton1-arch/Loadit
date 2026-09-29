@@ -185,16 +185,19 @@ export function HeroRoute() {
                       animate={{ opacity: dim ? 0.2 : showCandidates ? 1 : 0 }}
                       transition={{ duration: 0.4, delay: showCandidates ? 0.3 + i * 0.12 : 0 }}
                     >
-                      <rect x={r.x - 46} y="250" width="92" height="40" rx="8" fill="#0B0F1A" stroke={isSel && selected ? "rgba(34,169,92,0.8)" : "rgba(255,255,255,0.14)"} />
-                      <text x={r.x} y="266" textAnchor="middle" fontFamily="var(--font-mono)" fontSize="10" fill="#fff" letterSpacing="1">
-                        ROUTE {r.id} · {r.label}
+                      <rect x={r.x - 52} y="250" width="104" height="56" rx="9" fill="#0B0F1A" stroke={isSel && selected ? "rgba(34,169,92,0.8)" : "rgba(255,255,255,0.14)"} />
+                      <text x={r.x} y="265" textAnchor="middle" fontFamily="var(--font-mono)" fontSize="8.5" fill={isSel && selected ? "#34D17A" : "rgba(255,255,255,0.45)"} letterSpacing="2">
+                        ROUTE {r.id}
                       </text>
-                      <text x={r.x} y="281" textAnchor="middle" fontFamily="var(--font-sans)" fontSize="9.5" fill="rgba(255,255,255,0.5)">
+                      <text x={r.x} y="282" textAnchor="middle" fontFamily="var(--font-sans)" fontSize="12" fontWeight="700" fill="#fff">
+                        {r.label}
+                      </text>
+                      <text x={r.x} y="297" textAnchor="middle" fontFamily="var(--font-sans)" fontSize="9.5" fill="rgba(255,255,255,0.5)">
                         {r.meta}
                       </text>
                     </motion.g>
                     <motion.path
-                      d={`M${r.x} 290 C ${r.x} 320, 180 320, 180 350`}
+                      d={`M${r.x} 306 C ${r.x} 332, 180 332, 180 350`}
                       fill="none"
                       stroke="url(#hr-line)"
                       strokeWidth="2.5"
