@@ -25,6 +25,10 @@ export interface OgConfig {
   accent: [string, string];
   /** Up to three page-specific tags. */
   tags: string[];
+  /** Brand word before the eyebrow (default "Loadit"). */
+  brand?: string;
+  /** Domain printed in the corner (default loadit.net). */
+  domain?: string;
 }
 
 export function makeOgImage(cfg: OgConfig): ImageResponse {
@@ -85,7 +89,7 @@ export function makeOgImage(cfg: OgConfig): ImageResponse {
               color: a1,
             }}
           >
-            Loadit · {cfg.eyebrow}
+            {cfg.brand ?? "Loadit"} · {cfg.eyebrow}
           </div>
         </div>
 
@@ -156,7 +160,7 @@ export function makeOgImage(cfg: OgConfig): ImageResponse {
               letterSpacing: "0.1em",
             }}
           >
-            {SITE.domain}
+            {cfg.domain ?? SITE.domain}
           </div>
         </div>
       </div>

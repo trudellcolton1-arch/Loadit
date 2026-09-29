@@ -104,7 +104,9 @@ export function AeroChatWidget() {
   };
 
   return (
-    <>
+    // data-loadit-widget: stable hook so sibling domains (loaditglobal.com)
+    // can hide the consumer chat with scoped CSS — no behavior change here.
+    <div data-loadit-widget>
       {/* Panel */}
       <AnimatePresence>
         {open && (
@@ -314,6 +316,6 @@ export function AeroChatWidget() {
           )}
         </AnimatePresence>
       </motion.button>
-    </>
+    </div>
   );
 }
