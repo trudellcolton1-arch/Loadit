@@ -14,6 +14,6 @@ export default function Image() {
     titleAccent: "You choose the destination.",
     subtitle: "One API. Tell Loadit what value is coming in and where it needs to go — it finds the supported route.",
     accent: ["#5EEAD4", "#22C55E"],
-    tags: ["One API · multiple rails", "Non-custodial", "Live sandbox"],
+    tags: ["One API · multiple rails", "Non-custodial", "Early access"],
   });
 }

@@ -91,12 +91,12 @@ export function GlobalNav() {
         </nav>
 
         <div className="hidden items-center gap-2 lg:flex">
-          <a href="/dashboard" className="rounded-md px-3 py-2 text-sm text-white/65 hover:text-white">Sign In</a>
+          <span className="hidden font-mono text-[10px] uppercase tracking-[0.2em] text-rail-400 xl:inline">Pre-launch</span>
           <a
             href="/access"
             className="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-void transition-colors hover:bg-white/90"
           >
-            Get API access
+            Join the list
           </a>
         </div>
 
@@ -144,10 +144,9 @@ export function GlobalNav() {
                 {NAV.top.map((l) => (
                   <a key={l.href} href={l.href} className="rounded-lg py-2 text-base text-white/85">{l.label}</a>
                 ))}
-                <a href="/dashboard" className="rounded-lg py-2 text-base text-white/85">Sign In</a>
               </div>
               <a href="/access" className="rounded-lg bg-white px-4 py-3 text-center text-sm font-semibold text-void">
-                Get API access
+                Join the early-access list
               </a>
             </div>
           </motion.div>

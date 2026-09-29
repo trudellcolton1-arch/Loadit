@@ -20,7 +20,7 @@ const EXPLAIN = [
   },
   {
     title: "Intelligent routing",
-    status: "LIVE · SANDBOX" as const,
+    status: "IN BUILD" as const,
     body: "Loadit's orchestration layer evaluates available supported settlement paths instead of forcing developers to hard-code every possible financial route. The selected route is locked with a time-to-live and returned with its cost, expected time, and confidence.",
   },
   {

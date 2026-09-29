@@ -4,17 +4,17 @@ import { AccessForm } from "../../_components/AccessForm";
 
 export const metadata: Metadata = {
   title: "SDKs",
-  description: "Loadit client libraries — planned. The HTTP API needs no SDK today.",
+  description: "Loadit client libraries — planned. The HTTP API will need no SDK.",
   alternates: { canonical: "/developers/sdks" },
 };
 
 export default function Sdks() {
   return (
-    <PageShell eyebrow="SDKs" title="Client libraries." lede="The API is plain JSON over HTTPS and needs no SDK. Typed clients are planned; the intended shape is below so you can review it before it ships." status="PLANNED">
+    <PageShell eyebrow="SDKs" title="Client libraries." lede="The API will be plain JSON over HTTPS and need no SDK. Typed clients are planned; the intended shape is below so you can review it before anything ships." status="PLANNED">
       <Prose>
         <div>
-          <H3 id="today">Today</H3>
-          <P>Call the routing endpoint directly from any language. See the <a href="/developers/quickstart" className="text-rail-400 underline underline-offset-4">quickstart</a> for cURL and fetch examples.</P>
+          <H3 id="today">At launch</H3>
+          <P>Call the routing endpoint directly from any language. See the <a href="/developers/quickstart" className="text-rail-400 underline underline-offset-4">quickstart preview</a> for what cURL and fetch will look like.</P>
           <H3 id="planned">Planned: TypeScript</H3>
           <Code title="Conceptual — not published">{`import { Loadit } from "@loadit/global";
 

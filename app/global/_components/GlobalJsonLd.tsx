@@ -32,7 +32,7 @@ export function GlobalJsonLd() {
         description:
           "HTTP API that returns a selected, supported settlement route — cost, expected time, network, and a normalized settlement object — for a stated origin and destination of value.",
         publisher: { "@id": `${GLOBAL.url}/#organization` },
-        offers: { "@type": "Offer", price: "0", priceCurrency: "USD", description: "Demo key, rate-limited sandbox" },
+        releaseNotes: "Pre-launch. Opening to early-access partners first.",
       },
       {
         "@type": "FAQPage",
@@ -55,10 +55,10 @@ export function GlobalJsonLd() {
           },
           {
             "@type": "Question",
-            name: "Can I try the API today?",
+            name: "Can I integrate Loadit Global today?",
             acceptedAnswer: {
               "@type": "Answer",
-              text: "Yes. The HQ routing endpoint is live as a rate-limited sandbox with the demo key. Production keys and additional capabilities are provisioned through API access requests.",
+              text: "Not yet. Loadit Global is pre-launch. Businesses and developers can join the early-access list at loaditglobal.com/access and will be brought in as the platform opens.",
             },
           },
         ],

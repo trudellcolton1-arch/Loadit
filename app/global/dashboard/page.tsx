@@ -18,8 +18,8 @@ export default function DashboardPage() {
             <StatusTag status="PLANNED" />
             <p className="mt-4 text-white/70">No self-serve sign-in yet — deliberately. We would rather provision your first key by hand than ship a half-finished console.</p>
             <div className="mt-6 flex flex-wrap justify-center gap-3">
-              <Cta href="/access">Request access</Cta>
-              <Cta href="/developers/sandbox" variant="secondary">Use the sandbox</Cta>
+              <Cta href="/access">Join the early-access list</Cta>
+              <Cta href="/developers" variant="secondary">Preview the platform</Cta>
             </div>
           </div>
           <P>This address will become <span className="font-mono text-white">dashboard.loaditglobal.com</span>.</P>

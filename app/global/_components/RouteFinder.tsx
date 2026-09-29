@@ -2,99 +2,57 @@
 
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Section, Kicker, H2, Lede, StatusTag } from "./Bits";
+import { Section, Kicker, H2, Lede, StatusTag, Cta } from "./Bits";
 
 /**
  * THE GPS EXPERIENCE — "Money shouldn't need directions."
  *
- * YOU HAVE → YOU NEED → FIND ROUTE. Where the corridor is supported by the
- * live HQ routing endpoint (USD/cash origin → digital asset), the result is
- * REAL: fetched from /api/v1/route with the public demo key and labeled
- * LIVE SANDBOX. Every other corridor runs a clearly labeled ILLUSTRATIVE
- * walk-through — nothing is presented as live that isn't.
+ * YOU HAVE → YOU NEED → FIND ROUTE. Pre-launch: this is a PREVIEW of the
+ * experience. It animates how Loadit evaluates a route and shows the shape
+ * of the result — no live quote, no numbers, nothing presented as available.
  */
 
-type Origin = { id: string; label: string; method?: "Cash" | "Debit Card" | "Credit Card" | "Bank Transfer" };
-type Dest = { id: string; label: string; asset?: "USDC" | "USDT" | "BTC" | "ETH" | "SOL" | "XRP" };
+type Origin = { id: string; label: string };
+type Dest = { id: string; label: string; via: string };
 
 const ORIGINS: Origin[] = [
-  { id: "usd_bank", label: "USD · Bank transfer", method: "Bank Transfer" },
-  { id: "usd_debit", label: "USD · Debit card", method: "Debit Card" },
-  { id: "usd_credit", label: "USD · Credit card", method: "Credit Card" },
-  { id: "cash", label: "Cash · at a counter", method: "Cash" },
+  { id: "usd_bank", label: "USD · Bank transfer" },
+  { id: "usd_debit", label: "USD · Debit card" },
+  { id: "usd_credit", label: "USD · Credit card" },
+  { id: "cash", label: "Cash · at a counter" },
   { id: "usdc", label: "USDC" },
   { id: "btc", label: "BTC" },
 ];
 const DESTS: Dest[] = [
-  { id: "usdc", label: "USDC", asset: "USDC" },
-  { id: "usdt", label: "USDT", asset: "USDT" },
-  { id: "btc", label: "BTC", asset: "BTC" },
-  { id: "eth", label: "ETH", asset: "ETH" },
-  { id: "sol", label: "SOL", asset: "SOL" },
-  { id: "xrp", label: "XRP", asset: "XRP" },
-  { id: "usd", label: "USD · Fiat settlement" },
+  { id: "usdc", label: "USDC", via: "Solana" },
+  { id: "usdt", label: "USDT", via: "Solana" },
+  { id: "btc", label: "BTC", via: "Lightning" },
+  { id: "eth", label: "ETH", via: "Base" },
+  { id: "sol", label: "SOL", via: "Solana" },
+  { id: "xrp", label: "XRP", via: "XRPL" },
+  { id: "usd", label: "USD · Fiat settlement", via: "Licensed partner" },
 ];
 
 const CHECKS = ["Network availability", "Liquidity", "Cost", "Settlement speed", "Compliance", "Risk"];
-
-interface LiveRoute {
-  network_name: string;
-  eta: string;
-  total_usd: number;
-  loadit_fee_usd: number;
-  path: string[];
-  success_probability?: number;
-}
-
-type Result =
-  | { kind: "live"; route: LiveRoute }
-  | { kind: "illustrative"; note: string };
 
 export function RouteFinder() {
   const [origin, setOrigin] = useState<Origin>(ORIGINS[0]);
   const [dest, setDest] = useState<Dest>(DESTS[0]);
   const [stage, setStage] = useState<"idle" | "running" | "done">("idle");
   const [checks, setChecks] = useState(0);
-  const [result, setResult] = useState<Result | null>(null);
-
-  const supported = Boolean(origin.method && dest.asset);
 
   const run = async () => {
     setStage("running");
-    setResult(null);
     setChecks(0);
-    // Tick the evaluation list at a human pace while the real call runs.
-    const ticker = setInterval(() => setChecks((c) => Math.min(CHECKS.length, c + 1)), 260);
-
-    let res: Result;
-    if (supported) {
-      try {
-        const r = await fetch("/api/v1/route", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "x-api-key": "demo" },
-          body: JSON.stringify({ amount_usd: 1000, asset: dest.asset, payment_method: origin.method }),
-        });
-        const data = await r.json();
-        res = data?.ok && data.route
-          ? { kind: "live", route: data.route as LiveRoute }
-          : { kind: "illustrative", note: "The sandbox is rate-limited right now — showing the route shape without live numbers." };
-      } catch {
-        res = { kind: "illustrative", note: "Couldn't reach the sandbox — showing the route shape without live numbers." };
-      }
-    } else {
-      res = {
-        kind: "illustrative",
-        note: `${origin.label} → ${dest.label} isn't a live sandbox corridor yet. This is the route shape, not a quote.`,
-      };
+    for (let i = 1; i <= CHECKS.length; i++) {
+      await new Promise((r) => setTimeout(r, 260));
+      setChecks(i);
     }
-
-    // Let the checklist finish before revealing.
-    await new Promise((r) => setTimeout(r, Math.max(0, CHECKS.length * 260 + 200)));
-    clearInterval(ticker);
-    setChecks(CHECKS.length);
-    setResult(res);
+    await new Promise((r) => setTimeout(r, 200));
     setStage("done");
   };
+
+  const reset = () => { setStage("idle"); setChecks(0); };
 
   const Select = <T extends { id: string; label: string }>({
     label, value, options, onChange,
@@ -122,16 +80,17 @@ export function RouteFinder() {
     <Section id="find-route" grid>
       <div className="grid gap-12 lg:grid-cols-[1fr_1.1fr] lg:items-start">
         <div>
-          <Kicker>The GPS experience</Kicker>
+          <Kicker>The GPS experience · preview</Kicker>
           <H2>Money shouldn&apos;t need directions.</H2>
           <Lede>
             Your application tells Loadit the origin and destination. Loadit handles the
-            supported route between them.
+            supported route between them. This is a preview of that experience — the platform
+            is pre-launch.
           </Lede>
 
           <div className="mt-8 grid gap-4">
-            <Select label="You have" value={origin} options={ORIGINS} onChange={(v) => { setOrigin(v); setStage("idle"); setResult(null); }} />
-            <Select label="You need" value={dest} options={DESTS} onChange={(v) => { setDest(v); setStage("idle"); setResult(null); }} />
+            <Select label="You have" value={origin} options={ORIGINS} onChange={(v) => { setOrigin(v); reset(); }} />
+            <Select label="You need" value={dest} options={DESTS} onChange={(v) => { setDest(v); reset(); }} />
             <button
               onClick={run}
               disabled={stage === "running"}
@@ -140,9 +99,7 @@ export function RouteFinder() {
               {stage === "running" ? "Finding route…" : "Find route →"}
             </button>
             <p className="text-xs text-white/40">
-              {supported
-                ? "This corridor runs against the live HQ sandbox (demo key, $1,000 example). Numbers are estimates."
-                : "This corridor is illustrative — not yet a live sandbox route."}
+              Illustrative. No live quote is produced — nothing here is available to integrate yet.
             </p>
           </div>
         </div>
@@ -151,19 +108,13 @@ export function RouteFinder() {
         <div className="rounded-2xl border border-white/10 bg-[#070A12]/85 p-5 shadow-glass sm:p-6">
           <div className="flex items-center justify-between">
             <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-white/40">Route</span>
-            {result ? (
-              <StatusTag status={result.kind === "live" ? "LIVE · SANDBOX" : "ILLUSTRATIVE"} />
-            ) : (
-              <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-white/30">{stage === "running" ? "Analyzing…" : "Ready"}</span>
-            )}
+            <StatusTag status="PREVIEW" />
           </div>
 
           <div className="mt-6 grid gap-0">
-            {/* origin */}
             <Node label="Origin" value={origin.label} active />
             <Line active={stage !== "idle"} />
 
-            {/* loadit */}
             <div className="rounded-xl border border-rail-400/30 bg-rail-400/[0.05] px-4 py-3.5">
               <div className="flex items-center justify-between">
                 <span className="font-mono text-[11px] font-bold tracking-[0.25em] text-white">LOADIT</span>
@@ -191,35 +142,24 @@ export function RouteFinder() {
           </div>
 
           <AnimatePresence>
-            {result && (
+            {stage === "done" && (
               <motion.div
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
                 className="mt-5 rounded-xl border border-white/10 bg-white/[0.03] p-4"
               >
-                {result.kind === "live" ? (
-                  <>
-                    <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-rail-400">Route selected</p>
-                    <div className="mt-2 grid grid-cols-3 gap-3">
-                      <Stat k="Network" v={result.route.network_name} />
-                      <Stat k="ETA" v={result.route.eta} />
-                      <Stat k="Est. fee" v={`$${(result.route.loadit_fee_usd ?? 0).toFixed(2)}`} />
-                    </div>
-                    {result.route.path?.length ? (
-                      <p className="mt-3 truncate font-mono text-[11px] text-white/50">{result.route.path.join(" → ")}</p>
-                    ) : null}
-                    <p className="mt-2 text-[11px] text-white/35">HQ v1 · estimates dependent on live market and network conditions.</p>
-                  </>
-                ) : (
-                  <>
-                    <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-white/60">Route shape</p>
-                    <p className="mt-2 text-sm text-white/70">
-                      {origin.label} → Loadit normalizes and evaluates supported pathways → {dest.label}
-                    </p>
-                    <p className="mt-2 text-[11px] text-white/35">{result.note}</p>
-                  </>
-                )}
+                <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-rail-400">Route shape · illustrative</p>
+                <p className="mt-2 text-sm text-white/75">
+                  {origin.label} → Loadit normalizes the value, scores every supported path, and selects one → {dest.label}
+                  {dest.via ? <span className="text-white/45"> · e.g. via {dest.via}</span> : null}
+                </p>
+                <p className="mt-3 text-[11px] text-white/35">
+                  When the platform opens, this returns the selected network, cost, expected time, and a normalized settlement object.
+                </p>
+                <div className="mt-4">
+                  <Cta href="/access" className="px-4 py-2 text-xs">Join the early-access list</Cta>
+                </div>
               </motion.div>
             )}
           </AnimatePresence>
@@ -251,15 +191,6 @@ function Line({ active }: { active: boolean }) {
         style={{ transformOrigin: "top" }}
         transition={{ duration: 0.4 }}
       />
-    </div>
-  );
-}
-
-function Stat({ k, v }: { k: string; v: string }) {
-  return (
-    <div>
-      <div className="font-mono text-[10px] uppercase tracking-[0.15em] text-white/40">{k}</div>
-      <div className="mt-0.5 truncate text-sm font-semibold text-white">{v}</div>
     </div>
   );
 }

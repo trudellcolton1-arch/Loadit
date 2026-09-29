@@ -1,35 +1,39 @@
 import type { Metadata } from "next";
-import { PageShell, Prose, H3, P, Code } from "../_components/PageShell";
+import { PageShell, Prose, H3, P } from "../_components/PageShell";
 import { AccessForm } from "../_components/AccessForm";
 import { StatusTag } from "../_components/Bits";
 
 export const metadata: Metadata = {
-  title: "Get API access",
-  description: "Start with the demo key today; request a production key for higher limits and the transaction API as it ships.",
+  title: "Join the early-access list",
+  description: "Loadit Global is pre-launch. Join the list to be brought in as the platform opens to businesses and developers.",
   alternates: { canonical: "/access" },
 };
 
 export default function AccessPage() {
   return (
-    <PageShell eyebrow="API access" title="Start building." lede="The sandbox works this minute with the demo key. Production keys are issued by hand while the platform is in build — tell us what you're routing and we'll set you up.">
+    <PageShell
+      eyebrow="Early access"
+      title="Join the list."
+      lede="Loadit Global is not available yet. We're opening it to a small set of businesses and developers first. Tell us what value needs to move and we'll bring you in as the platform opens."
+      status="EARLY ACCESS"
+    >
       <Prose>
-        <div>
-          <div className="flex items-center gap-2"><StatusTag status="LIVE · SANDBOX" /><span className="text-sm text-white/55">Available now, no signup</span></div>
-          <Code title="Try it">{`curl -X POST https://loaditglobal.com/api/v1/route \\
-  -H "x-api-key: demo" -H "Content-Type: application/json" \\
-  -d '{ "amount_usd": 1000, "payment_method": "Bank Transfer", "asset": "USDC" }'`}</Code>
-          <H3 id="prod">Production access</H3>
-          <P>A production key raises the rate limit to 600 requests per minute and puts you first in line for transactions, settlement, and webhooks as they ship from the production build. Keys are provisioned by a person after a short conversation about your use case.</P>
-          <div className="mt-6 max-w-xl"><AccessForm source="access" /></div>
+        <div className="max-w-xl">
+          <AccessForm source="access" cta="Join the early-access list" />
         </div>
         <div>
-          <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-white/40">What you get</p>
+          <div className="flex items-center gap-2"><StatusTag status="COMING SOON" /></div>
+          <H3 id="what">What early access means</H3>
+          <P>A person reaches out when your use case fits what&apos;s opening. You get API keys ahead of general availability, a direct line to the engineering team, and diligence materials under NDA.</P>
+          <H3 id="who">Who we&apos;re opening to first</H3>
           <ul className="mt-3 space-y-2 text-sm text-white/60">
-            <li>— Production API key (600 req/min)</li>
-            <li>— Direct line to the engineering team</li>
-            <li>— Early access to transactions &amp; webhooks</li>
-            <li>— Diligence materials under NDA</li>
+            <li>— Fintechs and wallets moving value across rails</li>
+            <li>— Merchant, marketplace, and remittance platforms</li>
+            <li>— Financial institutions connecting existing products</li>
+            <li>— Teams building governed payments for AI agents</li>
           </ul>
+          <H3 id="honest">No surprises</H3>
+          <P>Nothing on this site is available to integrate today. Every capability is labeled by status, and we won&apos;t say something is ready until it is.</P>
         </div>
       </Prose>
     </PageShell>

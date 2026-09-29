@@ -7,7 +7,7 @@ import { useState } from "react";
  * which emails the lead to the company inbox (Resend) and/or forwards to a
  * configured webhook — real delivery, no new service.
  */
-export function AccessForm({ source, cta = "Request API access" }: { source: string; cta?: string }) {
+export function AccessForm({ source, cta = "Join the list" }: { source: string; cta?: string }) {
   const [email, setEmail] = useState("");
   const [company, setCompany] = useState("");
   const [need, setNeed] = useState("");
@@ -22,7 +22,7 @@ export function AccessForm({ source, cta = "Request API access" }: { source: str
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email,
-          source: `loaditglobal:${source}${company ? ` · ${company}` : ""}${need ? ` · ${need}` : ""}`,
+          source: `loaditglobal-signup:${source}${company ? ` · ${company}` : ""}${need ? ` · ${need}` : ""}`,
         }),
       });
       const data = await res.json();
@@ -36,8 +36,7 @@ export function AccessForm({ source, cta = "Request API access" }: { source: str
     return (
       <div className="rounded-2xl border border-rail-400/30 bg-rail-400/[0.06] p-6">
         <p className="font-mono text-[11px] font-bold uppercase tracking-[0.25em] text-rail-400">Received</p>
-        <p className="mt-2 text-white">Thanks — we&apos;ll reply from a Loadit address with next steps.</p>
-        <p className="mt-2 text-sm text-white/50">Meanwhile, the sandbox works today with the <code className="font-mono text-white/80">demo</code> key.</p>
+        <p className="mt-2 text-white">You&apos;re on the list. We&apos;ll reach out from a Loadit address as early access opens.</p>
       </div>
     );
   }

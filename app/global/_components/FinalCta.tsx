@@ -17,12 +17,12 @@ export function FinalCta() {
         </Reveal>
         <Reveal index={1}>
           <p className="mx-auto mt-5 max-w-xl text-lg text-white/55">
-            Connect your business to Loadit&apos;s infrastructure.
+            Loadit Global is pre-launch. Join the list and we&apos;ll bring you in as the platform opens.
           </p>
         </Reveal>
         <Reveal index={2}>
           <div className="mt-9 flex flex-wrap justify-center gap-3">
-            <Cta href="/access">Get API access</Cta>
+            <Cta href="/access">Join the early-access list</Cta>
             <Cta href="/contact" variant="secondary">Talk to Loadit</Cta>
           </div>
         </Reveal>

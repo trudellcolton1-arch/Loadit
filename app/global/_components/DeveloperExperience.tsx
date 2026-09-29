@@ -6,13 +6,12 @@ import { Section, Kicker, H2, Lede, StatusTag, Cta } from "./Bits";
 /**
  * DEVELOPER EXPERIENCE — one API, tell us where the value needs to go.
  *
- * Two code surfaces, labeled honestly:
- *  - LIVE · SANDBOX: the real HQ routing endpoint (POST /api/v1/route, demo key).
- *  - CONCEPTUAL: the planned transactions SDK shape. Not an implemented client.
+ * Pre-launch: every code surface here is a PREVIEW of the intended interface.
+ * Nothing is presented as available; the CTA is the early-access list.
  */
 
 const CURL = `curl -X POST https://loaditglobal.com/api/v1/route \\
-  -H "x-api-key: demo" \\
+  -H "x-api-key: $LOADIT_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{ "amount_usd": 1000, "payment_method": "Bank Transfer", "asset": "USDC" }'`;
 
@@ -73,13 +72,13 @@ export function DeveloperExperience() {
             object your ledger can reconcile without knowing which rail carried the value.
           </Lede>
           <ul className="mt-8 space-y-3 text-sm text-white/65">
-            <li className="flex gap-3"><span className="text-rail-400">—</span> Live sandbox today with the <code className="rounded bg-white/[0.06] px-1.5 py-0.5 font-mono text-xs text-white">demo</code> key, rate-limited</li>
-            <li className="flex gap-3"><span className="text-rail-400">—</span> Production keys are provisioned through API access requests</li>
-            <li className="flex gap-3"><span className="text-rail-400">—</span> CORS-open, JSON in, JSON out, no SDK required</li>
+            <li className="flex gap-3"><span className="text-rail-400">—</span> Pre-launch — the interface below is a preview, not an open endpoint</li>
+            <li className="flex gap-3"><span className="text-rail-400">—</span> Keys are issued to early-access partners first, by a person</li>
+            <li className="flex gap-3"><span className="text-rail-400">—</span> JSON in, JSON out, no SDK required</li>
           </ul>
           <div className="mt-8 flex flex-wrap gap-3">
-            <Cta href="/developers/quickstart">Quickstart</Cta>
-            <Cta href="/developers/api" variant="secondary">API reference</Cta>
+            <Cta href="/access">Join the early-access list</Cta>
+            <Cta href="/developers/api" variant="secondary">Preview the API</Cta>
           </div>
         </div>
 
@@ -97,7 +96,7 @@ export function DeveloperExperience() {
               ))}
             </div>
             <div className="flex items-center gap-2">
-              <StatusTag status={tab === "sdk" ? "CONCEPTUAL" : "LIVE · SANDBOX"} />
+              <StatusTag status={tab === "sdk" ? "CONCEPTUAL" : "PREVIEW"} />
               <button onClick={copy} className="rounded-md border border-white/10 px-2.5 py-1 font-mono text-[11px] text-white/60 hover:text-white">
                 {copied ? "Copied" : "Copy"}
               </button>
@@ -109,7 +108,7 @@ export function DeveloperExperience() {
           <div className="border-t border-white/8 px-5 py-3 text-[11px] text-white/40">
             {tab === "sdk"
               ? "Illustrates the intended shape of the transactions interface. Not an implemented client library."
-              : "Real endpoint. Estimates depend on live market and network conditions. Demo key: 30 req/min."}
+              : "Preview of the intended request and response. Not yet available — join the early-access list."}
           </div>
         </div>
       </div>

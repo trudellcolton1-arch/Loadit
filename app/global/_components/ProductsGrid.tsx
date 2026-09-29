@@ -9,8 +9,9 @@ export function ProductsGrid({ full = false }: { full?: boolean }) {
       <H2>Every layer of the route, as a product.</H2>
       {full ? (
         <Lede>
-          Each capability carries its status. Live means you can call it today with the demo
-          key. In build means it exists in the runtime and is being hardened for production.
+          Each capability carries its status. Nothing here is available to integrate yet —
+          in build means it exists in the runtime and is being hardened; coming soon means it
+          opens to early-access partners first.
         </Lede>
       ) : null}
       <div className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

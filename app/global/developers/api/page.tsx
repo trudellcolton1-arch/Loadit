@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { PageShell, Prose, Aside, H3, P, Code, Table } from "../../_components/PageShell";
-import { StatusTag } from "../../_components/Bits";
+import { StatusTag, Cta } from "../../_components/Bits";
 
 export const metadata: Metadata = {
-  title: "API Reference",
-  description: "Reference for the Loadit routing endpoint: authentication, parameters, response fields, errors, and rate limits.",
+  title: "API Reference (preview)",
+  description: "Preview of the Loadit routing interface: authentication, parameters, response fields, errors, and limits. Pre-launch — not yet open.",
   alternates: { canonical: "/developers/api" },
 };
 
@@ -20,16 +20,22 @@ const NAVI = [
 
 export default function ApiReference() {
   return (
-    <PageShell eyebrow="API reference" title="One endpoint. The route." lede="Everything the live sandbox accepts and returns, exactly as implemented. Planned endpoints are listed separately and labeled." status="LIVE · SANDBOX">
+    <PageShell eyebrow="API reference · preview" title="One endpoint. The route." lede="The intended interface, published early for review. The endpoint is not open to integrators yet — keys go to early-access partners first." status="PREVIEW">
       <Prose>
         <div>
+          <div className="mb-8 flex flex-wrap items-center gap-3 rounded-xl border border-white/10 bg-white/[0.02] px-4 py-3">
+            <StatusTag status="COMING SOON" />
+            <span className="text-sm text-white/60">Pre-launch. Review the interface now; integrate when access opens.</span>
+            <Cta href="/access" variant="secondary" className="ml-auto px-3 py-1.5 text-xs">Join the list</Cta>
+          </div>
+
           <H3 id="auth">Base URL &amp; authentication</H3>
-          <P>Base URL: <code className="font-mono text-white">https://loaditglobal.com</code>. Authenticate with an API key in the <code className="font-mono text-white">x-api-key</code> header (also accepted as <code className="font-mono text-white">key</code> in the JSON body or <code className="font-mono text-white">?key=</code> query). The sandbox key is <code className="font-mono text-white">demo</code>. CORS is open for browser use.</P>
+          <P>Base URL: <code className="font-mono text-white">https://loaditglobal.com</code>. Authenticate with a partner API key in the <code className="font-mono text-white">x-api-key</code> header. Keys are issued to early-access partners.</P>
 
           <H3 id="route">POST /api/v1/route</H3>
-          <P>Returns the selected, supported settlement route for a stated origin (funding method), destination (asset), and amount. <code className="font-mono text-white">GET</code> with query parameters is also accepted.</P>
-          <Code title="Request">{`POST /api/v1/route
-x-api-key: demo
+          <P>Returns the selected, supported settlement route for a stated origin (funding method), destination (asset), and amount.</P>
+          <Code title="Request · preview">{`POST /api/v1/route
+x-api-key: $LOADIT_API_KEY
 Content-Type: application/json
 
 { "amount_usd": 1000, "payment_method": "Bank Transfer", "asset": "USDC", "preferred": "auto" }`}</Code>
@@ -47,7 +53,7 @@ Content-Type: application/json
           />
 
           <H3 id="response">Response</H3>
-          <Code title="200 OK">{`{
+          <Code title="200 OK · preview">{`{
   "ok": true,
   "route": {
     "id": "rt_…",
@@ -59,12 +65,8 @@ Content-Type: application/json
     "loadit_fee_usd": 7.5,
     "swap_fee_usd": 0,
     "total_usd": 1007.5,
-    "legacy_fee_usd": 45,
-    "savings_usd": 37.5,
-    "savings_pct": 83,
     "eta": "~4s",
     "eta_seconds": 4,
-    "success_probability": 0.99,
     "confidence": 0.94,
     "risk": "low",
     "settlement": "non_custodial",
@@ -72,9 +74,8 @@ Content-Type: application/json
     "explanation": "…"
   },
   "meta": {
-    "engine": "HQ", "version": "v1", "plan": "demo",
-    "networks_scanned": 6, "pools_checked": 18,
-    "fees_live": true, "fee_sources": ["…"],
+    "engine": "HQ", "version": "v1",
+    "fees_live": true,
     "disclaimer": "Estimates dependent on live market and network conditions."
   }
 }`}</Code>
@@ -89,7 +90,6 @@ Content-Type: application/json
               ["route.confidence", "HQ's confidence in this selection, 0–1."],
               ["route.path", "Ordered legs from origin to destination."],
               ["route.settlement", "Always non_custodial — delivery to a destination the customer controls."],
-              ["meta.fees_live", "Whether live network-fee feeds informed this response."],
             ]}
           />
 
@@ -97,18 +97,18 @@ Content-Type: application/json
           <Table
             head={["Status", "error", "When"]}
             rows={[
-              ["401", "missing_api_key / invalid_api_key", "No key, or a key that is neither demo nor a provisioned key."],
+              ["401", "missing_api_key / invalid_api_key", "No key, or a key that is not provisioned."],
               ["422", "invalid_amount", "amount_usd missing, non-numeric, or ≤ 0."],
               ["422", "invalid_asset / invalid_payment_method / invalid_preferred", "Value not in the allowed list; the response includes allowed."],
-              ["429", "rate_limited", "Demo: 30 requests/min. Production keys: 600/min."],
+              ["429", "rate_limited", "Per-key limit exceeded."],
             ]}
           />
 
           <H3 id="limits">Rate limits</H3>
-          <P>Demo key: 30 requests per minute. Production keys: 600 per minute, with volume tiers by agreement. Limits are enforced per key.</P>
+          <P>Per-key limits are set with each early-access partner. Volume tiers follow by agreement.</P>
 
           <H3 id="planned">Planned endpoints</H3>
-          <div className="mt-3 flex items-center gap-2"><StatusTag status="PLANNED" /><span className="text-sm text-white/50">Shapes shown for design review. Not callable.</span></div>
+          <div className="mt-3 flex items-center gap-2"><StatusTag status="PLANNED" /><span className="text-sm text-white/50">Shapes shown for design review.</span></div>
           <Code title="Conceptual">{`POST   /api/v1/transactions            create a transaction (origin, destination, amount, constraints)
 GET    /api/v1/transactions/:id        state machine: quoted → intake → converting → paying_out → settled
 POST   /api/v1/transactions/:id/heal   re-score remaining legs under the same id

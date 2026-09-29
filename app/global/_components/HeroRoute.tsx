@@ -68,7 +68,7 @@ export function HeroRoute() {
             transition={{ duration: 0.5 }}
             className="font-mono text-[11px] font-bold uppercase tracking-[0.35em] text-rail-400"
           >
-            Value-movement infrastructure
+            Value-movement infrastructure · Pre-launch
           </motion.p>
           <motion.h1
             initial={{ opacity: 0, y: 18 }}
@@ -104,10 +104,18 @@ export function HeroRoute() {
             transition={{ duration: 0.6, delay: 0.28 }}
             className="mt-9 flex flex-wrap gap-3"
           >
-            <Cta href="/access">Start building</Cta>
-            <Cta href="/developers/api" variant="secondary">View API</Cta>
+            <Cta href="/access">Join the early-access list</Cta>
+            <Cta href="#how" variant="secondary">How it works</Cta>
             <Cta href="/contact" variant="ghost">Talk to Loadit →</Cta>
           </motion.div>
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.36 }}
+            className="mt-5 font-mono text-[11px] uppercase tracking-[0.2em] text-white/40"
+          >
+            Not available yet · opening to early-access partners first
+          </motion.p>
         </div>
 
         {/* ——— route calculation ——— */}

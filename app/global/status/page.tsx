@@ -9,8 +9,8 @@ export const metadata: Metadata = {
 };
 
 const COMPONENTS = [
-  { name: "Routing endpoint (/api/v1/route)", state: "Operational", tone: "ok" },
-  { name: "Live network-fee feeds", state: "Operational — degrades to cached estimates if a feed is down", tone: "ok" },
+  { name: "Platform", state: "Pre-launch — not yet available", tone: "build" },
+  { name: "Routing API", state: "In build — opening to early-access partners first", tone: "build" },
   { name: "Transactions / settlement", state: "In build — not yet available", tone: "build" },
   { name: "Webhooks", state: "Planned", tone: "build" },
   { name: "Dashboard", state: "Planned", tone: "build" },
@@ -18,7 +18,7 @@ const COMPONENTS = [
 
 export default function StatusPage() {
   return (
-    <PageShell eyebrow="System status" title="Status." lede="This page is maintained by hand. Automated monitoring, incident history, and uptime reporting arrive with the production build — no uptime figures are published until they are measured.">
+    <PageShell eyebrow="System status" title="Status." lede="Loadit Global is pre-launch. This page is maintained by hand; automated monitoring, incident history, and uptime reporting arrive with launch — no uptime figures are published until they are measured.">
       <Prose>
         <div>
           <ul className="divide-y divide-white/8 overflow-hidden rounded-2xl border border-white/10">

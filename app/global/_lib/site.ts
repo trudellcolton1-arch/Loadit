@@ -29,11 +29,11 @@ export const NAV = {
   ],
   developers: [
     { label: "Overview", href: "/developers", desc: "Start here." },
-    { label: "Quickstart", href: "/developers/quickstart", desc: "First route in five minutes." },
-    { label: "API Reference", href: "/developers/api", desc: "Endpoints, params, responses." },
+    { label: "Quickstart", href: "/developers/quickstart", desc: "Preview of the first route." },
+    { label: "API Reference", href: "/developers/api", desc: "Preview of the interface." },
     { label: "SDKs", href: "/developers/sdks", desc: "Client libraries." },
     { label: "Webhooks", href: "/developers/webhooks", desc: "Route and settlement events." },
-    { label: "Sandbox", href: "/developers/sandbox", desc: "Try it with the demo key." },
+    { label: "Sandbox", href: "/developers/sandbox", desc: "Opens with early access." },
     { label: "Status", href: "/status", desc: "System status." },
   ],
   top: [
@@ -119,8 +119,8 @@ export const PRODUCTS = [
     id: "api",
     name: "Loadit Global API",
     line: "Universal interface into Loadit's business-facing infrastructure.",
-    body: "One authenticated interface. Your application states the origin and the destination; the API returns the selected supported route, its cost, its expected time, and a normalized settlement object. Today that interface is the HQ routing endpoint — live, with a demo key.",
-    status: "LIVE · SANDBOX" as const,
+    body: "One authenticated interface. Your application states the origin and the destination; the API returns the selected supported route, its cost, its expected time, and a normalized settlement object. Opening to early-access partners first.",
+    status: "COMING SOON" as const,
   },
   {
     id: "uvce",
@@ -134,7 +134,7 @@ export const PRODUCTS = [
     name: "Intelligent Routing",
     line: "Evaluation and selection of supported transaction routes.",
     body: "The orchestration layer scores every supported path on cost, settlement speed, liquidity, network availability, risk, and compliance, then locks a route with a time-to-live — instead of your team hard-coding one rail per corridor.",
-    status: "LIVE · SANDBOX" as const,
+    status: "IN BUILD" as const,
   },
   {
     id: "settlement",
