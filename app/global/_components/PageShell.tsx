@@ -57,7 +57,9 @@ export function PageShell({
 export function Prose({ children }: { children: ReactNode }) {
   return (
     <div className="mx-auto max-w-7xl px-6 py-14 sm:py-20">
-      <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_280px]">{children}</div>
+      {/* minmax(0,1fr) on every breakpoint: code blocks and tables scroll inside their
+          own box instead of widening the column past the phone screen. */}
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-12 lg:grid-cols-[minmax(0,1fr)_280px]">{children}</div>
     </div>
   );
 }

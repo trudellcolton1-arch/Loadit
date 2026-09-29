@@ -12,6 +12,7 @@ import { WhoFor } from "./_components/WhoFor";
 import { ProductsGrid } from "./_components/ProductsGrid";
 import { Labs } from "./_components/Labs";
 import { GlobalNetwork } from "./_components/GlobalNetwork";
+import { Vision } from "./_components/Vision";
 import { FinalCta } from "./_components/FinalCta";
 
 export const metadata: Metadata = {
@@ -41,6 +42,7 @@ export default function GlobalHome() {
       <ProductsGrid />
       <Labs />
       <GlobalNetwork />
+      <Vision />
       <FinalCta />
     </main>
   );

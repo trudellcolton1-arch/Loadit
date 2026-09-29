@@ -253,7 +253,7 @@ export const CAPABILITIES = [
     id: "convert",
     name: "Convert",
     verb: "CONVERT",
-    line: "Value already held → one or many other supported assets or currencies.",
+    line: "Value already held → one or many other supported assets or currencies — and, corridor by corridor, toward any currency on earth.",
     embed: "Standalone conversion for balances your customers already hold, including one-to-many allocations, coordinated by the UVCE across supported liquidity.",
     example: "$1,000 USDC → $400 BTC + $300 ETH + $200 SOL + $100 USDC, as one instruction with one receipt.",
     status: "PLANNED" as const,

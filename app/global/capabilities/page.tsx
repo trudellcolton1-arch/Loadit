@@ -3,6 +3,7 @@ import { PageShell } from "../_components/PageShell";
 import { Capabilities } from "../_components/Capabilities";
 import { Whiteboard } from "../_components/Whiteboard";
 import { Roadmap } from "../_components/Roadmap";
+import { Vision } from "../_components/Vision";
 import { FinalCta } from "../_components/FinalCta";
 import { Section, Kicker, H2, Lede, StatusTag, Cta } from "../_components/Bits";
 import { Reveal } from "@/components/ui/Reveal";
@@ -59,6 +60,7 @@ export default function CapabilitiesPage() {
 
       <Whiteboard />
       <Roadmap />
+      <Vision />
 
       <Section tight>
         <Reveal>

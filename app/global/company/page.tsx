@@ -38,6 +38,11 @@ export default function CompanyPage() {
               We think value should work like navigation. State where it is and where it needs to
               go; let an intelligent layer find the supported route and adapt when the road changes.
             </Lede>
+            <Lede className="mt-4">
+              The destination we are building toward: any form of money a customer has, converted or
+              routed into any form the other side needs — every currency on earth, over every supported
+              rail — through one interface. Opened one corridor at a time, each with its real status.
+            </Lede>
             <div className="mt-8 flex flex-wrap gap-3">
               <Cta href="/contact">Talk to Loadit</Cta>
               <Cta href="https://loadit.net" variant="secondary">Loadit for people →</Cta>

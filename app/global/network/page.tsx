@@ -69,6 +69,11 @@ export default function NetworkPage() {
           ))}
           <span className="rounded-lg border border-dashed border-white/15 px-4 py-2 font-mono text-sm text-white/50">USD · fiat settlement — planned</span>
         </div>
+        <Lede className="mt-8">
+          Six assets today. The design goal is any value to any value — every currency on earth, fiat or
+          digital, over every supported rail — added one corridor at a time, each with a licensed partner
+          and its own status. <a href="/#vision" className="text-white underline decoration-white/30 underline-offset-4 hover:decoration-white">Where this goes →</a>
+        </Lede>
       </Section>
 
       <GlobalNetwork />

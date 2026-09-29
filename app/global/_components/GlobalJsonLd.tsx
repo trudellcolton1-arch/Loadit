@@ -71,6 +71,14 @@ export function GlobalJsonLd() {
           },
           {
             "@type": "Question",
+            name: "Which currencies and assets does Loadit route?",
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: "Today the live demo routes USD-originated value (cash, debit, credit, bank transfer) to USDC, USDT, BTC, ETH, SOL, and XRP across seven networks. The design goal is any value to any value — every currency on earth, fiat or digital, over every supported rail — opened corridor by corridor with a licensed partner and an honest status on each.",
+            },
+          },
+          {
+            "@type": "Question",
             name: "Can I integrate Loadit Global today?",
             acceptedAnswer: {
               "@type": "Answer",
