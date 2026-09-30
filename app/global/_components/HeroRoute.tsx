@@ -82,7 +82,7 @@ export function HeroRoute() {
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.12 }}
-            className="mt-6 text-2xl font-medium leading-snug text-white/85 sm:text-3xl"
+            className="mt-6 text-2xl font-medium leading-snug text-white/95 sm:text-3xl"
           >
             You choose the destination.
             <br />
@@ -92,7 +92,7 @@ export function HeroRoute() {
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="mt-6 max-w-xl text-base leading-relaxed text-white/55 sm:text-lg"
+            className="mt-6 max-w-xl text-base leading-relaxed text-white/80 sm:text-lg"
           >
             Connect your business to an intelligent infrastructure layer designed to
             coordinate value movement across supported traditional and digital financial
@@ -112,7 +112,7 @@ export function HeroRoute() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.36 }}
-            className="mt-5 font-mono text-[11px] uppercase tracking-[0.2em] text-white/40"
+            className="mt-5 font-mono text-[11px] uppercase tracking-[0.2em] text-white/60"
           >
             Not available yet · opening to early-access partners first
           </motion.p>

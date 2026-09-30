@@ -1,11 +1,26 @@
 import type { MetadataRoute } from "next";
+import { headers } from "next/headers";
 import { SITE } from "@/lib/constants";
 
+/**
+ * One deployment, several front doors — the web app manifest is chosen by host.
+ * loaditglobal.com (+ its subdomains) gets Loadit Global copy; every other host
+ * (loadit.net, load.money, load.club) keeps the consumer manifest unchanged.
+ */
 export default function manifest(): MetadataRoute.Manifest {
+  const host = (headers().get("host") || "").toLowerCase().split(":")[0];
+  const isGlobal = host === "loaditglobal.com" || host.endsWith(".loaditglobal.com");
+
+  const name = isGlobal ? "Loadit Global — GPS for money" : `${SITE.name} — ${SITE.tagline}`;
+  const short_name = isGlobal ? "Loadit Global" : SITE.name;
+  const description = isGlobal
+    ? "Loadit Global is enterprise and developer routing infrastructure for value movement — GPS for money. Pre-launch."
+    : SITE.description;
+
   return {
-    name: `${SITE.name} — ${SITE.tagline}`,
-    short_name: SITE.name,
-    description: SITE.description,
+    name,
+    short_name,
+    description,
     start_url: "/",
     display: "standalone",
     background_color: "#04060B",

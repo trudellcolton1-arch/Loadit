@@ -214,7 +214,7 @@ export const CAPABILITIES = [
     example: "A wallet adds \"Load $300 cash into USDC.\" It submits the intent, receives a quote and a funding location, and the customer never opens a Loadit screen.",
     status: "IN BUILD" as const,
     phase: 1,
-    note: "Route selection runs today in the live demo. Cash intake is certified with a licensed cash network and launches with the production build.",
+    note: "Route selection runs today in the live demo. Cash-in certification with a licensed cash network is complete (5/5); cash-in is not yet live.",
   },
   {
     id: "multi-asset-load",

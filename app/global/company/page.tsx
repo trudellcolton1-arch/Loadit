@@ -12,9 +12,9 @@ export const metadata: Metadata = {
 };
 
 const FACTS = [
-  ["Entity", "Loadit Inc., Delaware C corporation (file 10287397)"],
+  ["Entity", "Loadit Inc., Delaware C corporation"],
   ["Founded", "August 2025"],
-  ["Founder", "Colton Trudell"],
+  ["Colton Trudell", "CEO, Founder & Chairman"],
   ["Location", "Mansfield, Texas"],
   ["Intellectual property", "Unified Financial Rail — patent pending (application filed; no patent granted)"],
   ["Model", "Non-custodial infrastructure. Loadit routes and orchestrates; it never holds customer funds."],
@@ -23,7 +23,7 @@ const FACTS = [
 
 export default function CompanyPage() {
   return (
-    <PageShell eyebrow="Company" title="The internet routes information. Loadit routes value." lede="Stripe abstracted payment acceptance. Plaid abstracted financial connectivity. Twilio abstracted communications. Loadit is building the abstraction and routing layer for value movement.">
+    <PageShell eyebrow="Company" title="The internet routes information. Loadit routes value." lede="Earlier infrastructure companies abstracted payment acceptance, bank connectivity and messaging. Loadit is building the abstraction and routing layer for value movement.">
       <Section tight>
         <div className="grid gap-12 lg:grid-cols-[1fr_1fr]">
           <div>
