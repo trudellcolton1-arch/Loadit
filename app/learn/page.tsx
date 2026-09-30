@@ -4,6 +4,10 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { ARTICLES, TOOLS } from "@/lib/learn";
 import { SITE } from "@/lib/constants";
+import { listHqPages } from "@/lib/hqContent";
+
+/** HQ publishes new guides daily; re-check every 10 minutes. */
+export const revalidate = 600;
 
 export const metadata: Metadata = {
   title: "Learn — Guides, Explainers & Free Tools",
@@ -43,7 +47,8 @@ function Card({ href, kind, title, blurb }: { href: string; kind: string; title:
   );
 }
 
-export default function Page() {
+export default async function Page() {
+  const hqPages = await listHqPages();
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
@@ -76,6 +81,25 @@ export default function Page() {
               <Card key={a.href} href={a.href} kind={a.kind} title={a.title} blurb={a.blurb} />
             ))}
           </div>
+
+          {hqPages.length > 0 && (
+            <>
+              <h2 className="mt-14 text-sm font-semibold uppercase tracking-wider text-white/40">
+                How-to guides <span className="normal-case tracking-normal text-white/30">· written by HQ, Loadit&apos;s routing intelligence</span>
+              </h2>
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                {hqPages.map((p) => (
+                  <Card
+                    key={p.slug}
+                    href={`/p/${p.slug}`}
+                    kind="Guide"
+                    title={p.title}
+                    blurb={p.metaDescription ?? "A practical guide from HQ."}
+                  />
+                ))}
+              </div>
+            </>
+          )}
         </div>
       </main>
       <Footer />

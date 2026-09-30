@@ -14,32 +14,83 @@ import { unstable_cache } from "next/cache";
  * Both helpers are ISR-cached (10 min) and never throw — a DB hiccup or a
  * missing connection string renders as "no pages", never a 500.
  *
- * HARD ALLOWLIST: only the slugs in HQ_ALLOWED_SLUGS may render at /p/<slug>
- * or appear in the sitemap. HQ keeps write access to its content table, so a
- * republish of generic SEO junk must not resurface here — anything outside
- * the allowlist is treated as not-found/omitted even if its DB row says
- * status = 'published'.
+ * PUBLISHING RULES (replaces the hand allowlist of Aug 29, which left every
+ * newer HQ page 404ing):
+ *   1. Every row HQ marks status='published' for this domain renders — except
+ *   2. BLOCKED pages: anything whose slug or title targets a comprehensively
+ *      sanctioned jurisdiction, or names the cash partner in the URL itself.
+ *      Those are not-found and omitted from the sitemap whatever the DB says.
+ *   3. SANITIZED copy: the public site does not name the cash partner and never
+ *      presents retail cash-in as live, so the partner name is de-branded at
+ *      render time and every page carries a "where Loadit stands today" note.
+ * The real fix for 2–3 belongs in HQ's writing brief; this keeps the site
+ * honest in the meantime.
  */
 
 const DOMAINS = ["loadit.net", "www.loadit.net"];
 const REVALIDATE_S = 600;
 
-/** The only HQ slugs Loadit will serve. Curated by hand; edit deliberately. */
-export const HQ_ALLOWED_SLUGS: readonly string[] = [
-  "non-custodial-app-to-convert-cash-to-bitcoin-without-kyc-delays",
-  "send-crypto-to-family-overseas-without-custodial-risk",
+/**
+ * Never publish remittance / on-ramp guides aimed at comprehensively
+ * sanctioned jurisdictions. Matched against slug and title.
+ */
+export const HQ_BLOCKED_PATTERNS: readonly RegExp[] = [
+  /\bcuba(n)?\b/i,
+  /\biran(ian)?\b/i,
+  /north[\s-]?korea/i,
+  /\bsyria(n)?\b/i,
+  /\bcrimea(n)?\b/i,
+  /\bdonetsk\b|\bluhansk\b/i,
+  /\brussia(n)?\b/i,
+  /\bbelarus(ian)?\b/i,
+  // The cash partner is not named on any public surface — a URL that names
+  // it cannot be de-branded, so the page stays out.
+  /moneygram/i,
 ];
 
-const ALLOWED_SLUG_SET = new Set(HQ_ALLOWED_SLUGS);
+/** Hand-maintained blocklist for one-offs (exact slug, lowercase). */
+export const HQ_BLOCKED_SLUGS: readonly string[] = [];
 
-/** True only for the hand-curated slugs (after trim + lowercase). */
-export function isAllowedHqSlug(slug: string): boolean {
-  return ALLOWED_SLUG_SET.has((slug || "").trim().toLowerCase());
+const BLOCKED_SLUG_SET = new Set(HQ_BLOCKED_SLUGS);
+
+/** True when a page must not render, whatever its DB status. */
+export function isBlockedHqPage(page: { slug: string; title?: string | null }): boolean {
+  const slug = (page.slug || "").trim().toLowerCase();
+  if (!slug) return true;
+  if (BLOCKED_SLUG_SET.has(slug)) return true;
+  const hay = `${slug} ${page.title || ""}`;
+  return HQ_BLOCKED_PATTERNS.some((re) => re.test(hay));
 }
 
-/** Drop any rows outside the allowlist, whatever the DB claims. */
-export function filterAllowedHqPages<T extends { slug: string }>(pages: T[]): T[] {
-  return pages.filter((p) => isAllowedHqSlug(p.slug));
+/** Drop blocked rows — the sitemap and the page both go through this. */
+export function filterPublishableHqPages<T extends { slug: string; title?: string | null }>(pages: T[]): T[] {
+  return pages.filter((p) => !isBlockedHqPage(p));
+}
+
+/**
+ * Public-surface guardrails applied to HQ prose at render time:
+ *  - the cash partner is never named (site-wide rule since the Sep 11 scrub);
+ *    cash-in is described as launching, never as available today;
+ *  - HQ's CTA-insertion glitch ("a tool like try Loadit") is repaired.
+ * Works on plain text and on HTML alike (no tags are touched).
+ */
+export function sanitizeHqText(input: string): string {
+  if (!input) return input;
+  let s = input;
+  // "a MoneyGram location/kiosk/counter/agent" → "a participating cash location (launching soon)"
+  s = s.replace(/\b(a|an|any|your|the)\s+(?:Walmart\s+)?MoneyGram\s+(location|kiosk|counter|agent|store)s?\b/gi,
+    (_m, art: string) => `${art} participating cash location (retail cash-in launching soon)`);
+  // "MoneyGram locations/kiosks…" → "participating cash locations (launching soon)"
+  s = s.replace(/\b(?:Walmart\s+)?MoneyGram\s+(location|kiosk|counter|agent|store)s?\b/gi,
+    "participating cash locations (retail cash-in launching soon)");
+  // "at/through/via MoneyGram" → "… a licensed cash network (launching soon)"
+  s = s.replace(/\b(at|through|via|with|using)\s+MoneyGram\b/gi, "$1 a licensed cash network (retail cash-in launching soon)");
+  // Anything left: the bare name.
+  s = s.replace(/\bMoneyGram(?:'s)?\b/g, "a licensed cash network");
+  // Repair the CTA glitch: "a tool like try Loadit", "where try Loadit comes in".
+  s = s.replace(/\b(like|where|with|is|of|as|to)\s+try Loadit\b/g, "$1 Loadit");
+  s = s.replace(/\btry Loadit (fits|comes|is|was|does|handles|lets|helps)\b/g, "Loadit $1");
+  return s;
 }
 
 function contentDbUrl(): string | undefined {
@@ -96,6 +147,7 @@ export interface HqPage {
 export interface HqPageSummary {
   slug: string;
   title: string;
+  metaDescription: string | null;
   publishedAt: string | null;
 }
 
@@ -127,15 +179,24 @@ function toFaq(v: unknown): HqFaq[] {
   if (!Array.isArray(raw)) return [];
   return raw
     .filter((f): f is Record<string, unknown> => Boolean(f) && typeof f === "object")
-    .map((f) => ({ q: String(f.q ?? f.question ?? "").trim(), a: String(f.a ?? f.answer ?? "").trim() }))
+    .map((f) => ({ q: sanitizeHqText(String(f.q ?? f.question ?? "").trim()), a: sanitizeHqText(String(f.a ?? f.answer ?? "").trim()) }))
     .filter((f) => f.q && f.a);
+}
+
+/** Sanitize the string leaves of HQ's JSON-LD (headline, description, FAQ text). */
+function sanitizeJsonLd(v: unknown): unknown {
+  if (typeof v === "string") return sanitizeHqText(v);
+  if (Array.isArray(v)) return v.map(sanitizeJsonLd);
+  if (v && typeof v === "object") {
+    return Object.fromEntries(Object.entries(v as Record<string, unknown>).map(([k, x]) => [k, sanitizeJsonLd(x)]));
+  }
+  return v;
 }
 
 const getHqPageUncached = async (slug: string): Promise<HqPage | null> => {
   const clean = (slug || "").trim().toLowerCase();
-  // Allowlist first: a non-curated slug is notFound before we even look at
-  // the DB, so a junk republish by HQ can never render.
-  if (!clean || !isAllowedHqSlug(clean)) return null;
+  // Blocklist first: a blocked slug is notFound before we even look at the DB.
+  if (!clean || isBlockedHqPage({ slug: clean })) return null;
   if (!contentDbConfigured()) return null;
   try {
     const rows = await contentQuery<Record<string, unknown>>(
@@ -153,13 +214,16 @@ const getHqPageUncached = async (slug: string): Promise<HqPage | null> => {
     if (!rows.length) return null;
     const r = rows[0];
     if (!r.bodyHtml) return null;
+    const title = String(r.title || r.slug);
+    // Title-level block (a slug can be clean while the title targets a blocked place).
+    if (isBlockedHqPage({ slug: clean, title })) return null;
     return {
       slug: String(r.slug),
-      title: String(r.title || r.slug),
-      metaDescription: r.metaDescription ? String(r.metaDescription) : null,
-      bodyHtml: String(r.bodyHtml),
+      title: sanitizeHqText(title),
+      metaDescription: r.metaDescription ? sanitizeHqText(String(r.metaDescription)) : null,
+      bodyHtml: sanitizeHqText(String(r.bodyHtml)),
       faq: toFaq(r.faq),
-      jsonLd: toObject(r.jsonLd),
+      jsonLd: (sanitizeJsonLd(toObject(r.jsonLd)) as Record<string, unknown> | null) ?? null,
       publishedAt: r.publishedAt ? String(r.publishedAt) : null,
     };
   } catch {
@@ -167,8 +231,8 @@ const getHqPageUncached = async (slug: string): Promise<HqPage | null> => {
   }
 };
 
-/** One published, allowlisted HQ page for this domain, by slug. Cached 10 min. */
-export const getHqPage = unstable_cache(getHqPageUncached, ["hq-content-page"], {
+/** One published, publishable HQ page for this domain, by slug. Cached 10 min. */
+export const getHqPage = unstable_cache(getHqPageUncached, ["hq-content-page-v2"], {
   revalidate: REVALIDATE_S,
 });
 
@@ -176,30 +240,33 @@ const listHqPagesUncached = async (): Promise<HqPageSummary[]> => {
   if (!contentDbConfigured()) return [];
   try {
     const rows = await contentQuery<Record<string, unknown>>(
-      `select slug, title, published_at as "publishedAt"
+      `select slug, title, meta_description as "metaDescription", published_at as "publishedAt"
        from hq_content_page
-       where status = 'published' and domain = any($1) and slug = any($2)
+       where status = 'published' and domain = any($1) and body_html is not null
        order by published_at desc nulls last
        limit 500`,
-      [DOMAINS, [...HQ_ALLOWED_SLUGS]]
+      [DOMAINS]
     );
-    // Filter again in code: the sitemap allowlist must hold even if the SQL
-    // above is ever loosened or the DB returns unexpected rows.
-    return filterAllowedHqPages(
+    return filterPublishableHqPages(
       rows
         .filter((r) => r.slug)
         .map((r) => ({
           slug: String(r.slug),
           title: String(r.title || r.slug),
+          metaDescription: r.metaDescription ? String(r.metaDescription) : null,
           publishedAt: r.publishedAt ? String(r.publishedAt) : null,
         }))
-    );
+    ).map((p) => ({
+      ...p,
+      title: sanitizeHqText(p.title),
+      metaDescription: p.metaDescription ? sanitizeHqText(p.metaDescription) : null,
+    }));
   } catch {
     return []; // sitemap must build even if the DB is unreachable
   }
 };
 
-/** Published, allowlisted HQ pages for this domain (for the sitemap). Cached 10 min. */
-export const listHqPages = unstable_cache(listHqPagesUncached, ["hq-content-list"], {
+/** Published, publishable HQ pages for this domain (sitemap + /learn). Cached 10 min. */
+export const listHqPages = unstable_cache(listHqPagesUncached, ["hq-content-list-v2"], {
   revalidate: REVALIDATE_S,
 });

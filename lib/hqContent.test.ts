@@ -1,46 +1,73 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { HQ_ALLOWED_SLUGS, filterAllowedHqPages, isAllowedHqSlug } from "./hqContent";
+import { filterPublishableHqPages, isBlockedHqPage, sanitizeHqText } from "./hqContent";
 
-const CURATED = [
-  "non-custodial-app-to-convert-cash-to-bitcoin-without-kyc-delays",
-  "send-crypto-to-family-overseas-without-custodial-risk",
-];
-
-test("allowlist is exactly the curated slugs", () => {
-  assert.deepEqual([...HQ_ALLOWED_SLUGS].sort(), [...CURATED].sort());
-  assert.equal(new Set(HQ_ALLOWED_SLUGS).size, 2);
-});
-
-test("every curated slug passes; generic HQ slugs never do", () => {
-  for (const slug of CURATED) {
-    assert.equal(isAllowedHqSlug(slug), true, slug);
+test("published HQ pages render by default — no hand allowlist", () => {
+  for (const slug of [
+    "send-money-to-kenya-without-bank-transfer-fees-using-crypto",
+    "how-to-buy-bitcoin-with-cash-at-rite-aid-near-me",
+    "best-way-to-buy-crypto-without-an-exchange-holding-it",
+    "send-crypto-to-family-overseas-without-custodial-risk",
+  ]) {
+    assert.equal(isBlockedHqPage({ slug }), false, slug);
   }
-  // Generic republished junk must 404 even if its DB row is published.
-  assert.equal(isAllowedHqSlug("best-crypto-app-2026"), false);
-  assert.equal(isAllowedHqSlug("moneygram-near-me"), false);
-  assert.equal(isAllowedHqSlug("how-to-buy-crypto-with-cash-at-a-moneygram-near-me"), false);
-  assert.equal(isAllowedHqSlug("how-to-buy-crypto"), false);
-  assert.equal(isAllowedHqSlug(""), false);
-  assert.equal(isAllowedHqSlug("   "), false);
 });
 
-test("matching is exact after trim + lowercase, no prefix/suffix tricks", () => {
-  assert.equal(isAllowedHqSlug("  Send-Crypto-To-Family-Overseas-Without-Custodial-Risk  "), true);
-  assert.equal(isAllowedHqSlug("send-crypto-to-family-overseas-without-custodial-risk-2"), false);
-  assert.equal(isAllowedHqSlug("x-send-crypto-to-family-overseas-without-custodial-risk"), false);
+test("comprehensively sanctioned jurisdictions are blocked by slug or title", () => {
+  assert.equal(isBlockedHqPage({ slug: "send-money-to-cuba-without-western-union-fees-using-crypto" }), true);
+  assert.equal(isBlockedHqPage({ slug: "send-usdc-abroad", title: "How to Send Money to Iran Using USDC" }), true);
+  assert.equal(isBlockedHqPage({ slug: "north-korea-crypto-remittance" }), true);
+  assert.equal(isBlockedHqPage({ slug: "remit-to-syria-fast" }), true);
+  assert.equal(isBlockedHqPage({ slug: "send-money-to-russia-with-crypto" }), true);
+  // Not false positives on ordinary words / other places.
+  assert.equal(isBlockedHqPage({ slug: "send-money-to-ecuador-without-bank-fees-using-crypto" }), false);
+  assert.equal(isBlockedHqPage({ slug: "cheapest-way-to-send-usdc-internationally-in-2024" }), false);
 });
 
-test("filterAllowedHqPages drops non-curated rows even when 'published'", () => {
+test("URLs that name the cash partner stay out; empty slugs are blocked", () => {
+  assert.equal(isBlockedHqPage({ slug: "how-to-buy-crypto-with-cash-at-a-moneygram-near-me" }), true);
+  assert.equal(isBlockedHqPage({ slug: "moneygram-to-crypto-wallet-without-an-exchange-account" }), true);
+  assert.equal(isBlockedHqPage({ slug: "" }), true);
+  assert.equal(isBlockedHqPage({ slug: "   " }), true);
+});
+
+test("filterPublishableHqPages drops blocked rows even when 'published'", () => {
   const rows = [
-    { slug: CURATED[0], title: "keep", publishedAt: "2026-01-01" },
-    { slug: "generic-seo-junk", title: "drop", publishedAt: "2026-08-01" },
-    { slug: CURATED[1], title: "keep", publishedAt: null },
-    { slug: "another-republish", title: "drop", publishedAt: "2026-08-29" },
+    { slug: "send-money-to-kenya-without-bank-transfer-fees-using-crypto", title: "keep" },
+    { slug: "send-money-to-cuba-without-western-union-fees-using-crypto", title: "drop" },
+    { slug: "buy-usdc-with-cash-at-moneygram-near-me-no-bank-needed", title: "drop" },
+    { slug: "how-to-buy-bitcoin-with-cash-at-cvs-near-me", title: "keep" },
   ];
-  const kept = filterAllowedHqPages(rows);
   assert.deepEqual(
-    kept.map((r) => r.slug),
-    [CURATED[0], CURATED[1]]
+    filterPublishableHqPages(rows).map((r) => r.slug),
+    ["send-money-to-kenya-without-bank-transfer-fees-using-crypto", "how-to-buy-bitcoin-with-cash-at-cvs-near-me"]
   );
+});
+
+test("sanitizer de-brands the cash partner and frames cash-in as launching", () => {
+  const out = sanitizeHqText(
+    "You can fund a purchase with cash through a MoneyGram location, or with a card through Stripe or Coinbase."
+  );
+  assert.doesNotMatch(out, /moneygram/i);
+  assert.match(out, /participating cash location \(retail cash-in launching soon\)/);
+
+  const list = sanitizeHqText("Using an on-ramp connected to Stripe, Coinbase, or MoneyGram, you can convert cash.");
+  assert.doesNotMatch(list, /moneygram/i);
+  assert.match(list, /a licensed cash network/);
+
+  const plural = sanitizeHqText("Convert cash to USDC at MoneyGram locations nationwide.");
+  assert.doesNotMatch(plural, /moneygram/i);
+  assert.match(plural, /launching soon/);
+
+  // HTML is untouched apart from the text.
+  const html = sanitizeHqText('<p>Walk into <strong>any MoneyGram kiosk</strong>.</p>');
+  assert.equal(html, '<p>Walk into <strong>any participating cash location (retail cash-in launching soon)</strong>.</p>');
+});
+
+test("sanitizer repairs HQ's CTA glitch and leaves clean text alone", () => {
+  assert.equal(sanitizeHqText("This is where a tool like try Loadit fits in."), "This is where a tool like Loadit fits in.");
+  assert.equal(sanitizeHqText("This is where try Loadit comes in — it's built for that."), "This is where Loadit comes in — it's built for that.");
+  const clean = "Loadit lets you turn cash or a card into USDC while you keep custody.";
+  assert.equal(sanitizeHqText(clean), clean);
+  assert.equal(sanitizeHqText(""), "");
 });

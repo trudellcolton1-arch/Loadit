@@ -4,6 +4,7 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { SITE } from "@/lib/constants";
 import { getHqPage } from "@/lib/hqContent";
+import { CASH_CERT_LINE } from "@/lib/rail/copy";
 
 /**
  * /p/<slug> — HQ-written SEO pages, served on loadit.net so the search value
@@ -91,9 +92,20 @@ export default async function HqContentPage({ params }: Props) {
             </div>
           )}
 
+          {/* Where Loadit stands today — the same honesty line as the rest of the
+              site, on every HQ article, so guide prose about cash can never read
+              as "available now". */}
+          <aside className="mt-8 rounded-2xl border border-rail/30 bg-rail/10 px-5 py-4 text-sm leading-relaxed text-white/75">
+            <div className="text-xs font-semibold uppercase tracking-wider text-rail-400">Where Loadit stands today</div>
+            <p className="mt-2">
+              <b className="text-white">Card purchases</b> through licensed partners are live, delivered to a wallet you control.{" "}
+              <b className="text-white">Retail cash-in</b>: {CASH_CERT_LINE} Identity verification is performed by the licensed partner on every rail. Fees and times in this guide are estimates.
+            </p>
+          </aside>
+
           <div
             className="hq-body mt-10 border-t border-white/10 pt-10"
-            /* Written and sanitized upstream by HQ; Loadit renders read-only. */
+            /* Written and sanitized upstream by HQ; de-branded and honesty-checked in lib/hqContent. */
             dangerouslySetInnerHTML={{ __html: page.bodyHtml }}
           />
 
