@@ -31,7 +31,7 @@ export function GlobalFooter() {
           ))}
         </div>
         <div className="mt-12 flex flex-col gap-3 border-t border-white/8 pt-6 text-xs text-white/35 sm:flex-row sm:items-center sm:justify-between">
-          <p>© {new Date().getFullYear()} {GLOBAL.parent.name}. Loadit Global is the business and developer platform of Loadit.</p>
+          <p>© {new Date().getFullYear()} {GLOBAL.parent.name} Loadit Global is the business and developer platform of Loadit.</p>
           <p>Non-custodial infrastructure. Patent pending. Capabilities labeled by status; nothing here is a guarantee of availability.</p>
         </div>
       </div>

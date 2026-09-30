@@ -44,7 +44,7 @@ export default function NetworkPage() {
       <Section tight>
         <Kicker>Origins</Kicker>
         <H2>What value can enter.</H2>
-        <Lede>Card and bank-originated value route through licensed partners; cash-originated value is certified with a licensed national cash network (5/5). None of it is open to integrators yet — the platform is pre-launch.</Lede>
+        <Lede>Card and bank-originated value route through licensed partners; cash-in certification with a licensed national cash network is complete (5/5), but cash-in is not yet live. None of it is open to integrators yet — the platform is pre-launch.</Lede>
         <div className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {[
             ["Debit card", "IN BUILD"],
