@@ -7,6 +7,8 @@ import { IntentPanel } from "./_components/IntentPanel";
 import { RouteBuilder } from "./_components/RouteBuilder";
 import { InfrastructureStack } from "./_components/InfrastructureStack";
 import { ForPeople, ForUnbanked, ForMerchants, ForBanks } from "./_components/Audiences";
+import { ConsumerSide } from "./_components/ConsumerSide";
+import { BusinessSide } from "./_components/BusinessSide";
 import { DeveloperVision } from "./_components/DeveloperVision";
 import { WorldMap } from "./_components/WorldMap";
 import { RoadmapTimeline } from "./_components/RoadmapTimeline";
@@ -33,9 +35,11 @@ export default function WorldHome() {
       <RouteBuilder />
       <InfrastructureStack />
       <ForPeople />
+      <ConsumerSide />
       <ForUnbanked />
       <ForMerchants />
       <ForBanks />
+      <BusinessSide />
       <DeveloperVision />
       <WorldMap />
       <RoadmapTimeline />

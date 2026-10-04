@@ -17,7 +17,7 @@ export function WorldFooter() {
           <div>
             <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-white/40">Explore</p>
             <ul className="mt-4 space-y-2.5">
-              {FOOTER_LINKS.slice(0, 4).map((l) => (
+              {FOOTER_LINKS.slice(0, 5).map((l) => (
                 <li key={l.label}>
                   <a href={l.href} className="text-sm text-white/65 transition-colors hover:text-white">{l.label}</a>
                 </li>
@@ -27,7 +27,7 @@ export function WorldFooter() {
           <div>
             <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-white/40">Legal</p>
             <ul className="mt-4 space-y-2.5">
-              {FOOTER_LINKS.slice(4).map((l) => (
+              {FOOTER_LINKS.slice(5).map((l) => (
                 <li key={l.label}>
                   <a href={l.href} className="text-sm text-white/65 transition-colors hover:text-white">{l.label}</a>
                 </li>
