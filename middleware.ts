@@ -22,12 +22,15 @@ const GLOBAL_HOSTS: Record<string, string> = {
   "status.loaditglobal.com": "/global/status",
 };
 
+/** loadit.world hosts → the vision site under /world. */
+const WORLD_HOSTS = new Set(["loadit.world", "www.loadit.world"]);
+
 /** Site paths that must never be mistaken for a bare @handle on load.money. */
 const RESERVED = new Set([
   "install", "pay", "app", "learn", "tools", "compare", "platform", "technology",
   "developers", "deck", "privacy", "intent", "exchange", "energy", "data-room",
   "marketplace", "earn", "admin", "login", "signup", "help", "support", "about",
-  "club", "global",
+  "club", "global", "world",
 ]);
 const HANDLEISH = /^\/([a-z0-9][a-z0-9_.-]{1,30})(?:\/(\$?[0-9.]+))?\/?$/i;
 
@@ -53,6 +56,18 @@ export function middleware(req: NextRequest) {
     if (pathname === "/sitemap.xml") { url.pathname = "/global/sitemap.xml"; return NextResponse.rewrite(url); }
     if (pathname.startsWith("/global")) return NextResponse.next(); // already internal
     url.pathname = pathname === "/" ? globalBase : `${globalBase}${pathname}`;
+    return NextResponse.rewrite(url);
+  }
+
+  // ---- loadit.world — the vision site ----
+  if (WORLD_HOSTS.has(host)) {
+    if (host === "www.loadit.world") return toApex(req, "loadit.world");
+    const url = req.nextUrl.clone();
+    if (pathname === "/robots.txt") { url.pathname = "/world/robots.txt"; return NextResponse.rewrite(url); }
+    if (pathname === "/sitemap.xml") { url.pathname = "/world/sitemap.xml"; return NextResponse.rewrite(url); }
+    if (pathname === "/manifest.webmanifest") { url.pathname = "/world/manifest.webmanifest"; return NextResponse.rewrite(url); }
+    if (pathname.startsWith("/world")) return NextResponse.next();
+    url.pathname = pathname === "/" ? "/world" : `/world${pathname}`;
     return NextResponse.rewrite(url);
   }
 
@@ -98,5 +113,5 @@ export function middleware(req: NextRequest) {
 export const config = {
   // Skip static assets and API routes; only pages need host logic. robots and
   // sitemap are matched explicitly so loaditglobal.com can serve its own.
-  matcher: ["/((?!_next|api|.*\\..*).*)", "/robots.txt", "/sitemap.xml"],
+  matcher: ["/((?!_next|api|.*\\..*).*)", "/robots.txt", "/sitemap.xml", "/manifest.webmanifest"],
 };
