@@ -5,7 +5,7 @@ import { useRef } from "react";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { Reveal } from "@/components/ui/Reveal";
 import { HOW_STEPS } from "@/lib/constants";
-import { APP_STATUS_SHORT, CASH_CERT_LINE } from "@/lib/rail/copy";
+import { APP_STATUS_SHORT } from "@/lib/rail/copy";
 
 export function HowItWorks() {
   const ref = useRef<HTMLDivElement>(null);
@@ -22,7 +22,7 @@ export function HowItWorks() {
           align="center"
           eyebrow="How It Works"
           title="Money in. Crypto out. Seconds."
-          description={`${APP_STATUS_SHORT} Card and cash-in (${CASH_CERT_LINE.replace(/\.$/, "")}) launch with it. No bank account. Six steps from checkout to on-chain value.`}
+          description={`${APP_STATUS_SHORT} Card and cash-in — certified (5/5) with a licensed national cash network — launch with it. No bank account. Six steps from checkout to on-chain value.`}
         />
 
         <div ref={ref} className="relative mx-auto mt-20 max-w-3xl">
