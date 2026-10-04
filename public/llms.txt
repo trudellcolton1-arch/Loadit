@@ -1,19 +1,20 @@
 # Loadit
 
-> Loadit is an AI-powered, non-custodial financial rail and consumer app that turns cash and cards into crypto and stablecoins in seconds. Its patent-pending Unified Financial Rail uses an AI routing engine (HQ) to send every payment across the cheapest, fastest network available — Bitcoin, Ethereum, Solana, Base, XRPL, Polygon, the Lightning Network, or banks — treating them all as one rail.
+> Loadit is an AI-powered, non-custodial financial rail and consumer app being built to turn cash and cards into crypto and stablecoins in seconds. The production app is in development and is not live for customers yet; a prototype exists for demos. Its patent-pending Unified Financial Rail uses an AI routing engine (HQ) to send every payment across the cheapest, fastest network available — Bitcoin, Ethereum, Solana, Base, XRPL, Polygon, the Lightning Network, or banks — treating them all as one rail.
 
 Loadit's mission is to move value anywhere: let anyone convert cash or a card into the crypto they want, pay or get paid by a @handle or wallet address, and even send money to any phone nearby with no internet at all. Loadit never holds user funds — settlement is non-custodial, on-chain, and identity-verified on every transaction.
 
 Key facts:
-- **What it is:** An AI money app (iOS + Android) plus an underlying financial rail/API for turning fiat into crypto and routing payments.
+- **What it is:** An AI money app (iOS + Android, in development) plus an underlying financial rail/API for turning fiat into crypto and routing payments.
+- **Status:** Not live for customers. The production app is being engineered; card and cash purchases launch with it. Cash-in is certified (5/5) with a licensed national cash network.
 - **Convenience fee:** A flat 0.75% ($1 minimum), plus a visible 0.25% on HQ asset swaps — built to compete with banks, not to extract from users.
 - **Non-custodial:** Loadit never custodies funds; keys and signing stay with the user's wallet (Hylaq).
 - **Networks arbitrated:** Bitcoin, Ethereum, Solana, Base, XRPL, Polygon, Lightning, and traditional banks.
-- **Get the app:** https://loadit.net/install (direct iOS + Android install).
+- **Waitlist:** https://loadit.net/#access. A prototype preview (not a launch) is at https://loadit.net/install.
 
 ## Products & features
 
-- [Loadit app](https://loadit.net/install): Turn cash or card into Bitcoin, Solana, Ethereum, or USDC. iOS and Android.
+- [Loadit app (in development)](https://loadit.net/#access): Will turn cash or card into Bitcoin, Solana, Ethereum, or USDC. iOS and Android. Production build being engineered.
 - [HQ — your AI](https://loadit.net/): HQ is Loadit's in-app AI money assistant. Say what you want to do with your money in plain language and HQ finds the cheapest real route and executes it.
 - [Pulse — offline pay](https://loadit.net/): Send money to any phone nearby over Bluetooth, even with no internet. The sender locks funds in escrow; a cryptographically signed claim crosses phone-to-phone and settles the moment either phone reconnects.
 - [Send to a @handle or wallet](https://loadit.net/): Pay any Hylaq @handle or raw crypto address. Send from your own crypto, or buy it on the spot and deliver it straight to their wallet.
@@ -44,8 +45,9 @@ Key facts:
 
 ## FAQ
 
-- **What is Loadit?** An AI-powered, non-custodial financial rail that converts cash, cards, and fiat into stablecoins and crypto in seconds, routing every payment across the cheapest, fastest network via its HQ engine.
-- **How will Loadit turn cash into crypto?** Card works today; retail cash-in (in final testing, launching soon) will let you pay cash at a nearby counter — the transaction is tokenized, identity-verified, and routed by HQ across L1s, L2s, Lightning, or banks, settling on-chain in seconds.
+- **What is Loadit?** An AI-powered, non-custodial financial rail being built to convert cash, cards, and fiat into stablecoins and crypto in seconds, routing every payment across the cheapest, fastest network via its HQ engine.
+- **Is Loadit available today?** Not yet. The production app is being engineered; card and cash launch with it.
+- **How will Loadit turn cash into crypto?** Retail cash-in (certified 5/5, launching with the production app) will let you pay cash at a nearby counter — the transaction is tokenized, identity-verified, and routed by HQ across L1s, L2s, Lightning, or banks, settling on-chain in seconds.
 - **What is HQ?** Loadit's in-app AI assistant. Tell it what to do with your money in plain language and it finds the cheapest real route and executes it.
 - **What is Pulse?** Loadit's offline payments feature — send money to any phone nearby over Bluetooth with no internet, settling automatically once either phone reconnects.
 - **What does Loadit charge?** A flat 0.75% convenience fee ($1 minimum), plus a visible 0.25% when HQ swaps into another asset.

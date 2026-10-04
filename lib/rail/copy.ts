@@ -6,6 +6,12 @@
  * available to customers today; always frame it as certified and launching.
  * Never "patented" — patent pending only.
  */
+/** The app itself: a prototype exists; the production build is being engineered. */
+export const APP_STATUS_LINE =
+  "The Loadit app is in development — the production build is being engineered now. Card and cash launch with it; nothing is live for customers yet.";
+
+export const APP_STATUS_SHORT = "Production app in build — launching soon, not live yet.";
+
 export const CASH_CERT_LINE =
   "certification complete (5/5) — launching soon, not live yet.";
 

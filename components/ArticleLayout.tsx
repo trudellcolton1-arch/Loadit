@@ -97,14 +97,14 @@ export function ArticleLayout({ slug, kind, title, description, updated, readMin
 
           <div className="mt-14 flex flex-col items-start gap-4 rounded-3xl border border-rail/20 bg-gradient-to-br from-rail/10 to-transparent p-8 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <div className="text-lg font-semibold text-white">Try it with Loadit</div>
-              <div className="mt-1 text-sm text-white/60">Turn cash or card into crypto in seconds — AI-routed, non-custodial.</div>
+              <div className="text-lg font-semibold text-white">Loadit is coming</div>
+              <div className="mt-1 text-sm text-white/60">Cash or card into crypto in seconds — AI-routed, non-custodial. The production app is in build; join the waitlist to be first in.</div>
             </div>
             <Link
-              href="/install"
+              href="/#access"
               className="whitespace-nowrap rounded-full bg-rail px-6 py-3 text-sm font-semibold text-void transition-all hover:shadow-glow"
             >
-              Get the app →
+              Join the waitlist →
             </Link>
           </div>
         </article>

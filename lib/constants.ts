@@ -8,7 +8,7 @@ export const SITE = {
   domain: "loadit.net",
   tagline: "Move Value. Anywhere.",
   description:
-    "Loadit turns cards into crypto and stablecoins in seconds. Retail cash-in at hundreds of thousands of locations: certification complete (5/5), launching soon — not live yet. An AI-powered, non-custodial rail routing every payment over the cheapest, fastest network.",
+    "Loadit will turn cards and cash into crypto and stablecoins in seconds — an AI-powered, non-custodial rail routing every payment over the cheapest, fastest network. The production app is in build; retail cash-in at hundreds of thousands of locations is certified (5/5) and launches with it. Not live yet.",
   url: "https://loadit.net",
 } as const;
 

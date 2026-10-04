@@ -3,8 +3,8 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 
 export const metadata: Metadata = {
-  title: "Install the Loadit App (Beta)",
-  description: "Direct install of the Loadit iOS beta on registered devices, plus TestFlight and Android links.",
+  title: "Loadit Prototype Preview",
+  description: "Preview build of the Loadit prototype for demos and testing. The production app is being engineered now; this is not a customer launch.",
   robots: { index: false },
 };
 
@@ -21,9 +21,12 @@ export default function InstallPage() {
           <div className="mx-auto max-w-md space-y-4">
             <div className="glass rounded-4xl p-7 text-center">
               <span className="font-mono text-[0.6rem] uppercase tracking-[0.25em] text-rail-400">
-                Loadit Beta
+                Prototype preview
               </span>
-              <h1 className="mt-2 text-2xl font-semibold text-white">Install the app</h1>
+              <h1 className="mt-2 text-2xl font-semibold text-white">Preview the prototype</h1>
+              <p className="mt-3 rounded-xl border border-amber/30 bg-amber/10 px-4 py-3 text-left text-[0.75rem] leading-relaxed text-white/75">
+                <span className="font-semibold text-amber">Not a launch.</span> This is the prototype we use for demos and testing. The production Loadit app is being engineered now; card and cash purchases launch with it. Nothing here moves real customer money.
+              </p>
 
               <a
                 href={ITMS}

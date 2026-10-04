@@ -4,11 +4,15 @@ import { SITE } from "./constants";
 export const FAQS = [
   {
     q: "What is Loadit?",
-    a: "Loadit is an AI-powered financial rail that converts cards and fiat into stablecoins and crypto in seconds. Retail cash-in through a licensed national cash network: certification complete (5/5), launching soon — not live yet. Its patent-pending Unified Financial Rail uses its AI, HQ, to route every payment across the cheapest, fastest network available.",
+    a: "Loadit is an AI-powered financial rail being built to convert cards, cash, and fiat into stablecoins and crypto in seconds. The production app is in development and not live for customers yet; retail cash-in through a licensed national cash network is certified (5/5) and launches with it. Its patent-pending Unified Financial Rail uses its AI, HQ, to route every payment across the cheapest, fastest network available.",
   },
   {
     q: "How will Loadit turn cash into crypto?",
-    a: "Card purchases work today through licensed partners. Cash-in — certification complete (5/5), launching soon with our production build, not live yet — will let a shopper hand cash to a nearby retail counter; the transaction is identity-verified there and routed by HQ across L1s, L2s, Lightning, or banks, settling on-chain in seconds.",
+    a: "When the production app launches, card purchases will be completed by licensed partners straight to a wallet you control, and cash-in — certification complete (5/5), launching with the same build — will let a shopper hand cash to a nearby retail counter; the transaction is identity-verified there and routed by HQ across L1s, L2s, Lightning, or banks, settling on-chain in seconds. Neither is live for customers yet.",
+  },
+  {
+    q: "Is Loadit available today?",
+    a: "Not yet. A prototype exists for demos and testing; the production app is being engineered now. Card and cash launch with it. Join the waitlist on loadit.net to be first in.",
   },
   {
     q: "How does HQ route payments?",
@@ -77,7 +81,7 @@ export function buildJsonLd() {
         applicationCategory: "FinanceApplication",
         url: `${SITE.url}/install`,
         description:
-          "The Loadit app turns cards into Bitcoin, Solana, Ethereum, or USDC in seconds. Retail cash-in: certification complete (5/5), launching soon — not live yet. Non-custodial, AI-routed, with HQ (an in-app AI money assistant), Pulse offline Bluetooth payments, send to any @handle or wallet, and a flat 0.75% fee.",
+          "The Loadit app (in development — production build being engineered) will turn cards and cash into Bitcoin, Solana, Ethereum, or USDC in seconds. Retail cash-in: certification complete (5/5), launching with it. Non-custodial, AI-routed, with HQ (an in-app AI money assistant), Pulse offline Bluetooth payments, send to any @handle or wallet, and a flat 0.75% fee. Not live yet.",
         publisher: { "@id": `${SITE.url}/#organization` },
         offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
       },

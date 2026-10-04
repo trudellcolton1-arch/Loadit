@@ -15,7 +15,7 @@ export default function CompliancePage() {
         <div>
           <H3 id="model">The model</H3>
           <P><b className="text-white">Non-custodial.</b> Loadit never holds customer funds or keys. It routes and orchestrates; licensed partners execute.</P>
-          <P><b className="text-white">Card and bank rails.</b> Purchases are completed by licensed card and bank partners directly to a destination the customer controls. Those partners carry the money-transmission and KYC obligations for the purchase they execute.</P>
+          <P><b className="text-white">Card and bank rails.</b> Purchases will be completed by licensed card and bank partners directly to a destination the customer controls. Those partners carry the money-transmission and KYC obligations for the purchase they execute.</P>
           <P><b className="text-white">Cash rail.</b> The licensed money transmitter performs identity verification at the retail counter and executes the cash-to-USDC conversion; Loadit orchestrates routing and delivery only. Certification with a licensed national cash network is complete (5/5); cash-in is not yet live.</P>
           <P><b className="text-white">Routing.</b> Compliance is scored on every candidate route alongside cost, speed, liquidity, and risk. A route that fails compliance is not selected.</P>
 

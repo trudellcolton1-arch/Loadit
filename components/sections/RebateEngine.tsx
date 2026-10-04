@@ -92,7 +92,7 @@ export function RebateEngine() {
         {/* social proof */}
         <div className="mt-10 flex flex-col items-center">
           <div className="font-mono text-[0.6rem] uppercase tracking-[0.25em] text-rail-400">
-            ● Rebates paid to users today
+            ● Simulated rebates · illustrative, not live
           </div>
           <div className="mt-1 font-mono text-4xl font-semibold tracking-tight text-rail-gradient sm:text-5xl">
             ${paidToday.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}

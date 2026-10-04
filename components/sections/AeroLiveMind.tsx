@@ -392,8 +392,8 @@ export function AeroLiveMind() {
         {/* Telemetry counters */}
         <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-4">
           <Telemetry label="Paths / sec" value={Math.floor(paths % 1000000).toLocaleString()} accent />
-          <Telemetry label="Networks live" value="14" />
-          <Telemetry label="Value routed today" value={`$${value.toLocaleString()}`} accent />
+          <Telemetry label="Networks modeled" value="14" />
+          <Telemetry label="Simulated value routed" value={`$${value.toLocaleString()}`} accent />
           <Telemetry label="Median latency" value="38ms" />
         </div>
       </div>
