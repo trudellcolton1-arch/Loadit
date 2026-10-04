@@ -98,8 +98,9 @@ export default async function HqContentPage({ params }: Props) {
           <aside className="mt-8 rounded-2xl border border-rail/30 bg-rail/10 px-5 py-4 text-sm leading-relaxed text-white/75">
             <div className="text-xs font-semibold uppercase tracking-wider text-rail-400">Where Loadit stands today</div>
             <p className="mt-2">
-              <b className="text-white">Card purchases</b> through licensed partners are live, delivered to a wallet you control.{" "}
-              <b className="text-white">Retail cash-in</b>: {CASH_CERT_LINE} Identity verification is performed by the licensed partner on every rail. Fees and times in this guide are estimates.
+              <b className="text-white">The Loadit app</b> is in development — the production build is being engineered now, and nothing in this guide is available to customers yet.{" "}
+              <b className="text-white">Card purchases</b> launch with it, completed by licensed partners to a wallet you control.{" "}
+              <b className="text-white">Retail cash-in</b>: {CASH_CERT_LINE} Identity verification is performed by the licensed partner on every rail. Fees and times are estimates.
             </p>
           </aside>
 

@@ -177,11 +177,7 @@ export function RouteBuilder() {
           </dl>
           <p className="mt-5 text-xs leading-relaxed text-white/45">{route.note}</p>
           <div className="mt-5 flex flex-wrap gap-3">
-            {route.status === "live" ? (
-              <Cta href="https://loadit.net/install" variant="secondary" className="px-4 py-2 text-xs">Do this on Loadit.net →</Cta>
-            ) : (
-              <Cta href="https://loaditglobal.com/developers/sandbox" variant="secondary" className="px-4 py-2 text-xs">Watch the real engine route →</Cta>
-            )}
+            <Cta href="https://loaditglobal.com/developers/sandbox" variant="secondary" className="px-4 py-2 text-xs">Watch the real engine route →</Cta>
           </div>
         </div>
       </div>

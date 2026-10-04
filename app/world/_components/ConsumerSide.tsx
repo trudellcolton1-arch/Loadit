@@ -44,7 +44,7 @@ export function ConsumerSide() {
                   <p className="text-base text-white/85">{a.line}</p>
                   <p className="mt-1.5 text-xs leading-relaxed text-white/45">{a.now}</p>
                   <a href={a.href} className="mt-2 inline-block text-xs font-semibold text-rail-400 hover:text-rail-100">
-                    {a.status === "live" ? "Do it on Loadit.net →" : "Where it stands on Loadit.net →"}
+                    Where it stands on Loadit.net →
                   </a>
                 </div>
                 <StatusBadge status={a.status} className="justify-self-start sm:justify-self-end" />

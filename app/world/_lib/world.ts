@@ -40,7 +40,7 @@ export const STATUS_LABEL: Record<Status, string> = {
 };
 
 export const STATUS_HELP: Record<Status, string> = {
-  live: "Currently available.",
+  live: "Running today.",
   building: "Actively being developed.",
   vision: "Long-term Loadit architecture.",
 };
@@ -137,7 +137,7 @@ export interface BuiltRoute {
 
 /**
  * Status for a pay-with → receive pair. Derived from what actually exists:
- *  - card → digital asset: live today on loadit.net (licensed partners, non-custodial delivery)
+ *  - card → digital asset: works in the prototype; the production app is being built — not live for customers
  *  - cash → digital asset: certified with a licensed cash network; launches with the production build
  *  - bank → digital asset, chain → chain: in the routing engine, not yet a customer surface
  *  - anything that ends in cash, a bank account, or merchant settlement: vision
@@ -146,10 +146,10 @@ export function buildRoute(from: ValueForm, to: ValueForm): BuiltRoute {
   const id = `${from.short}-${to.short}`.toLowerCase();
   const same = from.id === to.id;
   if (same) {
-    return { id, status: "live", legs: [from.label, "Loadit", to.label], settlement: "No conversion required", networks: "—", note: "Same form in and out. Loadit is only needed when the two sides differ." };
+    return { id, status: "building", legs: [from.label, "Loadit", to.label], settlement: "No conversion required", networks: "—", note: "Same form in and out. Loadit is only needed when the two sides differ." };
   }
   if (from.id === "card" && DIGITAL.has(to.id)) {
-    return { id, status: "live", legs: [from.label, "Loadit · HQ", `${to.label} network`, to.label], settlement: "Non-custodial, to a wallet the recipient controls", networks: "Licensed card partner → selected chain", note: "Available today through Loadit. Card purchases are completed by licensed partners; HQ selects the network." };
+    return { id, status: "building", legs: [from.label, "Loadit · HQ", `${to.label} network`, to.label], settlement: "Non-custodial, to a wallet the recipient controls", networks: "Licensed card partner → selected chain", note: "The first corridor. Card to digital asset works in the prototype; the production app is being built by our engineering team and is not live for customers yet. Licensed partners complete the purchase; HQ selects the network." };
   }
   if (from.id === "cash" && DIGITAL.has(to.id)) {
     return { id, status: "building", legs: [from.label, "Licensed cash network", "Loadit · HQ", to.label], settlement: "Non-custodial, to a wallet the recipient controls", networks: "Cash network → conversion → selected chain", note: "Certification with a licensed national cash network is complete. Consumer cash-in launches with the production build." };
@@ -263,7 +263,7 @@ export const STACK: Layer[] = [
     name: "Transaction intake layer",
     role: "Where value enters: cash, card, fiat, QR, NFC, remote invoicing — and, later, immersive interfaces.",
     body: "Every entry point produces the same standardized transaction object: a cash counter binding a cash event to a merchant identity, a card tap tokenized at the terminal, a QR code carrying merchant, asset preference, and settlement instructions, or an API-initiated request. Intent is captured once, in one shape, whatever the medium.",
-    today: "Card intake is live on loadit.net through licensed partners. Cash intake is certified with a licensed national cash network and launches with the production build. POS and QR flows are in build; immersive intake is vision.",
+    today: "Card intake works in the prototype app; the production app is being built by our engineering team and is not live for customers yet. Cash intake is certified with a licensed national cash network and launches with the same production build. POS and QR flows are designed; immersive intake is vision.",
     claims: "Claims 1–4",
     status: "building",
   },
@@ -381,7 +381,7 @@ export interface ConsumerAction {
 
 /** The seven money actions of the consumer product, as they stand today. */
 export const CONSUMER_ACTIONS: ConsumerAction[] = [
-  { verb: "LOAD", name: "Load", line: "Turn card or cash into one supported digital asset, delivered to a wallet you control.", status: "live", now: "Card is live today. Cash-in is certified with a licensed national cash network and launches with the production build.", href: "https://loadit.net/install" },
+  { verb: "LOAD", name: "Load", line: "Turn card or cash into one supported digital asset, delivered to a wallet you control.", status: "building", now: "Works in the prototype. The production app is being built by our engineering team — card launches with it, and cash-in, certified with a licensed national cash network, launches alongside. Not live for customers yet.", href: "https://loadit.net" },
   { verb: "LOAD · MIX", name: "Multi-Asset Load", line: "One funding event, several assets, by dollar or percentage — a saved Load Mix.", status: "vision", now: "Phase 1 scope; not yet in the runtime.", href: "https://loadit.net/#how" },
   { verb: "SEND", name: "Send", line: "Send what you have; the other person receives what they want.", status: "vision", now: "Phase 2.", href: "https://loadit.net/intent" },
   { verb: "RECEIVE", name: "Receive", line: "Set how incoming value should arrive — one asset, one currency, or an allocation rule.", status: "vision", now: "Phase 4.", href: "https://loadit.net/intent" },
@@ -392,7 +392,7 @@ export const CONSUMER_ACTIONS: ConsumerAction[] = [
 ];
 
 export const CONSUMER_FACTS = [
-  ["Where", "loadit.net · iOS and Android app · pay links on load.money"],
+  ["Where", "loadit.net — production app in build by our engineering team; prototype today · pay links on load.money"],
   ["Custody", "Non-custodial. Value is delivered to a wallet the person controls; Loadit never holds funds."],
   ["Fees", "Disclosed on every route before you confirm. Estimates, never hidden spreads."],
   ["Rewards", "Load.club — earn your way in; membership is earned, not bought."],
@@ -479,7 +479,7 @@ export interface Phase {
 }
 
 export const PHASES: Phase[] = [
-  { n: "01", title: "Cash → Digital", body: "Connecting physical cash users with digital financial networks.", status: "building", now: "Card to digital asset is live. Cash-in is certified with a licensed cash network and launches with the production build." },
+  { n: "01", title: "Cash → Digital", body: "Connecting physical cash users with digital financial networks.", status: "building", now: "Card to digital asset works in the prototype; the production app is in build by our engineering team. Cash-in is certified with a licensed cash network and launches with it. Nothing is live for customers yet." },
   { n: "02", title: "Multi-asset routing", body: "Allowing value to move across different assets and networks.", status: "building", now: "HQ selects among six networks today; multi-asset allocation on one transaction is in build." },
   { n: "03", title: "Merchant settlement", body: "Abstracting how customers pay from how businesses receive value.", status: "vision", now: "Requires issuing and settlement partners. Designed, not built." },
   { n: "04", title: "Financial institution integration", body: "Giving banks, fintechs, wallets, and platforms a common routing layer.", status: "building", now: "Loadit Global is pre-launch with an early-access list and a published API preview." },
