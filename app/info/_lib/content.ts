@@ -19,8 +19,9 @@ export const INFO = {
 } as const;
 
 export const NAV = [
-  { label: "Opportunity", href: "#opportunity" },
   { label: "How it works", href: "#how-it-works" },
+  { label: "Patent", href: "#patent" },
+  { label: "Products", href: "#products" },
   { label: "Progress", href: "#progress" },
   { label: "Business model", href: "#business-model" },
   { label: "Roadmap", href: "#roadmap" },

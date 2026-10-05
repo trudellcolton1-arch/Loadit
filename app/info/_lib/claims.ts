@@ -159,6 +159,8 @@ export const FAQ = [
   { q: "Does Loadit hold customer funds?", a: "The model is non-custodial. Value is delivered to a destination the customer controls, and the licensed partner on each rail performs the regulated act. Loadit does not hold customer funds and does not hold money-transmitter licenses." },
   { q: "How are identity verification and compliance handled?", a: "By the licensed partner on each rail — at the retail counter for cash, and by the card and liquidity partners for card-funded purchases. Compliance is also a scored dimension of route selection in the engine. Formal legal opinions and state-by-state analysis are in preparation and are available to investors under NDA when ready." },
   { q: "What are the next milestones?", a: "Build the production application, launch Load through the certified cash network and the app, and validate the first route: completed transactions, repeat use, and unit costs. Dates are not committed and are not published." },
+  { q: "What does the patent cover, and what does \"pending\" mean?", a: "The application describes a single system with ten parts — from the front door that accepts cash and cards, through a universal value translator and an AI routing engine, to compliance, offline operation, self-healing, and post-quantum security — in 25 claims. Pending means it has been filed and awaits examination: nothing is granted or enforceable yet, and claims may narrow. It is one input to defensibility, not the whole case." },
+  { q: "What is the difference between Loadit.net and Loadit Global?", a: "Same engine, two front doors. Loadit.net is the consumer app, where a person loads cash or a card into a digital asset in their own wallet — prototype today, production app next. Loadit Global is the business and developer platform, where a bank, wallet, or fintech embeds the same capabilities through an API behind their own brand — pre-launch, with a live routing demo and an early-access list." },
   { q: "How can I request further information?", a: "Use the form below or email colt@loadit.net. Investor materials and data-room access are provided individually after a conversation; submitting the form does not grant access on its own." },
 ];
 
@@ -168,3 +170,168 @@ export const LEADERSHIP = [
 
 export const LEGAL_NOTE =
   "This website is for informational purposes only and does not constitute an offer to sell, or a solicitation of an offer to buy, any securities. Statements about plans, milestones, and intended pricing are forward-looking, describe intentions rather than commitments, and may change. Patent pending; no patent has been granted. Loadit, Inc. does not hold money-transmitter licenses; regulated activities are performed by licensed partners.";
+
+/* ------------------------------------------------------------ the patent, in plain words */
+
+export const PATENT = {
+  shortTitle: "Loadit Unified Financial Rail",
+  title:
+    "Self-Healing, AI-Orchestrated, Quantum-Optimized, Temporally Programmable, Offline-Resilient, Multi-Reality Transaction and Universal Value Conversion Architecture for Global Financial Settlement",
+  claims: 25,
+  parts: 10,
+  figures: 4,
+  independentClaim:
+    "A unified financial settlement system comprising an AI-orchestrated routing engine, a universal value conversion engine, a quantum optimization layer, a temporal settlement subsystem, an identity-verified offline transaction subsystem, a multi-reality transaction interface layer, a geo-temporal compliance engine, and a point-of-sale transaction intake layer — ingesting cash, card, fiat, and digital-asset payments and executing settlement across heterogeneous financial rails.",
+  /** The whole invention, for a five-year-old. */
+  kid: "Money comes in lots of shapes: paper cash, a plastic card, numbers in a bank, coins that live on the internet. Loadit's invention is a machine with a front door that takes any shape of money in, a translator that changes it into the shape the other person wants, a GPS that picks the best road to get it there, and a bunch of helpers that keep it working even when a road is closed, the internet is off, or the rules are different in another town.",
+  /** What \"pending\" means, for an investor. */
+  pendingMeans:
+    "An application has been filed and is awaiting examination. Nothing has been granted, nothing is enforceable yet, and the claims may narrow before any grant. The filing describes the architecture at a conceptual level; it is one input to defensibility, alongside partner relationships and operating knowledge, not the whole case.",
+  source: "LOADIT_UNIFIED_PATENT_MAIN_1.docx (data room); patent-pending language approved on loadit.net and loaditglobal.com",
+} as const;
+
+export interface PatentPart {
+  n: string;
+  code: string;
+  name: string;
+  /** The five-year-old version. */
+  kid: string;
+  /** One plain sentence of what the filing describes. */
+  filing: string;
+  /** Why an investor should care. */
+  why: string;
+  claims: string;
+  status: Status;
+  today: string;
+}
+
+export const PATENT_PARTS: PatentPart[] = [
+  {
+    n: "7.1", code: "INTAKE", name: "Transaction intake layer",
+    kid: "The front door. Cash, a card tap, a QR code, or a tap from an app all walk in the same door and get the same kind of envelope.",
+    filing: "Point-of-sale, card-present, card-not-present, QR, NFC, remote, and later immersive inputs each produce one standardized transaction object.",
+    why: "One shape in means one engine downstream, however the customer paid.",
+    claims: "Claims 1–4", status: "testing",
+    today: "Card intake works in the prototype; cash intake is certified with a licensed cash network and launches with the production app.",
+  },
+  {
+    n: "7.2", code: "UVCE", name: "Universal Value Conversion Engine",
+    kid: "The translator. It can turn dollars into internet coins, internet coins into dollars, or one kind of coin into another — and it checks a few shops for the best deal first.",
+    filing: "Fiat-to-digital, digital-to-fiat, and cross-asset translation through one normalization model, with liquidity sourcing, forecasting, programmable conversion rules, and fee normalization.",
+    why: "This is what lets the sender pay in one form and the recipient receive another.",
+    claims: "Claims 5, 8", status: "testing",
+    today: "Runs inside every prototype transaction: venue sourcing, forecast, fee breakdown, conversion plan.",
+  },
+  {
+    n: "7.3", code: "HQ · AORE", name: "AI-Orchestrated Routing Engine",
+    kid: "The GPS. It looks at every road, picks the best one right now, and if there is traffic it turns around and takes another.",
+    filing: "A real-time network analyzer, multi-rail path evaluation, a learning routing model, predictive pre-settlement, risk and compliance scoring, deterministic path selection, and live re-routing.",
+    why: "Routing is the product's intelligence and the part that is already demonstrable.",
+    claims: "Claims 7, 17", status: "today",
+    today: "A public demo on loaditglobal.com returns the selected network, estimated cost and time, and a confidence score for any request.",
+  },
+  {
+    n: "7.4", code: "QOL", name: "Quantum Optimization Layer",
+    kid: "A much faster calculator for when the map gets enormous. If it isn't around, the normal calculator still works.",
+    filing: "Quantum-assisted pathfinding, risk evaluation, and key distribution in a hybrid classical–quantum model with deterministic classical fallback.",
+    why: "Future-proofs the routing problem as the number of networks and venues grows; optional by design.",
+    claims: "Claims 9, 18", status: "planned",
+    today: "A research track. Classical routing is always the live path.",
+  },
+  {
+    n: "7.5", code: "TSM", name: "Temporal Settlement Subsystem",
+    kid: "A timer on the money. Send it now, but let it land later, or only when something happens, or as if it had been sent yesterday at yesterday's price.",
+    filing: "Retroactive, delayed, predictive, and condition-based settlement with verifiable historical and future state proofs.",
+    why: "Opens programmable settlement products that conventional real-time rails cannot offer.",
+    claims: "Claims 10, 19, 20", status: "planned",
+    today: "Designed and claimed; not in the runtime.",
+  },
+  {
+    n: "7.6", code: "IVOR", name: "Identity-Verified Offline Rail",
+    kid: "Works when the internet is off. You hand over a sealed envelope that proves it is really you; when the lights come back on, it gets opened and counted.",
+    filing: "Biometric and behavioral identity bound to a decentralized identifier, a local post-quantum escrow vault, deferred synchronization over mobile, satellite, or mesh, and replay prevention.",
+    why: "Extends the rail to disasters, remote regions, and travel without data — places existing payment systems do not reach.",
+    claims: "Claims 11, 12, 21", status: "planned",
+    today: "Designed and claimed; not in the runtime.",
+  },
+  {
+    n: "7.7", code: "SHF", name: "Self-healing architecture",
+    kid: "If a road closes halfway there, the package does not get lost. The machine notices, picks another road, and the package still arrives once.",
+    filing: "Fault detection across rails, failure classification, autonomous re-routing, settlement packet replication with deterministic deduplication, chain-health prediction, and post-recovery reconciliation.",
+    why: "Reliability is what partners and regulators will ask about first.",
+    claims: "Claims 16, 24", status: "testing",
+    today: "In the engine: a failed leg is parked, the rest re-scored, and a new route locked under the same identifier with idempotency keys.",
+  },
+  {
+    n: "7.8", code: "MRTI", name: "Multi-Reality Transaction Interface",
+    kid: "New ways to say \"pay\": pointing in a headset, or someday just thinking it, each tied to proof it is really you.",
+    filing: "AR, VR, XR, and brain–computer interface inputs captured as transaction intent, continuously authenticated, and normalized into the same transaction object.",
+    why: "Anchors the architecture's forward boundary; it is explicitly vision.",
+    claims: "Claims 13, 14, 22", status: "planned",
+    today: "Nothing in the product today.",
+  },
+  {
+    n: "7.9", code: "GTCE", name: "Geo-Temporal Compliance Engine",
+    kid: "The rulebook that knows where you are. Every town has its own rules, so the machine only picks roads that follow the rules for both ends of the trip.",
+    filing: "Jurisdiction-, asset-, and time-aware compliance rules enforced on every route, online or offline, with privacy-preserving proofs.",
+    why: "Compliance as a routing input rather than a gate at the end is central to operating across rails and borders.",
+    claims: "Claims 15, 23", status: "testing",
+    today: "Compliance is a scored dimension of route selection in the engine; the licensed party on each rail performs the regulated act.",
+  },
+  {
+    n: "7.10", code: "SECURITY", name: "Security and post-quantum cryptography",
+    kid: "Locks that even tomorrow's super-computers can't pick, on every envelope and every door.",
+    filing: "Post-quantum signatures and encryption, quantum-secure channels where supported, tiered identity integrity, secure enclaves, anomaly detection, and cross-ledger integrity proofs.",
+    why: "Long-lived financial records need protection against attackers who do not exist yet.",
+    claims: "Claims 18, 25", status: "testing",
+    today: "Settlement objects in the engine are signed with ML-DSA, a post-quantum scheme.",
+  },
+];
+
+/* ------------------------------------------------------------ two front doors */
+
+export interface ProductDoor {
+  name: string;
+  audience: string;
+  url: string;
+  kid: string;
+  what: string;
+  status: Status;
+  now: string;
+  items: { label: string; status: Status }[];
+}
+
+export const PRODUCTS: ProductDoor[] = [
+  {
+    name: "Loadit.net",
+    audience: "For people · B2C",
+    url: "https://loadit.net",
+    kid: "The app a person uses. Put money in, pick what you want it to become, and it shows up in your own wallet.",
+    what: "The consumer product. Seven planned actions on one engine — Load, Send, Connect, Convert, Receive, Cash Out, and a card called Loadit One — starting with Load: cash or card in, one supported digital asset out, delivered to a wallet the customer controls.",
+    status: "testing",
+    now: "A prototype exists for demos and testing. The production app is the next milestone; card and cash purchases launch with it. Not live for customers yet.",
+    items: [
+      { label: "Load — cash or card to a digital asset", status: "testing" },
+      { label: "Convert — conversion engine runs inside Load", status: "testing" },
+      { label: "Send · Receive · Connect · Cash Out", status: "planned" },
+      { label: "Loadit One card (issuing partner required)", status: "planned" },
+      { label: "Load.club rewards program", status: "testing" },
+    ],
+  },
+  {
+    name: "Loadit Global",
+    audience: "For businesses and developers · B2B",
+    url: "https://loaditglobal.com",
+    kid: "The same machine, but a bank or an app plugs it in behind their own screen so their customers never see Loadit.",
+    what: "The business and developer platform. Banks, exchanges, wallets, fintechs, payroll and remittance platforms, and merchants embed the same capabilities through one API and one transaction object, with white-label experiences to follow.",
+    status: "testing",
+    now: "Pre-launch. A live routing demo, an API preview, a published transaction model, segment-by-segment solutions, and an early-access list are public; keys go to early-access partners first.",
+    items: [
+      { label: "Live routing demo", status: "today" },
+      { label: "API preview and transaction model", status: "testing" },
+      { label: "Early-access list open", status: "today" },
+      { label: "Embedded capabilities for partners", status: "planned" },
+      { label: "White-label experiences", status: "planned" },
+    ],
+  },
+];
