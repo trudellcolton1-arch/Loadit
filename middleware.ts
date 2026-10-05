@@ -25,12 +25,15 @@ const GLOBAL_HOSTS: Record<string, string> = {
 /** loadit.world hosts → the vision site under /world. */
 const WORLD_HOSTS = new Set(["loadit.world", "www.loadit.world"]);
 
+/** loadit.info hosts → the investor site under /info. */
+const INFO_HOSTS = new Set(["loadit.info", "www.loadit.info"]);
+
 /** Site paths that must never be mistaken for a bare @handle on load.money. */
 const RESERVED = new Set([
   "install", "pay", "app", "learn", "tools", "compare", "platform", "technology",
   "developers", "deck", "privacy", "intent", "exchange", "energy", "data-room",
   "marketplace", "earn", "admin", "login", "signup", "help", "support", "about",
-  "club", "global", "world",
+  "club", "global", "world", "info",
 ]);
 const HANDLEISH = /^\/([a-z0-9][a-z0-9_.-]{1,30})(?:\/(\$?[0-9.]+))?\/?$/i;
 
@@ -69,6 +72,24 @@ export function middleware(req: NextRequest) {
     if (pathname.startsWith("/world")) return NextResponse.next();
     url.pathname = pathname === "/" ? "/world" : `/world${pathname}`;
     return NextResponse.rewrite(url);
+  }
+
+  // ---- loadit.info — the investor site ----
+  if (INFO_HOSTS.has(host)) {
+    if (host === "www.loadit.info") return toApex(req, "loadit.info");
+    const url = req.nextUrl.clone();
+    if (pathname === "/robots.txt") { url.pathname = "/info/robots.txt"; return NextResponse.rewrite(url); }
+    if (pathname === "/sitemap.xml") { url.pathname = "/info/sitemap.xml"; return NextResponse.rewrite(url); }
+    if (pathname.startsWith("/info")) return NextResponse.next();
+    url.pathname = pathname === "/" ? "/info" : `/info${pathname}`;
+    return NextResponse.rewrite(url);
+  }
+  // The investor site is reachable at /info on other hosts for previews only —
+  // keep those copies out of search so loadit.info stays the single canonical.
+  if (pathname === "/info" || pathname.startsWith("/info/")) {
+    const res = NextResponse.next();
+    res.headers.set("X-Robots-Tag", "noindex, nofollow");
+    return res;
   }
 
   // Other hosts: robots/sitemap are only in the matcher for Global's sake.

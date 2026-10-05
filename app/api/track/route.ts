@@ -15,6 +15,7 @@ const ALLOWED = new Set([
   "provider_click",
   "provider_impression",
   "checkout_start",
+  "investor_inquiry_submitted", // loadit.info — never carries name, email, or message
 ]);
 
 export async function POST(req: Request) {
