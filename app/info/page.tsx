@@ -4,6 +4,7 @@ import { Hero } from "./_components/Hero";
 import { HowItWorks } from "./_components/HowItWorks";
 import { Patent } from "./_components/Patent";
 import { Products } from "./_components/Products";
+import { Raise } from "./_components/Raise";
 import { Problem, MarketEntry, Progress, BusinessModel, Roadmap, Differentiation, Leadership, Faq } from "./_components/Sections";
 import { Contact } from "./_components/Contact";
 
@@ -26,6 +27,7 @@ export default function InvestorHome() {
       <MarketEntry />
       <Progress />
       <BusinessModel />
+      <Raise />
       <Roadmap />
       <Differentiation />
       <Leadership />

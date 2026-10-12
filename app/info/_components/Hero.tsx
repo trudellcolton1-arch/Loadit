@@ -24,7 +24,7 @@ export function Hero() {
           </div>
           <dl className="mt-10 grid gap-3 text-sm sm:grid-cols-3">
             {[
-              ["Stage", "Pre-launch. Prototype built; production app next."],
+              ["Stage", "Pre-launch. Raising $500K pre-seed to build the production app."],
               ["Model", "Non-custodial coordination; licensed partners execute."],
               ["IP", "Patent application filed, 25 claims. Pending."],
             ].map(([k, v]) => (

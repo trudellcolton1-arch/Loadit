@@ -50,7 +50,8 @@ export const CLAIMS: Claim[] = [
   { id: "patent-date", text: "", source: "Filing date / application number not in a public-approved source.", status: "unverified", approved: false },
   { id: "team", text: "", source: "No verified roster beyond the founder; no approved bios or photos.", status: "unverified", approved: false },
   { id: "traction", text: "", source: "No verified users, transactions, volume, or revenue.", status: "unverified", approved: false },
-  { id: "round", text: "", source: "No approved round size, valuation, instrument, or use of funds.", status: "unverified", approved: false },
+  { id: "round", text: "Loadit is raising a $500,000 pre-seed round on a SAFE to build the production application and take the first product live.", source: "Founder set the ask at $500K (2026-10-10); published on pitch.loadit.net. Cap and other terms are not published.", asOf: "2026-10-10", status: "planned", approved: true },
+  { id: "round-terms", text: "", source: "Valuation cap, discount, and closing timeline are not approved for public display.", status: "unverified", approved: false },
   { id: "market-size", text: "", source: "No sourced TAM/SAM figures approved for display.", status: "unverified", approved: false },
   { id: "launch-date", text: "", source: "No committed production-app or cash-in launch date.", status: "unverified", approved: false },
 ];
@@ -161,6 +162,7 @@ export const FAQ = [
   { q: "What are the next milestones?", a: "Build the production application, launch Load through the certified cash network and the app, and validate the first route: completed transactions, repeat use, and unit costs. Dates are not committed and are not published." },
   { q: "What does the patent cover, and what does \"pending\" mean?", a: "The application describes a single system with ten parts — from the front door that accepts cash and cards, through a universal value translator and an AI routing engine, to compliance, offline operation, self-healing, and post-quantum security — in 25 claims. Pending means it has been filed and awaits examination: nothing is granted or enforceable yet, and claims may narrow. It is one input to defensibility, not the whole case." },
   { q: "What is the difference between Loadit.net and Loadit Global?", a: "Same engine, two front doors. Loadit.net is the consumer app, where a person loads cash or a card into a digital asset in their own wallet — prototype today, production app next. Loadit Global is the business and developer platform, where a bank, wallet, or fintech embeds the same capabilities through an API behind their own brand — pre-launch, with a live routing demo and an early-access list." },
+  { q: "What is the ask, and what does it fund?", a: "A $500,000 pre-seed on a SAFE. It funds the production application — two engineers for twelve months plus security, QA, and design — the launch through the certified cash network, legal and compliance work to keep the licensed-partner model clean, and twelve months of operations with a small reserve. The full line-item plan, timeline, and spending gates are published on this page. Terms are discussed in person." },
   { q: "How can I request further information?", a: "Use the form below or email colt@loadit.net. Investor materials and data-room access are provided individually after a conversation; submitting the form does not grant access on its own." },
 ];
 
@@ -334,4 +336,125 @@ export const PRODUCTS: ProductDoor[] = [
       { label: "White-label experiences", status: "planned" },
     ],
   },
+];
+
+/* ------------------------------------------------------------ what $500K funds */
+
+export const RAISE = {
+  amount: 500_000,
+  amountLabel: "$500,000",
+  instrument: "Pre-seed SAFE",
+  horizonMonths: 12,
+  /** Average monthly spend implied by the plan (total ÷ horizon). */
+  avgMonthly: "≈ $41.7K / month",
+  thesis:
+    "Certification, the patent filing, and the prototype are done. The one thing between Loadit and a live product is production engineering. This round pays for exactly that: the engineers who build the production app, the launch through the certified cash network, and twelve months of runway to validate the first route with real transactions.",
+  source: "Allocation mirrors the published pitch (65 / 15 / 10 / 10). Line items are a founder-reviewed plan built from current vendor costs and market rates.",
+} as const;
+
+export interface BudgetLine {
+  item: string;
+  amount: number;
+  basis: string;
+  when: string;
+}
+export interface BudgetCategory {
+  name: string;
+  share: string;
+  total: number;
+  purpose: string;
+  lines: BudgetLine[];
+}
+
+export const USE_OF_FUNDS: BudgetCategory[] = [
+  {
+    name: "Engineering & product",
+    share: "65%",
+    total: 325_000,
+    purpose: "Replace the prototype with a production application and harden the engine that routes every transaction.",
+    lines: [
+      { item: "Lead full-stack engineer — production backend: transaction engine, partner integrations, routing service, reconciliation", amount: 160_000, basis: "1 senior engineer, 12 months, fully loaded ≈ $13.3K/mo (contract-to-hire)", when: "Months 1–12" },
+      { item: "Mobile engineer — production iOS and Android app, onboarding, wallet delivery, receipts", amount: 120_000, basis: "1 engineer, 12 months ≈ $10K/mo", when: "Months 1–12" },
+      { item: "Security & infrastructure contractor — penetration-test preparation, post-quantum signing hardening, CI/CD, monitoring, incident runbooks", amount: 30_000, basis: "≈ 6 months part-time at $5K/mo", when: "Months 2–8" },
+      { item: "QA, device testing, TestFlight and Play tracks, store listing assets", amount: 10_000, basis: "Contract QA before each release train plus device lab", when: "Months 4–6, 9, 12" },
+      { item: "Production design — UI system, accessibility pass, counter and in-app flows", amount: 5_000, basis: "Fixed-scope contract", when: "Months 1–3" },
+    ],
+  },
+  {
+    name: "Growth & distribution",
+    share: "15%",
+    total: 75_000,
+    purpose: "Get the first cohort through the door at certified counters and in the app — only after launch, never before.",
+    lines: [
+      { item: "Counter launch kit at the cash network — point-of-sale signage, QR counter cards, agent one-pagers, training deck", amount: 20_000, basis: "Print, fulfilment, and design for the initial metro footprint", when: "Months 5–7" },
+      { item: "Load.club earned rewards — first-cohort incentives for completed loads and referrals", amount: 20_000, basis: "Capped reward pool; released per completed transaction", when: "Months 6–12" },
+      { item: "Launch content — demo video, app-store listing, explainer pages, PR outreach (HQ content engine already runs at no cost)", amount: 15_000, basis: "Video production + launch PR contractor", when: "Months 4–6" },
+      { item: "Paid acquisition tests in three metro corridors near certified counters", amount: 15_000, basis: "Three $5K tests; scale only where cost per completed load clears the fee", when: "Months 7–12" },
+      { item: "Analytics and attribution tooling", amount: 5_000, basis: "Event pipeline + attribution, 12 months", when: "Months 1–12" },
+    ],
+  },
+  {
+    name: "Partnerships, legal & compliance",
+    share: "10%",
+    total: 50_000,
+    purpose: "Keep the patent moving, keep the licensed-partner model clean, and be audit-ready on day one.",
+    lines: [
+      { item: "Patent prosecution — office-action responses and counsel on the pending application", amount: 15_000, basis: "Counsel estimate for one prosecution cycle", when: "As office actions arrive" },
+      { item: "Regulatory counsel — state-by-state money-transmission analysis and partner-agreement review", amount: 20_000, basis: "Fixed-fee memo plus agreement review hours", when: "Months 1–4" },
+      { item: "Compliance operations — KYC/AML program documentation with partners, audit preparation, policy packets", amount: 10_000, basis: "Compliance consultant, part-time", when: "Months 2–6" },
+      { item: "Additional rail and off-ramp integration and certification costs", amount: 5_000, basis: "Sandbox, test funds, certification fees", when: "Months 8–12" },
+    ],
+  },
+  {
+    name: "Operations",
+    share: "10%",
+    total: 50_000,
+    purpose: "Keep the lights on, the books clean, and a reserve for what plans miss.",
+    lines: [
+      { item: "Infrastructure and tools — hosting, Postgres, email delivery, mobile CI, Apple and Google developer accounts, monitoring", amount: 12_000, basis: "≈ $1K/mo at current vendor pricing", when: "Months 1–12" },
+      { item: "Accounting, bookkeeping, tax filings, Delaware franchise tax", amount: 10_000, basis: "Fractional bookkeeper + annual filings", when: "Months 1–12" },
+      { item: "Insurance — general liability, plus D&O / E&O quotes ahead of launch", amount: 8_000, basis: "Early-stage fintech quotes", when: "Months 4–5" },
+      { item: "Customer support — help desk tooling and a part-time support contractor from launch", amount: 10_000, basis: "Tooling + ≈ $1.2K/mo from month 6", when: "Months 6–12" },
+      { item: "Contingency reserve", amount: 10_000, basis: "2% of the round, untouched unless a gate requires it", when: "Held" },
+    ],
+  },
+];
+
+/** Founder compensation is deliberately a separate line so it is never hidden inside a category. */
+export const FOUNDER_LINE = { item: "Founder compensation", amount: 0, basis: "No founder salary is budgeted from this round", when: "—" };
+
+export interface Phase {
+  months: string;
+  title: string;
+  spend: string;
+  deliverables: string[];
+}
+
+export const TIMELINE: Phase[] = [
+  { months: "0–1", title: "Hire and set the architecture", spend: "≈ $30K", deliverables: ["Lead and mobile engineers signed", "Production architecture and partner integration plan frozen", "Regulatory counsel engaged", "Design system started"] },
+  { months: "1–4", title: "Build the production app and backend", spend: "≈ $135K", deliverables: ["Transaction engine, partner integrations, and reconciliation in production environments", "iOS and Android apps replace the prototype", "Security contractor begins hardening", "Compliance documentation drafted with partners"] },
+  { months: "4–6", title: "Closed beta, then public launch", spend: "≈ $110K", deliverables: ["Closed beta at selected certified counters and via TestFlight", "Penetration-test findings resolved", "App Store and Google Play public launch", "Consumer cash-in goes live through the certified network"] },
+  { months: "6–9", title: "Validate the first route", spend: "≈ $110K", deliverables: ["Completed cash-in and card loads measured weekly", "Repeat-use rate, counter conversion, and unit cost per transaction tracked against the fee", "Counter kit deployed; Load.club rewards released per completed load"] },
+  { months: "9–12", title: "Expand what works", spend: "≈ $115K", deliverables: ["Paid acquisition only in corridors that clear unit cost", "Second rail or off-ramp certification", "Loadit Global early-access design partners onboarded", "Seed-round materials built on real transaction data"] },
+];
+
+export const GATES = [
+  { gate: "No public launch until the security review is closed.", why: "Money-moving software ships after the penetration test, not before." },
+  { gate: "No paid acquisition until the unit cost per completed load is below the fee it earns.", why: "Growth spend scales a working economy, never a broken one." },
+  { gate: "No new rail until the first route has 90 days of real transaction data.", why: "Expansion follows validation." },
+  { gate: "Contingency is released only by a gate, never for overruns.", why: "The reserve exists for surprises, not for drift." },
+];
+
+export const NOT_FUNDED = [
+  "A token, a treasury, or any custody of customer funds",
+  "Marketing or acquisition spend before the product is live",
+  "Office space, travel beyond partner meetings, or new domain purchases",
+  "Founder salary",
+  "Hiring beyond the two engineers and the contractors listed until the first route is validated",
+];
+
+export const REPORTING = [
+  "A monthly investor update: spend against this plan by category, hires, shipped work, and the next gate.",
+  "Transaction metrics from launch onward, with definitions, in the same update.",
+  "Any reallocation above 10% of a category is explained in writing before it happens.",
 ];

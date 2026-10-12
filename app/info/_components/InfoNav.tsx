@@ -36,7 +36,7 @@ export function InfoNav() {
             </span>
           </a>
 
-          <nav className="hidden items-center gap-1 lg:flex" aria-label="Primary">
+          <nav className="hidden items-center gap-0.5 xl:flex" aria-label="Primary">
             {NAV.map((n) => (
               <a key={n.href} href={n.href} className="whitespace-nowrap rounded-md px-3 py-2 text-sm text-white/65 transition-colors hover:text-white">{n.label}</a>
             ))}
@@ -47,7 +47,7 @@ export function InfoNav() {
               Request investor materials
             </a>
             <button
-              className="rounded-md p-2 text-white/80 lg:hidden"
+              className="rounded-md p-2 text-white/80 xl:hidden"
               aria-label={open ? "Close menu" : "Open menu"}
               aria-expanded={open}
               aria-controls="info-mobile-menu"
@@ -65,7 +65,7 @@ export function InfoNav() {
           would otherwise become the containing block for this fixed panel and
           clip it to the 64px bar. */}
       {open && (
-        <div id="info-mobile-menu" className="fixed inset-x-0 bottom-0 top-16 z-40 overflow-y-auto border-t border-white/8 bg-[#04060B] px-5 py-6 lg:hidden">
+        <div id="info-mobile-menu" className="fixed inset-x-0 bottom-0 top-16 z-40 overflow-y-auto border-t border-white/8 bg-[#04060B] px-5 py-6 xl:hidden">
           <nav aria-label="Mobile" className="grid gap-1">
             {NAV.map((n) => (
               <a key={n.href} href={n.href} onClick={() => setOpen(false)} className="rounded-lg py-3 text-lg text-white/85">{n.label}</a>
