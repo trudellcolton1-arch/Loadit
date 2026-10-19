@@ -20,6 +20,7 @@ export const NAV_LINKS = [
   { label: "Demo", href: "/#demo" },
   { label: "Compare", href: "/compare" },
   { label: "Platform", href: "/platform" },
+  { label: "DollarDNA", href: "/dollardna" },
   { label: "Technology", href: "/technology" },
   { label: "Exchange", href: "/exchange" },
   { label: "Energy", href: "/energy" },
