@@ -96,9 +96,9 @@ export function Hero() {
               </g>
               {/* context chip */}
               <g>
-                <rect x="332" y="276" width="220" height="38" rx="10" fill="rgba(34,169,92,0.08)" stroke="rgba(52,209,122,0.4)" />
-                <text x="344" y="292" fill="rgba(255,255,255,0.5)" fontFamily="ui-monospace, monospace" fontSize="8.5" letterSpacing="2">CONTEXT · ATTESTED</text>
-                <text x="344" y="306" fill="#fff" fontFamily="Inter, system-ui, sans-serif" fontSize="10.5">Invoice #1042 — brand design · signed by sender</text>
+                <rect x="300" y="276" width="252" height="38" rx="10" fill="rgba(34,169,92,0.08)" stroke="rgba(52,209,122,0.4)" />
+                <text x="312" y="292" fill="rgba(255,255,255,0.5)" fontFamily="ui-monospace, monospace" fontSize="8.5" letterSpacing="2">CONTEXT · ATTESTED</text>
+                <text x="312" y="306" fill="#fff" fontFamily="Inter, system-ui, sans-serif" fontSize="10">Invoice #1042 · brand design · signed by sender</text>
               </g>
               <text x="16" y="318" fill="rgba(255,255,255,0.35)" fontFamily="ui-monospace, monospace" fontSize="8.5" letterSpacing="1.5">EXAMPLE RATES · FICTIONAL PEOPLE · NO FUNDS MOVE</text>
             </svg>
