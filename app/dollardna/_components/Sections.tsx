@@ -218,7 +218,90 @@ export function HistoryVsCollectible() {
           ))}
         </ol>
       </div>
+
+      <FamousDollar />
     </Section>
+  );
+}
+
+/**
+ * THE FAMOUS-DOLLAR TEST — what a provenance record would and would not prove
+ * about a claim like "a famous person once held this dollar". Two fictional
+ * cases, same claim, different evidence. No real person is named anywhere on
+ * this page: a record that names someone is a claim about them, and the rule
+ * here is that claims are shown with their evidence or shown as unknown.
+ */
+function FamousDollar() {
+  const CASES = [
+    {
+      id: "A",
+      title: "Case A · the claim holds within coverage",
+      verdict: "Proven within coverage",
+      tone: "border-rail-400/40 bg-rail-400/[0.05] text-rail-400",
+      checks: [
+        ["Who held the ancestor parcel?", "A parcel record inside coverage, holder bound to a verified key belonging to Ada Okafor (fictional founder).", "attested"],
+        ["Is the chain unbroken to this parcel?", "Every segment from that parcel to this one is inside supported coverage: a split, a transfer, a conversion — each linked.", "referenced"],
+        ["Is the identity more than a label?", "The key was verified when the holder joined, not typed into a memo. The signature proves the key; the verification binds the key to the person.", "attested"],
+        ["What exactly is proven?", "That a tracked amount once recorded under that key is an ancestor of this parcel. Not that she chose it, noticed it, or that it adds a cent to its value.", "referenced"],
+      ],
+    },
+    {
+      id: "B",
+      title: "Case B · the same claim, with a gap",
+      verdict: "Not proven — Unknown",
+      tone: "border-amber-400/40 bg-amber-400/[0.05] text-amber-300",
+      checks: [
+        ["Who held the ancestor parcel?", "A note on the record says \"once held by a famous founder\". It is signed — by whoever attached it, not by that founder's key.", "attested"],
+        ["Is the chain unbroken to this parcel?", "The value passed through a bank balance DollarDNA did not record. Dollars in an account are fungible; no specific \"dollar\" persists through it.", "outside_coverage"],
+        ["Is the identity more than a label?", "There is no verified key behind the name. A name in a memo field is a claim, not evidence.", "unknown"],
+        ["What exactly is proven?", "That someone attached a note making the claim. DollarDNA shows the note, who signed it, and the gap — and shows the claim itself as unknown.", "unknown"],
+      ],
+    },
+  ] as const;
+
+  return (
+    <div className="mt-14">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div className="max-w-2xl">
+          <div className="eyebrow">The famous-dollar test</div>
+          <h3 className="mt-3 text-balance text-2xl font-semibold tracking-tightest text-white sm:text-3xl">
+            &ldquo;A famous person once held this dollar.&rdquo; What would it take to prove that?
+          </h3>
+          <p className="mt-3 text-sm leading-relaxed text-white/60">
+            The appeal of a famous previous owner is exactly the kind of claim DollarDNA is built to test rather than repeat. Same claim, two fictional cases, two different answers — decided by evidence, not by the name.
+          </p>
+        </div>
+        <StatusTag tag="illustrative" className="mb-1" />
+      </div>
+
+      <div className="mt-8 grid gap-6 lg:grid-cols-2">
+        {CASES.map((c) => (
+          <Reveal key={c.id}>
+            <article className="h-full rounded-3xl border border-white/10 bg-[#070A12] p-5 sm:p-6">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h4 className="text-base font-semibold text-white">{c.title}</h4>
+                <span className={`rounded-full border px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.18em] ${c.tone}`}>{c.verdict}</span>
+              </div>
+              <ol className="mt-5 grid gap-3">
+                {c.checks.map(([q, a, ev], i) => (
+                  <li key={q} className="rounded-2xl border border-white/8 bg-white/[0.02] p-4">
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <div className="text-sm font-semibold text-white"><span className="font-mono text-[11px] text-white/35">{String(i + 1).padStart(2, "0")}</span> {q}</div>
+                      <EvidenceTag evidence={ev} />
+                    </div>
+                    <p className="mt-2 text-sm leading-relaxed text-white/60">{a}</p>
+                  </li>
+                ))}
+              </ol>
+            </article>
+          </Reveal>
+        ))}
+      </div>
+
+      <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.02] p-5 text-sm leading-relaxed text-white/60">
+        <span className="font-semibold text-white">Why this page names no real person.</span> A record that names someone as a holder is a claim about that person. DollarDNA&rsquo;s rule is that a claim appears with its evidence or appears as unknown — so a famous name only ever enters a record the way Case A shows: through a verified key, inside coverage, with the gap visible wherever it exists. Every person on this page is fictional.
+      </div>
+    </div>
   );
 }
 
