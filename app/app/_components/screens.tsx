@@ -476,9 +476,10 @@ export function Activity({ wallet, onBack }: { wallet: Wallet; onBack: () => voi
   const [list, setList] = useState<Sep24Tx[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [open, setOpen] = useState<string | null>(null);
+  const { sep24List } = wallet;
   useEffect(() => {
-    wallet.sep24List().then(setList).catch((e) => setErr(e instanceof Error ? e.message : "list_failed"));
-  }, [wallet]);
+    sep24List().then(setList).catch((e) => setErr(e instanceof Error ? e.message : "list_failed"));
+  }, [sep24List]);
   const merged = useMemo(() => {
     const byId = new Map<string, Sep24Tx>();
     (list || []).forEach((t) => t.id && byId.set(String(t.id), t));

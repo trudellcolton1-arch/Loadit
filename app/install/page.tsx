@@ -56,6 +56,18 @@ export default function InstallPage() {
 
               <div className="mt-6 border-t border-white/8 pt-6">
                 <a
+                  href="/app"
+                  className="block w-full rounded-full border border-rail-400/40 bg-rail-400/10 px-6 py-4 text-sm font-semibold text-white transition-all hover:bg-rail-400/20"
+                >
+                  Open the web wallet (test mode) →
+                </a>
+                <p className="mt-2 text-[0.7rem] text-white/35">
+                  Runs in your browser and installs to your home screen. Cash-in and cash-out flows against the cash network&apos;s test environment — test USDC, no real money.
+                </p>
+              </div>
+
+              <div className="mt-6 border-t border-white/8 pt-6">
+                <a
                   href="https://testflight.apple.com/join/XxdDFBeF"
                   className="block w-full rounded-full border border-white/15 px-6 py-4 text-sm font-medium text-white transition-all hover:bg-white/5"
                 >
