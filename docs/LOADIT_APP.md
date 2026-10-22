@@ -5,6 +5,18 @@ Installable web app that does the first corridor for real: **cash → USDC** and
 that only exists on the user's device. Built so the production app can ship
 before the native build is finished.
 
+## Rule: no Hylaq
+
+The wallet involves Hylaq in no way — not its OAuth, not its database, not
+the HQ routing service at hylaqo.com, not its wallet endpoints, not its name
+in copy. Identity is a Stellar keypair created on the device; the only server
+calls are Loadit's own `/api/anchor/*` and `/api/wallet/activate`, Horizon,
+Friendbot (testnet), and the cash network's anchor. `lib/wallet/noHylaq.test.ts`
+walks the wallet's transitive import graph on every `npm test` and fails if a
+Hylaq module or string ever enters it. Runtime capture on 2026-10-22: the
+wallet tab contacted only its own origin, Horizon, and (preview only)
+vercel.live; MoneyGram's popup loads MoneyGram's own third parties.
+
 ## What it is
 
 - **Non-custodial.** The Stellar keypair is generated in the browser and
