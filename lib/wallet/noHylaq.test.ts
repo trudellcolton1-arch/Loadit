@@ -73,7 +73,8 @@ test("no file on the wallet path mentions Hylaq, hylaqo, or HQ keys", () => {
 });
 
 test("wallet copy never mentions Hylaq or HQ as a product", () => {
-  const files = ["app/app/_components/screens.tsx", "app/app/_components/TxStatus.tsx", "app/app/_components/AppShell.tsx", "app/app/layout.tsx", "app/app/manifest.webmanifest/route.ts", "docs/LOADIT_APP.md"];
+  // User-facing wallet files only; docs/LOADIT_APP.md states the rule and so names it.
+  const files = ["app/app/_components/screens.tsx", "app/app/_components/TxStatus.tsx", "app/app/_components/AppShell.tsx", "app/app/_components/ui.tsx", "app/app/layout.tsx", "app/app/page.tsx", "app/app/manifest.webmanifest/route.ts", "public/app-sw.js"];
   for (const rel of files) {
     const src = readFileSync(join(ROOT, rel), "utf8");
     assert.ok(!/hylaq/i.test(src), `${rel} mentions Hylaq`);
