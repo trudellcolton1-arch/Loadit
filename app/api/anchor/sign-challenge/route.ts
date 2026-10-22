@@ -7,6 +7,7 @@ import {
   TESTNET_PASSPHRASE,
   passphraseForChallenge,
 } from "@/lib/sep10Network";
+import { CLIENT_DOMAIN, validateClientDomainChallenge } from "@/lib/sep10Guard";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -30,8 +31,6 @@ export const dynamic = "force-dynamic";
  * for MoneyGram production (mgxanchor.moneygram.com). Sandbox / playground
  * stay on testnet. We do not flip the whole process to public.
  */
-
-const CLIENT_DOMAIN = process.env.LOADIT_CLIENT_DOMAIN || "loadit.net";
 
 export function GET() {
   // Non-secret readiness probe for the status page.
@@ -94,7 +93,7 @@ export async function POST(req: Request) {
 
   // Guard: only ever sign a genuine SEP-10 challenge that names OUR client
   // domain. This is what stops the endpoint being abused to sign anything else.
-  const guard = validateChallenge(tx);
+  const guard = validateClientDomainChallenge(tx);
   if (!guard.ok) {
     return NextResponse.json({ ok: false, reason: guard.reason }, { status: 422 });
   }
@@ -110,32 +109,4 @@ export async function POST(req: Request) {
   } catch {
     return NextResponse.json({ ok: false, reason: "sign_failed" }, { status: 500 });
   }
-}
-
-/**
- * Validate the anchor's SEP-10 challenge before signing:
- *  - sequence number must be 0 (challenge txs are never submitted)
- *  - the first op must be a ManageData auth op ("<home_domain> auth")
- *  - there must be a `client_domain` ManageData op whose value is OUR domain
- * We do NOT verify the anchor's signature here (the app/anchor does that);
- * our only job is to refuse to sign anything that isn't clearly a challenge
- * asking for loadit.net's client_domain attestation.
- */
-function validateChallenge(tx: Transaction): { ok: true } | { ok: false; reason: string } {
-  if (tx.sequence !== "0") return { ok: false, reason: "not_a_challenge" };
-  const ops = tx.operations;
-  if (!ops.length) return { ok: false, reason: "no_operations" };
-  if (ops[0].type !== "manageData") return { ok: false, reason: "bad_challenge_shape" };
-
-  let hasClientDomain = false;
-  for (const op of ops) {
-    if (op.type !== "manageData") continue;
-    if (op.name === "client_domain") {
-      const val = op.value ? op.value.toString("utf8") : "";
-      if (val !== CLIENT_DOMAIN) return { ok: false, reason: "wrong_client_domain" };
-      hasClientDomain = true;
-    }
-  }
-  if (!hasClientDomain) return { ok: false, reason: "no_client_domain_op" };
-  return { ok: true };
 }

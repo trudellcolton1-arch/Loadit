@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 
@@ -23,6 +24,9 @@ const SUGGESTIONS = [
 ];
 
 export function AeroChatWidget() {
+  const pathname = usePathname();
+  // The wallet (/app) is a focused, installable surface — no marketing chat bubble there.
+  const hidden = pathname === "/app" || pathname?.startsWith("/app/");
   const [open, setOpen] = useState(false);
   const [peek, setPeek] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([GREETING]);
@@ -102,6 +106,8 @@ export function AeroChatWidget() {
       setLoading(false);
     }
   };
+
+  if (hidden) return null;
 
   return (
     // data-loadit-widget: stable hook so sibling domains (loaditglobal.com)
