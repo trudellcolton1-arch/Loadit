@@ -54,12 +54,11 @@ export function Welcome({ wallet, onCreate, onRestore }: { wallet: Wallet; onCre
   );
 }
 
-export function CreateWallet({ wallet, onBack, onDone }: { wallet: Wallet; onBack: () => void; onDone: () => void }) {
+export function CreateWallet({ wallet, onBack, onCreated }: { wallet: Wallet; onBack: () => void; onCreated: (passphrase: string) => void }) {
   const [p1, setP1] = useState("");
   const [p2, setP2] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const [created, setCreated] = useState<string | null>(null);
   const problem = passphraseProblem(p1);
 
   const create = async () => {
@@ -68,16 +67,15 @@ export function CreateWallet({ wallet, onBack, onDone }: { wallet: Wallet; onBac
     if (p1 !== p2) return setErr("The two passphrases do not match.");
     setBusy(true);
     try {
-      const pub = await wallet.createWallet(p1);
-      setCreated(pub);
+      // The shell shows the backup screen before the wallet home once this resolves.
+      onCreated(p1);
+      await wallet.createWallet(p1);
     } catch (e) {
       setErr(e instanceof Error ? e.message : "create_failed");
     } finally {
       setBusy(false);
     }
   };
-
-  if (created) return <Backup wallet={wallet} passphrase={p1} onDone={onDone} firstTime />;
 
   return (
     <div>

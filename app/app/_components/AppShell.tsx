@@ -12,10 +12,15 @@ export function AppShell({ cfg }: { cfg: WalletNetworkConfig }) {
   const wallet = useWallet(cfg);
   const [onboard, setOnboard] = useState<Onboard>("welcome");
   const [screen, setScreen] = useState<Screen>("home");
+  // Set while a brand-new wallet still has to show its backup; holds the passphrase only until then.
+  const [firstBackup, setFirstBackup] = useState<string | null>(null);
 
   // Return to home whenever the wallet locks so a locked session never resumes mid-flow.
   useEffect(() => {
-    if (wallet.vaultState !== "unlocked") setScreen("home");
+    if (wallet.vaultState !== "unlocked") {
+      setScreen("home");
+      setFirstBackup(null);
+    }
   }, [wallet.vaultState]);
 
   let body: React.ReactNode;
@@ -23,11 +28,13 @@ export function AppShell({ cfg }: { cfg: WalletNetworkConfig }) {
     body = <div className="flex min-h-[60vh] items-center justify-center"><Spinner /></div>;
   } else if (wallet.vaultState === "none") {
     body =
-      onboard === "create" ? <CreateWallet wallet={wallet} onBack={() => setOnboard("welcome")} onDone={() => setScreen("home")} /> :
+      onboard === "create" ? <CreateWallet wallet={wallet} onBack={() => setOnboard("welcome")} onCreated={setFirstBackup} /> :
       onboard === "restore" ? <RestoreWallet wallet={wallet} onBack={() => setOnboard("welcome")} onDone={() => setScreen("home")} /> :
       <Welcome wallet={wallet} onCreate={() => setOnboard("create")} onRestore={() => setOnboard("restore")} />;
   } else if (wallet.vaultState === "locked") {
     body = <Unlock wallet={wallet} onForget={() => { if (confirm("Forget this wallet on this device? You will need your secret key to restore it.")) void wallet.forgetWallet(); }} />;
+  } else if (firstBackup !== null) {
+    body = <Backup wallet={wallet} passphrase={firstBackup} firstTime onDone={() => { setFirstBackup(null); setScreen("home"); }} />;
   } else {
     const back = () => setScreen("home");
     body =
@@ -40,7 +47,7 @@ export function AppShell({ cfg }: { cfg: WalletNetworkConfig }) {
       <Home wallet={wallet} go={setScreen} />;
   }
 
-  const showNav = wallet.vaultState === "unlocked";
+  const showNav = wallet.vaultState === "unlocked" && firstBackup === null;
 
   return (
     <div className="mx-auto flex min-h-[100dvh] w-full max-w-md flex-col px-4 pb-[calc(env(safe-area-inset-bottom)+5.5rem)] pt-[env(safe-area-inset-top)]">
