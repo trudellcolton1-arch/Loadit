@@ -15,10 +15,16 @@ import crypto from "crypto";
 export interface KeyPayload {
   /** Stable key id (also used for revocation). */
   kid: string;
-  /** Plan name, e.g. "startup". */
+  /** Plan name, e.g. "startup" — or "merchant" for checkout keys. */
   plan: string;
   /** Customer email, for support/tracing. */
   email?: string;
+  /** Merchant keys: display name shown on the hosted checkout. */
+  name?: string;
+  /** Merchant keys: the merchant's own Stellar address USDC settles to. */
+  addr?: string;
+  /** Merchant keys: "test" (Stellar testnet) or "live" (public network). */
+  mode?: "test" | "live";
   /** Issued-at (epoch seconds). */
   iat: number;
   /** Expiry (epoch seconds). */
@@ -46,6 +52,9 @@ export function signApiKey(
     kid: payload.kid,
     plan: payload.plan,
     email: payload.email,
+    ...(payload.name ? { name: payload.name } : {}),
+    ...(payload.addr ? { addr: payload.addr } : {}),
+    ...(payload.mode ? { mode: payload.mode } : {}),
     iat: now,
     exp: now + (payload.ttlDays ?? 35) * 86400,
   };
