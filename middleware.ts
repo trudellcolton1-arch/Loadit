@@ -33,7 +33,7 @@ const RESERVED = new Set([
   "install", "pay", "app", "learn", "tools", "compare", "platform", "technology",
   "developers", "deck", "privacy", "intent", "exchange", "energy", "data-room",
   "marketplace", "earn", "admin", "login", "signup", "help", "support", "about",
-  "club", "global", "world", "info", "dollardna",
+  "club", "global", "world", "info", "dollardna", "checkout",
 ]);
 const HANDLEISH = /^\/([a-z0-9][a-z0-9_.-]{1,30})(?:\/(\$?[0-9.]+))?\/?$/i;
 
