@@ -23,10 +23,16 @@ export interface SessionRow {
   amountUsd: number;
   feeUsd: number;
   usdcAmount: string;
-  /** Merchant's own Stellar address — where the buyer's USDC lands. */
-  destination: string;
-  /** On-chain text memo that ties the payment to this session (= id). */
-  memo: string;
+  /** Merchant's Stellar address (null if the merchant is Solana-only). */
+  destination: string | null;
+  /** Stellar text memo tying a payment to this session (= id), if offered. */
+  memo: string | null;
+  /** Merchant's Solana address (null if the merchant is Stellar-only). */
+  solDestination: string | null;
+  /** Unique Solana Pay reference pubkey for this session, if offered. */
+  solReference: string | null;
+  /** Which network actually settled the payment (set with `succeeded`). */
+  paidNetwork: "stellar" | "solana" | null;
   item: CheckoutItem;
   metadata: Record<string, string> | null;
   successUrl: string;
@@ -95,8 +101,11 @@ function ensureTable(): Promise<void> {
           amount_usd numeric(12,2) not null,
           fee_usd numeric(12,2) not null,
           usdc_amount text not null,
-          destination text not null,
-          memo text not null,
+          destination text,
+          memo text,
+          sol_destination text,
+          sol_reference text,
+          paid_network text,
           item text not null,
           metadata text,
           success_url text not null,
@@ -145,8 +154,13 @@ function toRow(r: Record<string, unknown>): SessionRow {
     amountUsd: Number(r.amount_usd),
     feeUsd: Number(r.fee_usd),
     usdcAmount: String(r.usdc_amount),
-    destination: String(r.destination),
-    memo: String(r.memo),
+    destination: r.destination ? String(r.destination) : null,
+    memo: r.memo ? String(r.memo) : null,
+    solDestination: r.sol_destination ? String(r.sol_destination) : null,
+    solReference: r.sol_reference ? String(r.sol_reference) : null,
+    paidNetwork: r.paid_network === "stellar" || r.paid_network === "solana"
+      ? (r.paid_network as "stellar" | "solana")
+      : null,
     item,
     metadata,
     successUrl: String(r.success_url),
@@ -168,9 +182,10 @@ function toRow(r: Record<string, unknown>): SessionRow {
 }
 
 const COLS = `id, merchant_kid, merchant_name, mode, order_id, amount_usd, fee_usd,
-  usdc_amount, destination, memo, item, metadata, success_url, cancel_url,
-  webhook_url, status, tx_hash, paid_at, failure_reason, webhook_attempts,
-  webhook_last_status, created_at, expires_at`;
+  usdc_amount, destination, memo, sol_destination, sol_reference, paid_network,
+  item, metadata, success_url, cancel_url, webhook_url, status, tx_hash,
+  paid_at, failure_reason, webhook_attempts, webhook_last_status, created_at,
+  expires_at`;
 
 /**
  * Insert a session. If the merchant already created one for this order_id
@@ -185,8 +200,10 @@ export async function insertSession(input: {
   amountUsd: number;
   feeUsd: number;
   usdcAmount: string;
-  destination: string;
-  memo: string;
+  destination?: string;
+  memo?: string;
+  solDestination?: string;
+  solReference?: string;
   item: CheckoutItem;
   metadata?: Record<string, string>;
   successUrl: string;
@@ -198,10 +215,10 @@ export async function insertSession(input: {
   const inserted = await dbQuery<Record<string, unknown>>(
     `insert into loadit_merchant_payment
        (id, merchant_kid, merchant_name, mode, order_id, amount_usd, fee_usd,
-        usdc_amount, destination, memo, item, metadata, success_url, cancel_url,
-        webhook_url, status, expires_at)
-     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,'pending',
-             now() + ($16 || ' minutes')::interval)
+        usdc_amount, destination, memo, sol_destination, sol_reference, item,
+        metadata, success_url, cancel_url, webhook_url, status, expires_at)
+     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,'pending',
+             now() + ($18 || ' minutes')::interval)
      on conflict (merchant_kid, order_id) do nothing
      returning ${COLS}`,
     [
@@ -213,8 +230,10 @@ export async function insertSession(input: {
       input.amountUsd,
       input.feeUsd,
       input.usdcAmount,
-      input.destination,
-      input.memo,
+      input.destination ?? null,
+      input.memo ?? null,
+      input.solDestination ?? null,
+      input.solReference ?? null,
       JSON.stringify(input.item),
       input.metadata ? JSON.stringify(input.metadata) : null,
       input.successUrl,
@@ -251,15 +270,16 @@ export async function getSession(id: string): Promise<SessionRow | null> {
 export async function markSucceeded(
   id: string,
   txHash: string,
-  paidAt: string
+  paidAt: string,
+  network: "stellar" | "solana"
 ): Promise<boolean> {
   await ensureTable();
   const rows = await dbQuery<{ id: string }>(
     `update loadit_merchant_payment
-     set status = 'succeeded', tx_hash = $2, paid_at = $3
+     set status = 'succeeded', tx_hash = $2, paid_at = $3, paid_network = $4
      where id = $1 and status = 'pending'
      returning id`,
-    [id, txHash, paidAt]
+    [id, txHash, paidAt, network]
   );
   return rows.length > 0;
 }

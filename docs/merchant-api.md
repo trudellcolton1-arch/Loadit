@@ -2,12 +2,16 @@
 
 Let any site — including a fully static one — sell items for USDC through a
 hosted Loadit checkout. **Non-custodial by construction:** the buyer pays USDC
-on Stellar straight to *your* wallet address with a per-session memo; Loadit
-never holds, routes, or forwards the funds. Loadit only reads public ledger
-records to confirm the payment, then redirects the buyer back to you and fires
-a signed webhook.
+straight to *your* wallet address — on Stellar (with a per-session memo) or on
+Solana (via a Solana Pay transfer request carrying a per-session reference).
+Loadit never holds, routes, or forwards the funds. Loadit only reads public
+ledger records to confirm the payment, then redirects the buyer back to you
+and fires a signed webhook.
 
-- **Asset / network:** USDC on Stellar (testnet in test mode, public network in live mode)
+- **Asset / networks:** USDC on **Stellar** and/or **Solana** — whichever
+  settlement addresses your key carries. With both, the buyer picks a network
+  on the hosted checkout. Test mode = Stellar testnet / Solana devnet; live =
+  the public networks.
 - **Fee:** Loadit's standard convenience fee — **0.75% with a $1 minimum** —
   computed and recorded on every session (`fee_usd`). Because settlement is
   non-custodial, the fee is never deducted from the buyer's payment; it is
@@ -29,12 +33,19 @@ up later:
 | API key | `lk_…` | `x-api-key` header on merchant API calls |
 | Webhook secret | `whsec_…` | Verifying the `loadit-signature` header on webhooks |
 
-The API key is bound to your **Stellar settlement address** and your mode.
-Buyers' USDC goes directly to that address — double-check it. Your wallet must
-hold a USDC **trustline** (test mode: the testnet USDC issuer
-`GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5`; live: Circle's
-issuer `GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN`), or
-payments to it will fail in the buyer's wallet.
+The API key is bound to your **settlement address(es)** — Stellar, Solana, or
+both — and your mode. Buyers' USDC goes directly to those addresses —
+double-check them.
+
+- **Stellar:** your wallet must hold a USDC **trustline** (test mode: the
+  testnet issuer `GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5`;
+  live: Circle's issuer `GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN`),
+  or payments to it will fail in the buyer's wallet.
+- **Solana:** your wallet should already hold an initialized **USDC token
+  account** (devnet mint `4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU`;
+  mainnet: Circle's mint `EPjFWdd5AufqSSqeM2qN1xQ1xvH8gKjXK8Wb3Bf7z7vZ`) —
+  most wallets create it on first receive, but some Solana Pay wallets refuse
+  to pay a recipient whose token account doesn't exist yet.
 
 <details>
 <summary>Operator: minting a key</summary>
@@ -47,9 +58,11 @@ curl -X POST https://loadit.net/api/merchant/v1/keys \
     "name": "Billionaire Warfare",
     "email": "dev@billionairewarfare.com",
     "stellar_address": "G...MERCHANT_WALLET...",
+    "solana_address": "...MERCHANT_SOLANA_WALLET...",
     "mode": "test"
   }'
-# → { merchant_id, api_key, webhook_secret, mode }
+# At least one of stellar_address / solana_address is required.
+# → { merchant_id, api_key, webhook_secret, mode, settlement }
 ```
 
 Revoke a key by adding its `merchant_id` to the `API_KEYS_REVOKED` env var.
@@ -96,19 +109,33 @@ Response (`201`, or `200` with `replayed: true` on an idempotent retry):
     "usdc_amount": "25.00",
     "settlement": {
       "asset": "USDC",
-      "network": "stellar-testnet",
-      "destination": "G...MERCHANT_WALLET...",
-      "memo": "lp_9f2c41d6a8b03e71",
-      "non_custodial": true
+      "non_custodial": true,
+      "options": [
+        {
+          "network": "stellar-testnet",
+          "destination": "G...MERCHANT_WALLET...",
+          "memo": "lp_9f2c41d6a8b03e71",
+          "usdc_issuer": "GBBD47IF…"
+        },
+        {
+          "network": "solana-devnet",
+          "destination": "...MERCHANT_SOLANA_WALLET...",
+          "reference": "…unique per-session reference pubkey…",
+          "usdc_mint": "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU"
+        }
+      ]
     },
     "expires_at": "2026-10-24T13:57:00Z"
   }
 }
 ```
 
-Redirect the buyer to `session.url`. The hosted page shows a QR / wallet link
-for the exact USDC amount with the session memo, watches the ledger, and on
-confirmation sends the buyer to
+Redirect the buyer to `session.url`. The hosted page lets the buyer pick a
+network (when your key carries both), shows a QR / wallet link for the exact
+USDC amount — a SEP-7 link on Stellar (with the session memo), a Solana Pay
+transfer request on Solana (Phantom, Solflare, any Solana Pay wallet; the
+per-session `reference` is how the payment is found on-chain) — watches the
+ledger, and on confirmation sends the buyer to
 `success_url?loadit_session_id=<id>&loadit_status=succeeded`.
 
 **Fields**
@@ -128,8 +155,8 @@ confirmation sends the buyer to
 `GET /api/merchant/v1/sessions/:id` with `x-api-key`. Polling this is always
 authoritative — it also verifies on-chain settlement server-side, so it works
 even if a webhook delivery was missed or the buyer closed the tab after
-paying. Terminal statuses: `succeeded` (with `tx_hash`, `paid_at`) or
-`expired`.
+paying. Terminal statuses: `succeeded` (with `tx_hash` — a Stellar transaction
+hash or Solana signature, `paid_network`, `paid_at`) or `expired`.
 
 ## 4. Webhooks
 
@@ -141,7 +168,7 @@ On settlement (or expiry) Loadit POSTs a JSON event to your `webhook_url`:
   "type": "payment.succeeded",            // or "payment.failed" (failure_reason: "expired")
   "created": "2026-10-24T13:02:11.000Z",
   "livemode": false,
-  "data": { "object": { /* the full session, incl. order_id, tx_hash */ } }
+  "data": { "object": { /* the full session: order_id, tx_hash, paid_network, … */ } }
 }
 ```
 
@@ -250,6 +277,8 @@ export default async function handler(req, res) {
 
 ## 6. Testing end-to-end (test mode)
 
+**Stellar testnet**
+
 1. Get a `test`-mode key bound to a testnet wallet
    ([create + fund one on Stellar Laboratory](https://laboratory.stellar.org/#account-creator?network=test),
    then add the testnet USDC trustline).
@@ -257,6 +286,15 @@ export default async function handler(req, res) {
    send the shown USDC amount **with the memo**.
 3. The checkout flips to "Payment confirmed", your webhook fires, and
    `GET /sessions/:id` reports `succeeded` with the `tx_hash`.
+
+**Solana devnet**
+
+1. Get a `test`-mode key with a `solana_address` (any devnet wallet; grab
+   devnet USDC for the *buyer* wallet from [Circle's faucet](https://faucet.circle.com)).
+2. Create a session; open `session.url`; pick Solana; pay via the QR / Solana
+   Pay link so the transaction carries the session's `reference`.
+3. Same confirmation flow — `tx_hash` is the Solana signature and
+   `paid_network` is `solana`.
 
 ## 7. Operating it (Loadit side)
 
@@ -268,7 +306,11 @@ Env vars on the loadit.net deployment:
 | `MERCHANT_ADMIN_TOKEN` | yes | Bearer token guarding `POST /api/merchant/v1/keys`. |
 | `MERCHANT_DATABASE_URL` | one of these | Neon Postgres (HTTP SQL endpoint) holding the `loadit_merchant_payment` table — created automatically on first use. Falls back to `HQ_CONTENT_DATABASE_URL`, then `HYLAQ_DATABASE_URL`. |
 | `API_KEYS_REVOKED` | no (existing) | Comma-separated kids to revoke. |
+| `SOLANA_RPC_URL` | recommended for live | Solana mainnet RPC for settlement verification (defaults to the public `api.mainnet-beta.solana.com`, which is heavily rate-limited — use a provider RPC in production). |
+| `SOLANA_DEVNET_RPC_URL` | no | Devnet RPC override (defaults to `api.devnet.solana.com`). |
+| `SOLANA_USDC_MINT` / `SOLANA_DEVNET_USDC_MINT` | no | USDC mint overrides, mainly for testing against a custom devnet mint. |
 
-No Stellar secret keys are needed anywhere — Loadit only reads public Horizon
-data. Fee collection is off-chain: bill merchants from the recorded `fee_usd`
-on succeeded sessions (e.g. monthly, straight from the table).
+No Stellar or Solana secret keys are needed anywhere — Loadit only reads
+public Horizon / RPC data. Fee collection is off-chain: bill merchants from
+the recorded `fee_usd` on succeeded sessions (e.g. monthly, straight from the
+table).

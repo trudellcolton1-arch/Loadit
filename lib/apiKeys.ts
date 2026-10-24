@@ -23,6 +23,8 @@ export interface KeyPayload {
   name?: string;
   /** Merchant keys: the merchant's own Stellar address USDC settles to. */
   addr?: string;
+  /** Merchant keys: the merchant's own Solana address USDC settles to. */
+  sol?: string;
   /** Merchant keys: "test" (Stellar testnet) or "live" (public network). */
   mode?: "test" | "live";
   /** Issued-at (epoch seconds). */
@@ -54,6 +56,7 @@ export function signApiKey(
     email: payload.email,
     ...(payload.name ? { name: payload.name } : {}),
     ...(payload.addr ? { addr: payload.addr } : {}),
+    ...(payload.sol ? { sol: payload.sol } : {}),
     ...(payload.mode ? { mode: payload.mode } : {}),
     iat: now,
     exp: now + (payload.ttlDays ?? 35) * 86400,

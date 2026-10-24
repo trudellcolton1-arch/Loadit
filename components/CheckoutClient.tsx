@@ -7,11 +7,21 @@ import { cn, formatUSD } from "@/lib/utils";
 /**
  * HOSTED MERCHANT CHECKOUT — the buyer-facing side of the merchant API.
  *
- * Non-custodial: the buyer sends USDC on Stellar straight to the merchant's
- * own address with the session id as the memo. This client polls the verify
- * endpoint, which confirms the payment on-chain and then redirects the buyer
- * back to the merchant's success URL.
+ * Non-custodial: the buyer sends USDC straight to the merchant's own wallet
+ * on whichever settlement network they pick (Stellar with a session memo, or
+ * Solana via a Solana Pay transfer request carrying a per-session reference).
+ * This client polls the verify endpoint, which confirms the payment on-chain
+ * and then redirects the buyer back to the merchant's success URL.
  */
+
+interface SettlementOption {
+  network: string; // "stellar" | "stellar-testnet" | "solana" | "solana-devnet"
+  chain: "stellar" | "solana";
+  destination: string;
+  memo?: string;
+  reference?: string;
+  pay_uri: string;
+}
 
 interface PublicSession {
   id: string;
@@ -21,10 +31,8 @@ interface PublicSession {
   item: { name: string; sku?: string; image_url?: string };
   amount_usd: number;
   usdc_amount: string;
-  network: string;
-  destination: string;
-  memo: string;
-  sep7_uri: string;
+  settlement_options: SettlementOption[];
+  paid_network: "stellar" | "solana" | null;
   tx_hash: string | null;
   explorer_tx_url: string | null;
   success_url: string;
@@ -34,9 +42,12 @@ interface PublicSession {
 
 const POLL_MS = 6000;
 
-function shortAddr(a: string) {
-  return a.length > 14 ? `${a.slice(0, 7)}…${a.slice(-7)}` : a;
-}
+const NETWORK_LABELS: Record<string, string> = {
+  stellar: "Stellar",
+  "stellar-testnet": "Stellar testnet",
+  solana: "Solana",
+  "solana-devnet": "Solana devnet",
+};
 
 function CopyRow({ label, value, mono = true }: { label: string; value: string; mono?: boolean }) {
   const [copied, setCopied] = useState(false);
@@ -90,6 +101,7 @@ export function CheckoutClient({ id }: { id: string }) {
   const [session, setSession] = useState<PublicSession | null>(null);
   const [state, setState] = useState<"loading" | "ready" | "not_found" | "error">("loading");
   const [checking, setChecking] = useState(false);
+  const [chain, setChain] = useState<"stellar" | "solana" | null>(null);
   const redirected = useRef(false);
 
   const verify = useCallback(async () => {
@@ -177,7 +189,12 @@ export function CheckoutClient({ id }: { id: string }) {
   }
 
   const isTest = session.mode === "test";
-  const qrSrc = `/api/qr?data=${encodeURIComponent(session.sep7_uri)}&size=360`;
+  const options = session.settlement_options;
+  const active =
+    options.find((o) => o.chain === chain) ?? options[0] ?? null;
+  const qrSrc = active
+    ? `/api/qr?data=${encodeURIComponent(active.pay_uri)}&size=360`
+    : "";
 
   return (
     <div>
@@ -192,7 +209,7 @@ export function CheckoutClient({ id }: { id: string }) {
         </a>
         {isTest && (
           <span className="rounded-full border border-amber/40 bg-amber/10 px-3 py-1 font-mono text-[0.6rem] uppercase tracking-[0.2em] text-amber">
-            Testnet — no real money
+            {`Test mode — no real money`}
           </span>
         )}
       </div>
@@ -228,14 +245,45 @@ export function CheckoutClient({ id }: { id: string }) {
               {formatUSD(session.amount_usd)}
             </span>
             <span className="block font-mono text-[0.7rem] text-white/50">
-              {session.usdc_amount} USDC ·{" "}
-              {session.network === "stellar" ? "Stellar" : "Stellar testnet"}
+              {session.usdc_amount} USDC
+              {active ? ` · ${NETWORK_LABELS[active.network] ?? active.network}` : ""}
             </span>
           </span>
         </div>
 
-        {session.status === "pending" && (
+        {session.status === "pending" && active && (
           <>
+            {/* Network picker — only when the merchant accepts more than one */}
+            {options.length > 1 && (
+              <div className="mt-5 grid grid-cols-2 gap-2" role="tablist" aria-label="Payment network">
+                {options.map((o) => {
+                  const selected = o.network === active.network;
+                  return (
+                    <button
+                      key={o.network}
+                      type="button"
+                      role="tab"
+                      aria-selected={selected}
+                      onClick={() => setChain(o.chain)}
+                      className={cn(
+                        "rounded-2xl border px-4 py-2.5 text-sm transition-colors",
+                        selected
+                          ? "border-rail-400/60 bg-rail-500/10 text-white"
+                          : "border-white/[0.08] text-white/60 hover:border-white/[0.2] hover:text-white"
+                      )}
+                    >
+                      <span className="block font-medium">
+                        {o.chain === "stellar" ? "Stellar" : "Solana"}
+                      </span>
+                      <span className="block font-mono text-[0.6rem] uppercase tracking-[0.15em] text-white/40">
+                        USDC · {NETWORK_LABELS[o.network] ?? o.network}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
             {/* QR + wallet handoff */}
             <div className="mt-6 flex flex-col items-center">
               <div className="rounded-3xl bg-white p-3 shadow-glow">
@@ -243,25 +291,33 @@ export function CheckoutClient({ id }: { id: string }) {
                 <img src={qrSrc} alt="Payment QR code" className="h-44 w-44" />
               </div>
               <a
-                href={session.sep7_uri}
+                href={active.pay_uri}
                 className="mt-4 inline-flex items-center justify-center rounded-full bg-white px-6 py-2.5 text-sm font-medium text-void transition-colors hover:bg-white/90"
               >
                 Open in wallet
               </a>
               <p className="mt-2 text-center text-xs text-white/40">
-                Scan with any Stellar wallet, or send manually below.
+                {active.chain === "solana"
+                  ? "Scan with Phantom, Solflare, or any Solana Pay wallet."
+                  : "Scan with any Stellar wallet, or send manually below."}
               </p>
             </div>
 
-            {/* Manual payment details */}
+            {/* Payment details */}
             <div className="mt-5 space-y-2">
-              <CopyRow label={`Send exactly (USDC)`} value={session.usdc_amount} />
-              <CopyRow label="To address" value={session.destination} />
-              <CopyRow label="Memo — required" value={session.memo} />
+              <CopyRow label="Send exactly (USDC)" value={session.usdc_amount} />
+              <CopyRow label="To address" value={active.destination} />
+              {active.chain === "stellar" && active.memo && (
+                <CopyRow label="Memo — required" value={active.memo} />
+              )}
+              {active.chain === "solana" && (
+                <CopyRow label="Payment link" value={active.pay_uri} />
+              )}
             </div>
             <p className="mt-3 rounded-xl border border-amber/20 bg-amber/5 px-3 py-2 text-[0.72rem] leading-relaxed text-amber/90">
-              Include the memo exactly as shown — it&apos;s how your payment is matched to
-              this order. Payments without it can&apos;t be confirmed automatically.
+              {active.chain === "solana"
+                ? "Pay via the QR or payment link so your transaction carries this checkout's reference — that's how it is matched to your order and confirmed automatically."
+                : "Include the memo exactly as shown — it's how your payment is matched to this order. Payments without it can't be confirmed automatically."}
             </p>
 
             {/* Status */}
@@ -296,7 +352,9 @@ export function CheckoutClient({ id }: { id: string }) {
             </div>
             <h2 className="mt-3 text-lg font-semibold text-white">Payment confirmed</h2>
             <p className="mt-1 text-sm text-white/55">
-              Settled on-chain, straight to the merchant&apos;s wallet.
+              Settled on-chain
+              {session.paid_network ? ` on ${session.paid_network === "solana" ? "Solana" : "Stellar"}` : ""}
+              , straight to the merchant&apos;s wallet.
             </p>
             {session.explorer_tx_url && (
               <a
