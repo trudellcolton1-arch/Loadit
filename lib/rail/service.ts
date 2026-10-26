@@ -17,8 +17,9 @@
  *             same payment id, idempotent payout) can be exercised end to end.
  *             Every response says it is simulated.
  *
- * Non-custodial in both modes: no keys, no balances, delivery only to the
- * wallet in the intent.
+ * Non-custodial in both modes: no keys, delivery only to the wallet in the
+ * intent. The audit ledger (lib/rail/ledger.ts) records pipeline position
+ * in integer minor units; it is not a custodial balance.
  */
 import { RailRuntime, type PaymentRecord } from "./runtime";
 import { CASH_CERT_NOTICE } from "./copy";
@@ -31,9 +32,15 @@ import {
   IllegalTransitionError,
   NoViableRouteError,
   QuoteExpiredError,
+  RefundNotAllowedError,
   StubDoorError,
 } from "./errors";
-import { InvalidIntentError } from "./types";
+import { InvalidIntentError, type DoorAdapter } from "./types";
+import { publicTransferStatus } from "./ledger";
+import { MemoryTransferStore, toTransferView, type TransferStore, type TransferView } from "./store";
+import { PgTransferStore } from "./pgStore";
+import { railConfigured } from "../railDb";
+import type { AccountBalance } from "./ledger";
 
 export type RailMode = "live" | "sim";
 
@@ -42,61 +49,77 @@ interface ModeRig {
   payout: FixturePayoutExecutor;
   convert: FixtureConvertExecutor;
   simulated: boolean;
+  store: TransferStore;
 }
 
-function buildLiveRig(): ModeRig {
-  const payout = new FixturePayoutExecutor();
-  const convert = new FixtureConvertExecutor();
-  const runtime = new RailRuntime({
-    doors: [new MoneyGramDoor(), cardDoorStub(), bankDoorStub(), nextCashNetworkDoorStub()],
-    payout,
-    convert,
-  });
-  return { runtime, payout, convert, simulated: false };
+function bindStore(doors: DoorAdapter[], payout: FixturePayoutExecutor, convert: FixtureConvertExecutor, store: TransferStore) {
+  for (const door of doors) {
+    if ("setStepCache" in door && typeof (door as { setStepCache?: (s: TransferStore) => void }).setStepCache === "function") {
+      (door as { setStepCache: (s: TransferStore) => void }).setStepCache(store);
+    }
+  }
+  payout.setStepCache(store);
+  convert.setStepCache(store);
 }
 
-function buildSimRig(): ModeRig {
-  const payout = new FixturePayoutExecutor();
-  const convert = new FixtureConvertExecutor();
-  const runtime = new RailRuntime({
-    doors: [
-      new FixtureDoor({
-        id: "sim_cash_door",
-        kind: "cash",
-        label: "Simulated cash door (test money)",
-        certification: "CLEARED",
-        feeUsd: 1.2,
-        etaSeconds: 420,
-        liquidity: 0.85,
-        risk: 0.15,
-      }),
-      new FixtureDoor({
-        id: "sim_bank_door",
-        kind: "bank",
-        label: "Simulated bank door (test money)",
-        certification: "CLEARED",
-        feeUsd: 0.9,
-        etaSeconds: 3600,
-        liquidity: 0.95,
-        risk: 0.1,
-      }),
-    ],
-    payout,
-    convert,
-  });
-  return { runtime, payout, convert, simulated: true };
+function buildLiveRig(store: TransferStore): ModeRig {
+  const payout = new FixturePayoutExecutor({ steps: store });
+  const convert = new FixtureConvertExecutor({ steps: store });
+  const doors = [new MoneyGramDoor(), cardDoorStub(), bankDoorStub(), nextCashNetworkDoorStub()];
+  bindStore(doors, payout, convert, store);
+  const runtime = new RailRuntime({ doors, payout, convert });
+  return { runtime, payout, convert, simulated: false, store };
+}
+
+function buildSimRig(store: TransferStore): ModeRig {
+  const payout = new FixturePayoutExecutor({ steps: store });
+  const convert = new FixtureConvertExecutor({ steps: store });
+  const doors: DoorAdapter[] = [
+    new FixtureDoor({
+      id: "sim_cash_door",
+      kind: "cash",
+      label: "Simulated cash door (test money)",
+      certification: "CLEARED",
+      feeUsd: 1.2,
+      etaSeconds: 420,
+      liquidity: 0.85,
+      risk: 0.15,
+    }),
+    new FixtureDoor({
+      id: "sim_bank_door",
+      kind: "bank",
+      label: "Simulated bank door (test money)",
+      certification: "CLEARED",
+      feeUsd: 0.9,
+      etaSeconds: 3600,
+      liquidity: 0.95,
+      risk: 0.1,
+    }),
+  ];
+  bindStore(doors, payout, convert, store);
+  const runtime = new RailRuntime({ doors, payout, convert });
+  return { runtime, payout, convert, simulated: true, store };
 }
 
 interface ServiceState {
   live: ModeRig;
   sim: ModeRig;
+  store: TransferStore;
+}
+
+function createStore(): TransferStore {
+  if (railConfigured()) return new PgTransferStore();
+  const g = globalThis as { __loaditRailStore?: TransferStore };
+  if (!g.__loaditRailStore) g.__loaditRailStore = new MemoryTransferStore();
+  return g.__loaditRailStore;
 }
 
 /** Survives Next.js dev HMR and per-request module contexts on a warm instance. */
 function serviceState(): ServiceState {
   const g = globalThis as { __loaditRailService?: ServiceState };
   if (!g.__loaditRailService) {
-    g.__loaditRailService = { live: buildLiveRig(), sim: buildSimRig() };
+    const store = createStore();
+    g.__loaditRailService = { live: buildLiveRig(store), sim: buildSimRig(store), store };
   }
   return g.__loaditRailService;
 }
@@ -105,9 +128,21 @@ function rigFor(mode: RailMode): ModeRig {
   return serviceState()[mode];
 }
 
-/** Test-only: rebuild both rigs so tests do not share state. */
-export function resetRailServiceForTests(): void {
-  (globalThis as { __loaditRailService?: ServiceState }).__loaditRailService = undefined;
+/**
+ * Test-only: rebuild both rigs so tests do not share runtime state.
+ * Pass `{ preserveStore: true }` to simulate a process restart — new
+ * runtimes, same ledger — so a get/settle after "reboot" still sees the
+ * transfer.
+ */
+export function resetRailServiceForTests(opts?: { preserveStore?: boolean }): void {
+  const g = globalThis as { __loaditRailService?: ServiceState; __loaditRailStore?: TransferStore };
+  const kept = opts?.preserveStore ? g.__loaditRailService?.store ?? g.__loaditRailStore : undefined;
+  g.__loaditRailService = undefined;
+  if (opts?.preserveStore && kept) {
+    g.__loaditRailStore = kept;
+  } else {
+    g.__loaditRailStore = undefined;
+  }
 }
 
 const LIVE_NOTICE = CASH_CERT_NOTICE;
@@ -118,6 +153,7 @@ export function serializePayment(p: PaymentRecord) {
   return {
     id: p.id,
     state: p.state,
+    status: publicTransferStatus(p.state),
     healCount: p.healCount,
     lastError: p.lastError,
     intent: p.intent,
@@ -220,6 +256,9 @@ function errorResult(mode: RailMode, rig: ModeRig, err: unknown): RailActionResu
   if (err instanceof StubDoorError) {
     return { status: 409, payload: { ok: false, reason: "stub_door", message, ...meta(mode, rig) } };
   }
+  if (err instanceof RefundNotAllowedError) {
+    return { status: 409, payload: { ok: false, reason: "refund_not_allowed", message, ...meta(mode, rig) } };
+  }
   if (/^unknown payment /.test(message)) {
     return { status: 404, payload: { ok: false, reason: "unknown_payment", message, ...meta(mode, rig) } };
   }
@@ -232,6 +271,25 @@ function errorResult(mode: RailMode, rig: ModeRig, err: unknown): RailActionResu
  * (Authorization lives in ownerGate.ts and the route handler — this function
  * must never be reachable without it.)
  */
+async function persist(mode: RailMode, payment: PaymentRecord): Promise<void> {
+  await rigFor(mode).store.persistPayment(payment, mode);
+}
+
+async function resolvePayment(mode: RailMode, paymentId: string): Promise<PaymentRecord> {
+  const rig = rigFor(mode);
+  if (rig.runtime.hasPayment(paymentId)) return rig.runtime.getPayment(paymentId);
+  const stored = await rig.store.loadStored(paymentId);
+  if (!stored || stored.mode !== mode) throw new Error(`unknown payment ${paymentId}`);
+  rig.runtime.adoptPayment(stored.record);
+  return stored.record;
+}
+
+async function persistIfPresent(mode: RailMode, paymentId: string): Promise<void> {
+  const rig = rigFor(mode);
+  if (!rig.runtime.hasPayment(paymentId)) return;
+  await persist(mode, rig.runtime.getPayment(paymentId));
+}
+
 export async function handleRailAction(body: RailActionRequest): Promise<RailActionResult> {
   const mode: RailMode = body.mode === "sim" ? "sim" : "live";
   const rig = rigFor(mode);
@@ -242,42 +300,78 @@ export async function handleRailAction(body: RailActionRequest): Promise<RailAct
     payload: { ok: true, payment: serializePayment(payment), ...meta(mode, rig), ...extra },
   });
 
+  const paymentId = String(body.paymentId || "");
+
   try {
     switch (body.action) {
       case "create": {
         const payment = runtime.createPayment(body.intent);
+        await persist(mode, payment);
         return ok(payment);
       }
       case "get": {
-        return ok(runtime.getPayment(String(body.paymentId || "")));
+        return ok(await resolvePayment(mode, paymentId));
       }
       case "intake": {
-        const payment = await runtime.beginIntake(String(body.paymentId || ""));
-        return ok(payment);
+        await resolvePayment(mode, paymentId);
+        try {
+          const payment = await runtime.beginIntake(paymentId);
+          await persist(mode, payment);
+          return ok(payment);
+        } catch (err) {
+          await persistIfPresent(mode, paymentId);
+          throw err;
+        }
       }
       case "confirm": {
         // Simulated webhook trigger (a real anchor would call the webhook
         // itself). The door's certification gate decides — in live mode the
         // MoneyGram door refuses while certification is IN FLIGHT.
-        const payment = runtime.getPayment(String(body.paymentId || ""));
+        const payment = await resolvePayment(mode, paymentId);
         if (!payment.intake) {
           return {
             status: 409,
             payload: { ok: false, reason: "no_intake", message: "no intake to confirm — begin intake first", ...meta(mode, rig) },
           };
         }
-        const updated = await runtime.handleWebhook(payment.intake.doorId, {
-          internalRef: payment.intake.internalRef,
-          type: "intake_confirmed",
-        });
-        return ok(updated);
+        try {
+          const updated = await runtime.handleWebhook(payment.intake.doorId, {
+            internalRef: payment.intake.internalRef,
+            type: "intake_confirmed",
+          });
+          await persist(mode, updated);
+          return ok(updated);
+        } catch (err) {
+          await persistIfPresent(mode, paymentId);
+          throw err;
+        }
       }
       case "settle": {
-        const payment = await runtime.settle(String(body.paymentId || ""));
-        return ok(payment);
+        await resolvePayment(mode, paymentId);
+        try {
+          const payment = await runtime.settle(paymentId);
+          await persist(mode, payment);
+          return ok(payment);
+        } catch (err) {
+          await persistIfPresent(mode, paymentId);
+          throw err;
+        }
       }
       case "heal": {
-        const payment = await runtime.heal(String(body.paymentId || ""));
+        await resolvePayment(mode, paymentId);
+        try {
+          const payment = await runtime.heal(paymentId);
+          await persist(mode, payment);
+          return ok(payment);
+        } catch (err) {
+          await persistIfPresent(mode, paymentId);
+          throw err;
+        }
+      }
+      case "refund": {
+        await resolvePayment(mode, paymentId);
+        const payment = runtime.refund(paymentId);
+        await persist(mode, payment);
         return ok(payment);
       }
       case "kill_pipe": {
@@ -292,7 +386,7 @@ export async function handleRailAction(body: RailActionRequest): Promise<RailAct
         const pipe = body.pipe === "convert" ? "convert" : "payout";
         if (pipe === "convert") rig.convert.killNext("simulated: convert pipe killed");
         else rig.payout.killNext("before", "simulated: payout pipe killed mid-pay");
-        const payment = runtime.getPayment(String(body.paymentId || ""));
+        const payment = await resolvePayment(mode, paymentId);
         return ok(payment, { pipe_killed: pipe });
       }
       default:
@@ -304,4 +398,15 @@ export async function handleRailAction(body: RailActionRequest): Promise<RailAct
   } catch (err) {
     return errorResult(mode, rig, err);
   }
+}
+
+/** Read a transfer (any mode) by id — status + history for GET /api/v1/transfers/:id. */
+export async function getTransferById(id: string): Promise<TransferView | null> {
+  const stored = await serviceState().store.loadStored(id);
+  return stored ? toTransferView(stored) : null;
+}
+
+/** Ledger balances derived from posted lines. `mode` filters; omit for both. */
+export async function getLedgerBalances(mode?: RailMode): Promise<AccountBalance[]> {
+  return serviceState().store.balances(mode);
 }

@@ -7,23 +7,34 @@
  * re-executing the effect. Failures are NOT recorded, so a genuinely failed
  * step can be retried.
  *
- * In-memory by design for the runtime's current demo/test scope; the
- * interface is the contract a persistent store would implement.
+ * `StepCache` is the durable contract (memory today, Postgres when
+ * RAIL_DATABASE_URL is set). IdempotencyStore remains the in-process helper
+ * the fixture executors and tests already use.
  */
 export interface IdempotentResult<T> {
   result: T;
   replayed: boolean;
 }
 
-export class IdempotencyStore {
+/** Async get/put used by doors, executors, and the transfer store. */
+export interface StepCache {
+  get<T>(key: string): Promise<T | undefined>;
+  put<T>(key: string, value: T): Promise<void>;
+}
+
+export class IdempotencyStore implements StepCache {
   private readonly results = new Map<string, unknown>();
 
   has(key: string): boolean {
     return this.results.has(key);
   }
 
-  get<T>(key: string): T | undefined {
-    return this.results.get(key) as T | undefined;
+  get<T>(key: string): Promise<T | undefined> {
+    return Promise.resolve(this.results.get(key) as T | undefined);
+  }
+
+  async put<T>(key: string, value: T): Promise<void> {
+    if (!this.results.has(key)) this.results.set(key, value);
   }
 
   /**
@@ -50,4 +61,6 @@ export const stepKey = {
   convert: (paymentId: string) => `${paymentId}:convert`,
   /** Stable per payment: however many heals happen, at most one payout. */
   payout: (paymentId: string) => `${paymentId}:payout`,
+  /** One ledger posting per money-moving kind, ever, per payment. */
+  ledger: (paymentId: string, kind: string) => `${paymentId}:ledger:${kind}`,
 };

@@ -20,6 +20,7 @@ import type {
 import { CertificationGateError } from "../errors";
 import { CASH_CERT_GATE } from "../copy";
 import { newInternalRef } from "../ids";
+import type { StepCache } from "../idempotency";
 
 export abstract class BaseDoor implements DoorAdapter {
   abstract readonly id: string;
@@ -28,8 +29,23 @@ export abstract class BaseDoor implements DoorAdapter {
 
   private readonly intakes = new Map<string, DoorIntake>();
   private readonly byIdempotencyKey = new Map<string, string>();
+  private steps: StepCache | undefined;
   /** How many intakes were actually created (replays excluded) — for tests. */
   createCalls = 0;
+
+  /** Durable step cache so a retry after restart replays the same intake. */
+  setStepCache(steps: StepCache): void {
+    this.steps = steps;
+  }
+
+  /**
+   * Rehydrate a persisted intake (and optional idempotency key) so webhook
+   * and create-replay still resolve after the process restarted.
+   */
+  adoptIntake(intake: DoorIntake, idempotencyKey?: string): void {
+    this.intakes.set(intake.internalRef, intake);
+    if (idempotencyKey) this.byIdempotencyKey.set(idempotencyKey, intake.internalRef);
+  }
 
   abstract certification(): CertificationStatus;
   abstract candidate(intent: PaymentIntent): DoorCandidate | null;
@@ -46,6 +62,12 @@ export abstract class BaseDoor implements DoorAdapter {
     const existingRef = this.byIdempotencyKey.get(req.idempotencyKey);
     if (existingRef) return this.intakes.get(existingRef)!;
 
+    const cached = await this.steps?.get<DoorIntake>(req.idempotencyKey);
+    if (cached) {
+      this.adoptIntake(cached, req.idempotencyKey);
+      return cached;
+    }
+
     this.beforeCreate(req);
     this.createCalls += 1;
     const intake: DoorIntake = {
@@ -60,6 +82,7 @@ export abstract class BaseDoor implements DoorAdapter {
     };
     this.intakes.set(intake.internalRef, intake);
     this.byIdempotencyKey.set(req.idempotencyKey, intake.internalRef);
+    await this.steps?.put(req.idempotencyKey, intake);
     return intake;
   }
 

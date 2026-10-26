@@ -24,11 +24,11 @@ test("the happy path is legal end to end", () => {
   }
 });
 
-test("every live state can fail; failed can only heal", () => {
+test("every live state can fail; failed can only heal or refund", () => {
   for (const s of ["quoted", "intake_pending", "intake_confirmed", "converting", "paying_out"] as const) {
     assert.equal(canTransition(s, "failed"), true);
   }
-  assert.deepEqual([...LEGAL_TRANSITIONS.failed], ["healing"]);
+  assert.deepEqual([...LEGAL_TRANSITIONS.failed], ["healing", "refunded"]);
 });
 
 test("healing resumes only at legal re-entry points", () => {
@@ -42,9 +42,10 @@ test("healing resumes only at legal re-entry points", () => {
   assert.equal(canTransition("healing", "settled"), false);
 });
 
-test("settled is terminal", () => {
+test("settled and refunded are terminal", () => {
   for (const to of PAYMENT_STATES) {
     assert.equal(canTransition("settled", to), false, `settled → ${to} must be illegal`);
+    assert.equal(canTransition("refunded", to), false, `refunded → ${to} must be illegal`);
   }
 });
 

@@ -188,6 +188,22 @@ test("expired quote fails honestly and heal re-quotes under the same id", async 
   assert.equal(payment.state, "intake_pending");
 });
 
+test("refund of a failed payment with confirmed intake; refused if nothing is in", async () => {
+  const { runtime, payout } = buildRig();
+  const payment = runtime.createPayment(INTENT);
+  await runtime.beginIntake(payment.id);
+  await confirmIntake(runtime, payment.id, "fixture_primary");
+  payout.killNext("before", "liquidity provider timed out");
+  await runtime.settle(payment.id);
+  assert.equal(payment.state, "failed");
+
+  runtime.refund(payment.id);
+  assert.equal(payment.state, "refunded");
+
+  const fresh = runtime.createPayment(INTENT);
+  assert.throws(() => runtime.refund(fresh.id), /nothing to refund/);
+});
+
 test("uncertified door in the runtime: webhook confirm is refused, payment stays pending", async () => {
   const gated = new FixtureDoor({ id: "fixture_gated", certification: "IN_FLIGHT" });
   const payout = new FixturePayoutExecutor();
