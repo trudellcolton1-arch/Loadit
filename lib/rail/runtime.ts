@@ -35,7 +35,12 @@ import {
 } from "./stateMachine";
 import { lockQuote, isQuoteExpired, type ScoreOptions } from "./scorer";
 import { stepKey } from "./idempotency";
-import { DeadPipeError, NoViableRouteError, QuoteExpiredError } from "./errors";
+import {
+  DeadPipeError,
+  NoViableRouteError,
+  QuoteExpiredError,
+  RefundNotAllowedError,
+} from "./errors";
 import { newPaymentId } from "./ids";
 
 export interface PaymentRecord {
@@ -85,6 +90,25 @@ export class RailRuntime {
     const payment = this.payments.get(paymentId);
     if (!payment) throw new Error(`unknown payment ${paymentId}`);
     return payment;
+  }
+
+  hasPayment(paymentId: string): boolean {
+    return this.payments.has(paymentId);
+  }
+
+  /**
+   * Adopt a payment record rehydrated from a persistent store (after a
+   * restart or on a fresh serverless instance). The record is plain data —
+   * exactly what the store persisted — so the machine resumes where the
+   * money actually is. A persisted intake is handed back to its door so
+   * webhook/status still resolve.
+   */
+  adoptPayment(record: PaymentRecord): void {
+    this.payments.set(record.id, record);
+    if (record.intake) {
+      const door = this.doors.get(record.intake.doorId);
+      door?.adoptIntake?.(record.intake, stepKey.intake(record.id, record.intake.doorId));
+    }
   }
 
   private scoreOptions(payment?: Pick<PaymentRecord, "failedDoorIds">): ScoreOptions {
@@ -285,6 +309,33 @@ export class RailRuntime {
       this.transition(payment, "failed", `heal failed: ${reason}`);
       throw err;
     }
+    return payment;
+  }
+
+  /**
+   * Refund a failed payment: confirmed customer money goes back out through
+   * the door it came in, instead of forward. Only legal when money actually
+   * came in (intake confirmed) and nothing was ever paid out — a settled or
+   * receipted payment can never be "refunded" into a double-spend.
+   */
+  refund(paymentId: string): PaymentRecord {
+    const payment = this.getPayment(paymentId);
+    if (payment.receipt) {
+      throw new RefundNotAllowedError(
+        `payment ${paymentId} already paid out (receipt ${payment.receipt.receiptRef}) — nothing to refund`
+      );
+    }
+    if (payment.intake?.status !== "confirmed") {
+      throw new RefundNotAllowedError(
+        `payment ${paymentId} has no confirmed customer money in — nothing to refund`
+      );
+    }
+    // assertTransition inside recordTransition enforces state === "failed".
+    this.transition(
+      payment,
+      "refunded",
+      `refund of intake ${payment.intake.internalRef} back through ${payment.intake.doorId}`
+    );
     return payment;
   }
 }

@@ -15,6 +15,7 @@
 import type { PayoutExecutor, PayoutReceipt, ConvertExecutor, SwapAsset } from "./types";
 import { DeadPipeError } from "./errors";
 import { newInternalRef } from "./ids";
+import type { StepCache } from "./idempotency";
 
 type KillMode = "before" | "after";
 
@@ -23,6 +24,15 @@ export class FixturePayoutExecutor implements PayoutExecutor {
   readonly ledger: PayoutReceipt[] = [];
   private readonly byKey = new Map<string, PayoutReceipt>();
   private kill: { mode: KillMode; reason: string } | null = null;
+  private steps: StepCache | undefined;
+
+  constructor(opts: { steps?: StepCache } = {}) {
+    this.steps = opts.steps;
+  }
+
+  setStepCache(steps: StepCache): void {
+    this.steps = steps;
+  }
 
   killNext(mode: KillMode, reason = `payout pipe died (${mode} effect)`): void {
     this.kill = { mode, reason };
@@ -35,8 +45,11 @@ export class FixturePayoutExecutor implements PayoutExecutor {
     amountUsd: number;
     wallet: string;
   }): Promise<PayoutReceipt> {
-    const existing = this.byKey.get(req.idempotencyKey);
-    if (existing) return { ...existing, replayed: true };
+    const existing = this.byKey.get(req.idempotencyKey) ?? (await this.steps?.get<PayoutReceipt>(req.idempotencyKey));
+    if (existing) {
+      this.byKey.set(req.idempotencyKey, existing);
+      return { ...existing, replayed: true };
+    }
 
     if (this.kill?.mode === "before") {
       const reason = this.kill.reason;
@@ -56,6 +69,8 @@ export class FixturePayoutExecutor implements PayoutExecutor {
     };
     this.ledger.push(receipt);
     this.byKey.set(req.idempotencyKey, receipt);
+    // Persist BEFORE the ack-lost throw so a restart replays instead of paying twice.
+    await this.steps?.put(req.idempotencyKey, receipt);
 
     if (this.kill?.mode === "after") {
       const reason = this.kill.reason;
@@ -70,6 +85,15 @@ export class FixtureConvertExecutor implements ConvertExecutor {
   readonly conversions: { idempotencyKey: string; paymentId: string; asset: SwapAsset }[] = [];
   private readonly done = new Set<string>();
   private kill: string | null = null;
+  private steps: StepCache | undefined;
+
+  constructor(opts: { steps?: StepCache } = {}) {
+    this.steps = opts.steps;
+  }
+
+  setStepCache(steps: StepCache): void {
+    this.steps = steps;
+  }
 
   killNext(reason = "convert pipe died"): void {
     this.kill = reason;
@@ -83,6 +107,11 @@ export class FixtureConvertExecutor implements ConvertExecutor {
     asset: SwapAsset;
   }): Promise<void> {
     if (this.done.has(req.idempotencyKey)) return;
+    const cached = await this.steps?.get<{ done: true }>(req.idempotencyKey);
+    if (cached) {
+      this.done.add(req.idempotencyKey);
+      return;
+    }
     if (this.kill) {
       const reason = this.kill;
       this.kill = null;
@@ -94,5 +123,6 @@ export class FixtureConvertExecutor implements ConvertExecutor {
       paymentId: req.paymentId,
       asset: req.asset,
     });
+    await this.steps?.put(req.idempotencyKey, { done: true as const });
   }
 }

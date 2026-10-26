@@ -29,6 +29,15 @@ test("cash-cert copy is locked: 5/5 complete, not awaiting, not live", () => {
   assert.match(CASH_CERT_NOTICE, /production build/i);
 });
 
+test(".env.example documents 5/5 complete cash-in-not-live and the rail write URL", () => {
+  const env = readFileSync(join(process.cwd(), ".env.example"), "utf8");
+  assert.match(env, /COMPLETE \(5\/5\)/);
+  assert.match(env, /cash-in is NOT live/i);
+  assert.doesNotMatch(env, /4\/5/);
+  assert.match(env, /RAIL_DATABASE_URL=/);
+  assert.match(env, /Do NOT point this at HYLAQ_DATABASE_URL/);
+});
+
 test("Expo CERT_LINE stays in lockstep with the shared cash-cert line", () => {
   const mobile = readFileSync(join(process.cwd(), "mobile/lib/railPoc.ts"), "utf8");
   assert.ok(mobile.includes(LOCKED));

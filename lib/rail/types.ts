@@ -229,6 +229,11 @@ export interface DoorAdapter {
   status(internalRef: string): Promise<DoorIntake>;
   webhook(event: DoorWebhookEvent): Promise<DoorIntake>;
   cancel(internalRef: string): Promise<DoorIntake>;
+  /**
+   * Rehydrate a persisted intake after a restart so webhook/status still
+   * resolve. Optional — fixture/live doors implement it via BaseDoor.
+   */
+  adoptIntake?(intake: DoorIntake, idempotencyKey?: string): void;
 }
 
 /** Receipt for a completed payout. `replayed` marks an idempotent replay. */

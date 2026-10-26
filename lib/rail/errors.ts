@@ -52,6 +52,17 @@ export class IllegalTransitionError extends Error {
   }
 }
 
+/**
+ * Raised when a refund is requested for a payment that has nothing to refund
+ * (no confirmed customer money in) or that already paid out.
+ */
+export class RefundNotAllowedError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "RefundNotAllowedError";
+  }
+}
+
 /** A downstream pipe (converter, payout rail, anchor) died mid-flight. */
 export class DeadPipeError extends Error {
   constructor(message: string) {
